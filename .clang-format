@@ -1,0 +1,7 @@
+BasedOnStyle: Google
+IndentWidth: 4
+NamespaceIndentation: All
+FixNamespaceComments: false
+ColumnLimit: 90
+IncludeBlocks: Merge
+AccessModifierOffset: -4

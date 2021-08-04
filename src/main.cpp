@@ -1,451 +1,461 @@
 #include <Arduino.h>
 #include "FastAccelStepper.h"
+#include "TMCStepper.h"
 #undef min
 #undef max
-#include "TMCStepper.h"
-#include <string>
-#include <set>
-#include <tuple>
+#include <math.h>
+#include <map>
+#include <memory>
 #include <sstream>
-#include <vector>
-#include <algorithm>
+#include <stdexcept>
+#include <string>
 
-using namespace std;
+using std::string;
 
-/**** PIN CONNECTIONS ****/
-#define PIN_TMC_EN 25
-#define PIN_TMC_STEP 26
-#define PIN_TMC_DIR 27
-#define PIN_ENDSTOP_LEFT 18
-#define PIN_ENDSTOP_RIGHT 19
+/* ===== GLOBALS ===== */
 
-/**** STEPPER DRIVER CONFIG ****/
-#define TMC_SERIAL_PORT Serial2
-#define TMC_ADDRESS 0b00
-#define TMC_R_SENSE 0.11f
-#define TMC_TOFF_VALUE 5
-#define TMC_MICROSTEPS 16
-
-/**** MISCELLANEOUS ****/
-#define REVERSE_STEPPER true
-#define FULL_STEPS_PER_M 5000    // How many *full* steps to move by 1 meter
-#define SERIAL_SPEED_CMD 115200
-#define SERIAL_SPEED_TMC 115200
-#define HOMING_SPEED 0.1
-#define HOMING_ACCEL 0.5
-#define ERR_MSG_KEY_IS_READONLY "! This key is readonly: "
-
-/**** CONFIG/STATE DEFAULTS ****/
-#define DEFAULT_SAFE_MARGIN 0.01
-#define DEFAULT_MAX_V 0.2
-#define DEFAULT_MAX_A 1.0
-#define DEFAULT_CLAMP_X false
-#define DEFAULT_CLAMP_V false
-#define DEFAULT_CLAMP_A false
-#define DEFAULT_STEPPER_CURRENT 1500
-
-/**** INTERNAL GLOBALS ****/
-float full_length = 0;
-string input_buffer = "";
-char output_buffer[255];
-
-/**** PUBLIC CONFIG GLOBALS ****/
-float max_x = 0;
-float max_v = DEFAULT_MAX_V;
-float max_a = DEFAULT_MAX_A;
-float safe_margin = DEFAULT_SAFE_MARGIN;
-const float hw_max_v = 1000;
-const float hw_max_a = 1000;
-bool clamp_x = DEFAULT_CLAMP_X;
-bool clamp_v = DEFAULT_CLAMP_V;
-bool clamp_a = DEFAULT_CLAMP_A;
-int stepper_current = DEFAULT_STEPPER_CURRENT;
-
-const auto config_keys = vector<string> {
-  "max_x",
-  "max_v",
-  "max_a",
-  "safe_margin",
-  "hw_max_v",
-  "hw_max_a",
-  "clamp_x",
-  "clamp_v",
-  "clamp_a",
-  "stepper_current",
-  "trgt_x", // TODO: REMOVE!!! ONLY FOR TESTING
+namespace config {
+    float safe_margin = 0.01;   // [m] Reserved distance to real edges of workspace
+    float max_x = 0;            // [m] Absolute max cart position
+    float max_v = 0.5;          // [m/s] Absolute max cart velocity
+    float max_a = 1.0;          // [m/s^2] Absolute max cart acceleration
+    const float hw_max_v = 10;  // [m/s] Absolute max hardware-allowed velocity
+    const float hw_max_a = 10;  // [m/s^2] Absolute max hardware-allowed acceleration
+    bool clamp_x = false;       // Clamp X to allowed range instead of raising error
+    bool clamp_v = false;       // Clamp V to allowed range instead of raising error
+    bool clamp_a = false;       // Clamp A to allowed range instead of raising error
+    float stepper_current = 1;  // [amps] Stepper RMS current (controlled by TMC)
 };
 
-/**** ERROR CODES ****/
-enum class ERRCODE: int {
-  E00_NO_ERROR = 0,
-  E01_NEED_INIT = 1,
-  E02_X_OVERFLOW = 2,
-  E03_V_OVERFLOW = 3,
-  E04_A_OVERFLOW = 4
+namespace state {
+    enum class ERR : int {
+        E0_NO_ERROR = 0,        // This is fine
+        E1_NEED_INIT = 1,       // Homing procedure is required ("reset" command)
+        E2_X_OVERFLOW = 2,      // X overshoot detected, motion is disabled
+        E3_V_OVERFLOW = 3,      // V overshoot detected, motion is disabled
+        E4_A_OVERFLOW = 4,      // A overshoot detected, motion is disabled
+        E5_STALL_DETECTED = 5,  // TMC StallGuard is triggered (stepper missed steps)
+    };
+
+    float curr_x = 0;                 // [m] Current cart position
+    float trgt_x = NAN;               // [m] Target cart position
+    float curr_v = 0;                 // [m/s] Current cart velocity
+    float trgt_v = NAN;               // [m/s] Target cart velocity
+    float curr_a = 0;                 // [m/s^2] Current cart acceleration
+    float trgt_a = NAN;               // [m/s^2] Target cart acceleration
+    float pole_ang = 0;               // [rad] Current pole angle
+    float pole_vel = 0;               // [rad/s] Current pole angular velocity
+    float timestamp = 0;              // [s] Current internal timestamp
+    ERR errcode = ERR::E1_NEED_INIT;  // Current error code
 };
 
-/**** PUBLIC STATE GLOBALS ****/
-float curr_x = 0;
-float trgt_x = 0;
-float curr_v = 0;
-float trgt_v = 0;
-float curr_a = 0;
-float trgt_a = 0;
-float pole_ang = 0;
-float pole_vel = 0;
-float timestamp = 0;
-ERRCODE errcode = ERRCODE::E01_NEED_INIT;
-
-const auto state_keys = vector<string> {
-  "curr_x",
-  "trgt_x",
-  "curr_v",
-  "trgt_v",
-  "curr_a",
-  "trgt_a",
-  "pole_ang",
-  "pole_vel",
-  "timestamp",
-  "errcode",
+namespace pins {
+    const int tmc_en = 25;
+    const int tmc_step = 26;
+    const int tmc_dir = 27;
+    const int endstop_left = 18;
+    const int endstop_right = 19;
 };
 
-/**** GLOBAL SINGLETONES ****/
-TMC2209Stepper driver(&TMC_SERIAL_PORT, TMC_R_SENSE, TMC_ADDRESS);
-FastAccelStepperEngine engine = FastAccelStepperEngine();
-FastAccelStepper *stepper = NULL;
+namespace tmc {
+    auto serial_port = Serial2;
+    const int serial_speed = 115200;
+    const int address = 0b00;
+    const float r_sense = 0.11;
+    const int toff_value = 5;
+    const int microsteps = 16;
+};
 
-/**** INITIALIZATION ****/
+namespace misc {
+    auto cmd_serial_port = Serial;
+    const int cmd_serial_speed = 115200;
+    const bool reverse_stepper = true;
+    const int full_steps_per_m = 5000;
+    const float homing_speed = 0.1;
+    const float homing_accel = 0.5;
+};
 
-void init_pins() {
-  pinMode(PIN_TMC_EN, OUTPUT);
-  pinMode(PIN_TMC_STEP, OUTPUT);
-  pinMode(PIN_TMC_DIR, OUTPUT);
-  pinMode(PIN_ENDSTOP_LEFT, INPUT);
-  pinMode(PIN_ENDSTOP_RIGHT, INPUT);
+/* ===== DYNAMIC GET/SET ===== */
+
+enum class FID {  // Field ID
+    safe_margin,
+    max_x,
+    max_v,
+    max_a,
+    hw_max_v,
+    hw_max_a,
+    clamp_x,
+    clamp_v,
+    clamp_a,
+    stepper_current,
+    curr_x,
+    trgt_x,
+    curr_v,
+    trgt_v,
+    curr_a,
+    trgt_a,
+    pole_ang,
+    pole_vel,
+    timestamp,
+    errcode,
+};
+
+class FieldBase {
+public:
+    virtual ~FieldBase() = default;
+    virtual string get();             // Return string representation of current value
+    virtual void set(string &input);  // Parse input string, update field value
+    virtual void reset();             // Reset to default
+};
+
+// Pre define
+template <typename T, FID V>
+class Field;
+
+// Format field value to string
+template <typename T, FID V>
+struct format_field {
+    string operator()(const Field<T, V> &field) {
+        throw std::runtime_error("Not implemented");
+    };
+};
+
+// Parse input string, validate, return new value
+template <typename T, FID V>
+struct parse_field {
+    T operator()(const Field<T, V> &field, const string &input) {
+        throw std::runtime_error("Not implemented");
+    };
+};
+
+// Called when field value is about to update
+// Can implement additional validation and/or field-specific logic
+template <typename T, FID V>
+void set_callback(Field<T, V> &field, T &new_value){
+    // Default impl: do nothing
+};
+
+/* ===== FIELD DEFINITION ===== */
+
+template <typename T, FID V>
+class Field : public FieldBase {
+public:
+    T &value;
+    const T default_value;
+    const bool readonly;
+    const bool allow_nan;
+
+    Field(T &value, bool readonly, bool allow_nan)
+        : value(value), readonly(readonly), allow_nan(allow_nan) {}
+
+    string get() { return format_field<T, V>{}(this->value); }
+
+    void set(string &input) {
+        if (readonly) throw std::runtime_error("This field is readonly");
+        T new_value = parse_field<T, V>{}(*this, input);
+        set_callback(*this, new_value);
+        this->value = value;
+    }
+};
+
+// clang-format off
+#define MAKE_FIELD(namespace, key, type, args...) \
+{#key, std::unique_ptr<FieldBase>(new Field <type, FID::key>(namespace::key, args))}
+// clang-format on
+
+std::map<string, std::unique_ptr<FieldBase>> CONFIG_FIELDS{
+    // MAKE_FIELD(NAMESPACE, KEY, TYPE, READONLY, ALLOW_NAN)
+    MAKE_FIELD(config, max_v, float, false, false),
+    MAKE_FIELD(config, clamp_x, bool, false, false),
+};
+
+/* ===== STRING-RELATED HELPERS ===== */
+
+template <typename... Args>
+string string_format(const string &format, Args... args) {
+    // https://stackoverflow.com/a/26221725/6152172
+    int size_s = std::snprintf(nullptr, 0, format.c_str(), args...) + 1;
+    if (size_s <= 0) throw std::runtime_error("Error during formatting");
+    auto size = static_cast<size_t>(size_s);
+    auto buf = std::make_unique<char[]>(size);
+    std::snprintf(buf.get(), size, format.c_str(), args...);
+    return string(buf.get(), buf.get() + size - 1);
 }
 
-void init_tmc() {
-  digitalWrite(PIN_TMC_EN, LOW);
-  delay(100);  // Small warmup delay
-  TMC_SERIAL_PORT.begin(SERIAL_SPEED_TMC);
-  driver.begin();
-  driver.rms_current(DEFAULT_STEPPER_CURRENT);
-  driver.microsteps(TMC_MICROSTEPS);
-  driver.toff(0);
+/* ===== FORMAT IMPLEMENTATIONS ===== */
+
+template <FID V>
+struct format_field<float, V> {
+    string operator()(const Field<float, V> &field) {
+        return string_format("%.5f", field.value);
+    };
+};
+
+template <FID V>
+struct format_field<bool, V> {
+    string operator()(const Field<bool, V> &field) {
+        return field.value ? "true" : "false";
+    };
+};
+
+template <FID V>
+struct format_field<state::ERR, V> {
+    string operator()(const Field<state::ERR, V> &field) {
+        return string_format("%d", field.value);
+    };
+};
+
+/* ===== PARSE IMPLEMENTATIONS ===== */
+
+template <FID V>
+struct parse_field<float, V> {
+    float operator()(const Field<float, V> &field, const string &input) {
+        try {
+            float value = std::stof(input);
+            if (!std::isfinite(value))
+                throw std::runtime_error("Non-finite values not allowed");
+            if (std::isnan(value))
+                // TODO: Implement parse_field for trgt_x, trgt_v, trgt_a (allow nan)
+                throw std::runtime_error("NaN not allowed");
+            return value;
+        } catch (std::logic_error) {
+            throw std::runtime_error("Failed to parse float");
+        }
+    };
+};
+
+template <FID V>
+struct parse_field<bool, V> {
+    bool operator()(const Field<bool, V> &field, const string &input) {
+        if (input == "true") return true;
+        if (input == "false") return false;
+        throw std::runtime_error("Failed to parse bool");
+    };
+};
+
+/* ===== STEPPER LOGIC ===== */
+
+namespace stepper {
+    TMC2209Stepper tmc_driver(&tmc::serial_port, tmc::r_sense, tmc::address);
+    FastAccelStepperEngine fas_engine = FastAccelStepperEngine();
+    FastAccelStepper *fas_stepper = nullptr;
+
+    void init() {
+        // Init pins
+        pinMode(pins::tmc_en, OUTPUT);
+        pinMode(pins::tmc_step, OUTPUT);
+        pinMode(pins::tmc_dir, OUTPUT);
+        pinMode(pins::endstop_left, INPUT);
+        pinMode(pins::endstop_right, INPUT);
+
+        // Init TMC driver
+        digitalWrite(pins::tmc_en, LOW);
+        delay(10);
+        tmc::serial_port.begin(tmc::serial_speed);
+        tmc_driver.begin();
+        tmc_driver.rms_current(config::stepper_current * 1000);
+        tmc_driver.microsteps(tmc::microsteps);
+        tmc_driver.toff(0);
+
+        // Init FastAccelStepper
+        fas_engine.init();
+        fas_stepper = fas_engine.stepperConnectToPin(pins::tmc_step);
+        assert(fas_stepper != NULL);
+        fas_stepper->setDirectionPin(pins::tmc_dir, misc::reverse_stepper);
+    };
+
+    void poll() {
+        // ???
+    }
+
+    void enable() {
+        Serial.println("# Stepper enabled");
+        tmc_driver.toff(tmc::toff_value);
+    }
+
+    void disable() {
+        Serial.println("# Stepper disabled");
+        tmc_driver.toff(0);
+    }
+
+    void set_speed(float value) {
+        uint32_t speed_hz = value * misc::full_steps_per_m * tmc::microsteps;
+        Serial.printf("# Set stepper speed: %.5f m/s, %d steps/s\n", value, speed_hz);
+        fas_stepper->setSpeedInHz(speed_hz);
+    }
+
+    void set_accel(float value) {
+        uint32_t steps_per_ss = value * misc::full_steps_per_m * tmc::microsteps;
+        Serial.printf("# Set stepper accel: %.5f m/s^2, %d steps/s^2\n", value,
+                      steps_per_ss);
+        fas_stepper->setAcceleration(steps_per_ss);
+    }
+
+    void force_stop() {
+        misc::cmd_serial_port.println("# Stepper force stop");
+        fas_stepper->forceStopAndNewPosition(fas_stepper->getCurrentPosition());
+        delay(50);
+    }
+
+    void homing() {
+        force_stop();
+        enable();
+        set_speed(misc::homing_speed);
+        set_accel(misc::homing_accel);
+
+        // RUN LEFT
+        fas_stepper->runBackward();
+        while (!digitalRead(pins::endstop_left)) {
+        };
+        force_stop();
+        fas_stepper->setCurrentPosition(0);
+
+        // RUN RIGHT
+        fas_stepper->runForward();
+        while (!digitalRead(pins::endstop_right)) {
+        };
+        force_stop();
+        int delta_steps = fas_stepper->getCurrentPosition();
+        fas_stepper->setCurrentPosition(delta_steps);
+
+        // GOTO CENTER
+        fas_stepper->moveTo(delta_steps / 2);
+        while (fas_stepper->isRunning()) {
+        };
+
+        // UPDATE CONFIG
+        float full_length = (float)delta_steps / tmc::microsteps / misc::full_steps_per_m;
+        config::max_x = full_length / 2 - config::safe_margin;
+        assert(config::max_x > 0);
+        // TODO: Reset state?
+        state::errcode = state::ERR::E0_NO_ERROR;
+        misc::cmd_serial_port.printf("# Full length: %d steps, %.3f meters\n",
+                                     delta_steps, full_length);
+        misc::cmd_serial_port.printf("# Valid X range: %.3f ... %.3f\n", -config::max_x,
+                                     config::max_x);
+    }
+};
+
+/* ===== PROTOCOL PARSER LOGIC ===== */
+
+namespace protocol {
+    using iss = std::istringstream;
+    using oss = std::ostringstream;
+
+    void init() {
+        misc::cmd_serial_port.begin(misc::cmd_serial_speed);
+        while (!misc::cmd_serial_port) {
+        };  // Wait for init
+        misc::cmd_serial_port.println("# CARTPOLE CONTROLLER");
+    }
+
+    void get_keys(iss &in, oss &out,
+                  std::map<string, std::unique_ptr<FieldBase>> &fields) {
+        while (!in.eof()) {
+            string key;
+            in >> key;
+            if (fields.find(key) == std::end(fields))
+                throw std::runtime_error("Unknown key: " + key);
+            FieldBase *field = fields[key].get();
+            out << key << "=" << field->get() << " ";
+        }
+        out.seekp(-1, std::ios_base::end);
+        out << '\0';
+    }
+
+    void set_keys(iss &in, std::map<string, std::unique_ptr<FieldBase>> &fields) {
+        std::vector<std::pair<string, string>> kv_pairs;
+        while (!in.eof()) {
+            string key_value;
+            in >> key_value;
+            string::size_type split = key_value.find('=');
+            if (split == string::npos)
+                throw std::runtime_error("Failed to parse key=value pair: " + key_value);
+            string key = key_value.substr(0, split);
+            string value = key_value.substr(split, string::npos);
+            if (fields.find(key) == std::end(fields))
+                throw std::runtime_error("Unknown key: " + key);
+            FieldBase *field = fields[key].get();
+            try {
+                field->set(value);  // Not good
+            } catch (std::runtime_error e) {
+                throw std::runtime_error(e.what() +
+                                         string_format(" [at %s=%s]", key, value));
+            }
+        }
+    }
+
+    void reset_keys(iss &in, std::map<string, std::unique_ptr<FieldBase>> &fields) {
+        // TODO
+    }
+
+    void cmd_reset(iss &in, oss &out) {
+        if (!out.eof()) throw std::runtime_error("Reset takes no arguments");
+        stepper::homing();
+        out << "ok";
+    }
+
+    void cmd_config_group(iss &in, oss &out) {
+        string cmd;
+        in >> cmd;
+        if (cmd == "get") {
+            get_keys(in, out, CONFIG_FIELDS);
+        } else if (cmd == "set") {
+            // TODO
+        } else if (cmd == "reset") {
+            // TODO
+        } else {
+            throw std::runtime_error("Invalid subcommand: " + cmd);
+        }
+    }
+
+    void cmd_state_group(iss &in, oss &out) {}
+
+    void handle_command(iss &in, oss &out) {
+        try {
+            string cmd;
+            in >> cmd;
+            if (cmd == "reset") {
+                return cmd_reset(in, out);
+            } else if (cmd == "config") {
+                return cmd_config_group(in, out);
+            } else if (cmd == "state") {
+                return cmd_state_group(in, out);
+            } else {
+                throw std::runtime_error("Unknown command: " + cmd);
+            }
+        } catch (std::runtime_error e) {
+            out.clear();
+            out << "! ERR: " << e.what();
+        }
+    }
+
+    void poll() {
+        static string buff = "";
+        while (misc::cmd_serial_port.available()) {
+            char c = misc::cmd_serial_port.read();
+            if (c == '\n') {
+                iss in(buff);
+                oss out;
+                handle_command(in, out);
+                misc::cmd_serial_port.println(out.str().c_str());
+                buff = "";
+                break;
+            } else {
+                buff += std::tolower(c);
+            }
+        }
+    }
 }
 
-void init_fas() {
-  engine.init();
-  stepper = engine.stepperConnectToPin(PIN_TMC_STEP);
-  stepper->setDirectionPin(PIN_TMC_DIR, REVERSE_STEPPER);
-}
-
-void init_encoder() {
-  // TODO
-}
+/* ===== ENTRYPOINT ===== */
 
 void setup() {
-  Serial.begin(SERIAL_SPEED_CMD);
-  while (!Serial) {};
-  init_pins();
-  init_tmc();
-  init_fas();
-  init_encoder();
-  Serial.println("# CARTPOLE CONTROLLER");
-}
-
-/**** STEPPER CONTROL ****/
-
-void stepper_set_speed(float value) {
-  uint32_t speed_hz = value * FULL_STEPS_PER_M * TMC_MICROSTEPS;
-  Serial.printf("# Set stepper speed to %d steps/s\n", speed_hz);
-  stepper->setSpeedInHz(speed_hz);
-}
-
-void stepper_set_accel(float value) {
-  uint32_t steps_per_ss = value * FULL_STEPS_PER_M * TMC_MICROSTEPS;
-  Serial.printf("# Set stepper accel to %d steps/s^2\n", steps_per_ss);
-  stepper->setAcceleration(steps_per_ss);
-}
-
-void stepper_enable() {
-  Serial.println("# Stepper enabled");
-  driver.toff(TMC_TOFF_VALUE);
-}
-
-void stepper_disable() {
-  Serial.println("# Stepper disabled");
-  driver.toff(0);
-}
-
-void stepper_force_stop() {
-  Serial.println("# Stepper force stop");
-  stepper->forceStopAndNewPosition(stepper->getCurrentPosition());
-  delay(100);
-}
-
-void stepper_goto_pos(float pos) {
-  uint32_t pos_steps = (pos + full_length / 2) * FULL_STEPS_PER_M * TMC_MICROSTEPS;
-  Serial.printf("# New target: %.3f (%d steps)", pos, pos_steps);
-  stepper->moveTo(pos_steps);
-}
-
-/**** INPUT PARSING/FORMATTING HELPERS ****/
-
-string format_float(float value, int precision = 5) {
-  char tmp[255];
-  sprintf(tmp, "%.*f", precision, value);
-  return tmp;
-}
-
-string format_bool(bool value) {
-  return value ? "true" : "false";
-}
-
-string format_int(int value) {
-  char tmp[255];
-  sprintf(tmp, "%d", value);
-  return tmp;
-}
-
-string format_param(string key) {
-  if (key == "max_x") { return format_float(max_x); }
-  else if (key == "max_v") { return format_float(max_v); }
-  else if (key == "max_a") { return format_float(max_a); }
-  else if (key == "safe_margin") { return format_float(safe_margin); }
-  else if (key == "hw_max_v") { return format_float(hw_max_v); }
-  else if (key == "hw_max_a") { return format_float(hw_max_a); }
-  else if (key == "clamp_x") { return format_bool(clamp_x); }
-  else if (key == "clamp_v") { return format_bool(clamp_v); }
-  else if (key == "clamp_a") { return format_bool(clamp_a); }
-  else if (key == "stepper_current") { return format_int(stepper_current); }
-  else if (key == "curr_x") { return format_float(curr_x); }
-  else if (key == "trgt_x") { return format_float(trgt_x); }
-  else if (key == "curr_v") { return format_float(curr_v); }
-  else if (key == "trgt_v") { return format_float(trgt_v); }
-  else if (key == "curr_a") { return format_float(curr_a); }
-  else if (key == "trgt_a") { return format_float(trgt_a); }
-  else if (key == "pole_ang") { return format_float(pole_ang); }
-  else if (key == "pole_vel") { return format_float(pole_vel); }
-  else if (key == "timestamp") { return format_float(timestamp); }
-  else if (key == "errcode") { return format_int(static_cast<int>(errcode)); }
-  else { throw runtime_error("! Unknown key passed to format_value"); }
-}
-
-tuple<bool, float, string> parse_float(string input, float min, float max, bool allow_nan = false) {
-  float value;
-  int retcode = sscanf(input.c_str(), "%f", &value);
-  if (retcode != 1 || !isfinite(value)) return make_tuple(false, 0, "! Failed to parse float: " + input);
-  if (allow_nan && !isnan(value)) return make_tuple(false, 0, "! NaN not allowed: " + input);
-  if (value < min) return make_tuple(false, 0, "! Validation failed: " + format_float(value) + " < " + format_float(min));
-  if (value > max) return make_tuple(false, 0, "! Validation failed: " + format_float(value) + " > " + format_float(max));
-  return make_tuple(true, value, "");
-}
-
-string parse_param(string key, string input) {
-  bool ok;
-  string msg;
-  float f_value;
-  if (key == "max_x") { return "! This key is readonly: " + key; }
-  else if (key == "max_v") {
-    tie(ok, f_value, msg) = parse_float(input, 0, hw_max_v);
-    if (!ok) return msg;
-    max_v = f_value;
-    stepper_set_speed(max_v);
-  } else if (key == "max_a") {
-    tie(ok, f_value, msg) = parse_float(input, 0, hw_max_a);
-    if (!ok) return msg;
-    max_a = f_value;
-    stepper_set_accel(max_a);
-  } else if (key == "safe_margin") {
-    tie(ok, f_value, msg) = parse_float(input, 0, 1);
-    if (!ok) return msg;
-    safe_margin = f_value;
-    errcode = ERRCODE::E01_NEED_INIT; // Maybe go to center, then update max_x, then reset state
-  } else if (key == "hw_max_v") { return ERR_MSG_KEY_IS_READONLY + key; }
-  else if (key == "hw_max_a") { return ERR_MSG_KEY_IS_READONLY + key; }
-  else if (key == "clamp_x") { return "! NOT IMPLEMENTED"; }
-  else if (key == "clamp_v") { return "! NOT IMPLEMENTED"; }
-  else if (key == "clamp_a") { return "! NOT IMPLEMENTED"; }
-  else if (key == "stepper_current") { return "! NOT IMPLEMENTED"; }
-  else if (key == "curr_x") { return ERR_MSG_KEY_IS_READONLY + key; }
-  else if (key == "trgt_x") {
-    tie(ok, f_value, msg) = parse_float(input, -max_x, max_x);
-    if (!ok) return msg;
-    trgt_x = f_value;
-    stepper_goto_pos(trgt_x);
-  } else if (key == "curr_v") { return ERR_MSG_KEY_IS_READONLY + key; }
-  else if (key == "trgt_v") { return "! NOT IMPLEMENTED"; }
-  else if (key == "curr_a") { return ERR_MSG_KEY_IS_READONLY + key; }
-  else if (key == "trgt_a") { return "! NOT IMPLEMENTED"; }
-  else if (key == "pole_ang") { return ERR_MSG_KEY_IS_READONLY + key; }
-  else if (key == "pole_vel") { return ERR_MSG_KEY_IS_READONLY + key; }
-  else if (key == "timestamp") { return ERR_MSG_KEY_IS_READONLY + key; }
-  else if (key == "errcode") { return ERR_MSG_KEY_IS_READONLY + key; }
-  else { throw runtime_error("! Unknown key passed to parse_param"); }
-  return "";
-}
-
-tuple<bool, vector<pair<string, string>>, string>
-parse_kv_pairs(string input, vector<string> allowed_keys) {
-  istringstream ss{input};
-  string token;
-  vector<pair<string, string>> pairs;
-  while (getline(ss, token, ' ')) {
-    if (token.empty()) continue;
-    int split = token.find('=');
-    if (split == string::npos) {
-      return make_tuple(false, pairs, "! Failed to parse key=value pair: " + token);
-    }
-    string key = token.substr(0, split);
-    string value = token.substr(split + 1, string::npos);
-    if (find(allowed_keys.begin(), allowed_keys.end(), key) == allowed_keys.end()) {
-      return make_tuple(false, pairs, "! No such key: " + key);
-    }
-    pairs.push_back(make_pair(key, value));
-  }
-  return make_tuple(true, pairs, "");
-}
-
-tuple<bool, vector<string>, string>
-parse_keys(string input, vector<string> allowed_keys) {
-  istringstream ss{input};
-  string token;
-  vector<string> keys;
-  while (getline(ss, token, ' ')) {
-    if (token.empty()) continue;
-    if (find(allowed_keys.begin(), allowed_keys.end(), token) == allowed_keys.end()) {
-      return make_tuple(false, keys, "! No such key: " + token);
-    }
-    keys.push_back(token);
-  }
-  return make_tuple(true, keys, "");
-}
-
-string format_kv_pairs(vector<string> keys) {
-  ostringstream ss;
-  string sep = "";
-  for (auto&& key : keys) {
-    ss << sep;
-    sep = " ";
-    ss << key << "=" << format_param(key);
-  }
-  return ss.str();
-}
-
-/**** COMMANDS IMPLEMENTATION ****/
-
-string cmd_config_get(string args) {
-  if (args == "") {
-    return format_kv_pairs(config_keys);  
-  } else {
-    bool ok; vector<string> keys; string msg;
-    tie(ok, keys, msg) = parse_keys(args, config_keys);
-    if (!ok) return msg;
-    return format_kv_pairs(keys);
-  }
-}
-
-string cmd_config_set(string args) {
-  bool ok; vector<pair<string, string>> kv_pairs; string msg;
-  tie(ok, kv_pairs, msg) = parse_kv_pairs(args, config_keys);
-  if (!ok) return msg;
-  vector<string> keys;
-  for (auto&& pair : kv_pairs) {
-    msg = parse_param(pair.first, pair.second);
-    if (!msg.empty()) return msg;
-    keys.push_back(pair.first);
-  }
-  return format_kv_pairs(keys);
-}
-
-string cmd_reset(string args) {
-  if (!args.empty()) return "! Reset takes no arguments";
-  stepper_force_stop();
-  stepper_enable();
-  stepper_set_speed(HOMING_SPEED);
-  stepper_set_accel(HOMING_ACCEL);
-  
-  // RUN LEFT
-  stepper->runBackward();
-  while (!digitalRead(PIN_ENDSTOP_LEFT)) {};
-  stepper_force_stop();
-  stepper->setCurrentPosition(0);
-  
-  // RUN RIGHT
-  stepper->runForward();
-  while (!digitalRead(PIN_ENDSTOP_RIGHT)) {};
-  stepper_force_stop();
-  int delta_steps = stepper->getCurrentPosition();
-  stepper->setCurrentPosition(delta_steps);
-
-  // GOTO CENTER
-  stepper->moveTo(delta_steps / 2);
-  while (stepper->isRunning()) {};
-
-  // UPDATE CONFIG
-  full_length = 1.0f * delta_steps / TMC_MICROSTEPS / FULL_STEPS_PER_M;
-  max_x = full_length / 2 - safe_margin;
-  // TODO: Reset state?
-  errcode = ERRCODE::E00_NO_ERROR;
-  Serial.printf("# Full length: %d steps, %.3f meters\n", delta_steps, full_length);
-  Serial.printf("# Valid X range: %.3f ... %.3f\n", -max_x, max_x);
-  
-  return "OK";
-}
-
-string handle_command(string line) {
-  int split = line.find(' ');
-  string cmd, args;
-  if (split == string::npos) {  // TODO: Helper function
-    cmd = line;
-    args = "";
-  } else {
-    cmd = line.substr(0, split);
-    args = line.substr(split + 1, string::npos); 
-  }
-  if (cmd == "reset") {
-    return cmd_reset(args);
-  } else if (cmd == "config-get") {  // TODO: Split one more time
-    return cmd_config_get(args);
-  } else if (cmd == "config-set") {
-    return cmd_config_set(args);
-  // } else if (errcode != ERRCODE::E00_NO_ERROR) {
-  //   sprintf(output_buffer, "! Errcode: %d", static_cast<int>(errcode));
-  //   return output_buffer;
-  } else {
-    return "! Unknown command: " + cmd;
-  }
-}
-
-/**** MAIN HANDLERS ****/
-
-void handle_serial() {
-  while (Serial.available()) {
-    char c = Serial.read();
-    if (c == '\n') {
-      string response = handle_command(input_buffer);
-      Serial.println(response.c_str());
-      input_buffer = "";
-      break;
-    } else {
-      input_buffer += c;
-    }
-  };
-}
-
-void handle_guards() {
-  // TODO
-}
-
-void handle_encoder() {
-  // TODO
-}
-
-/**** MAIN LOOP ****/
+    stepper::init();
+    protocol::init();
+};
 
 void loop() {
-  handle_serial();
-  handle_guards();
-  handle_encoder();
-}
+    stepper::poll();
+    protocol::poll();
+};
