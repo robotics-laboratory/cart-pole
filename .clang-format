@@ -2,7 +2,6 @@ BasedOnStyle: Google
 IndentWidth: 4
 NamespaceIndentation: All
 FixNamespaceComments: false
-ColumnLimit: 120
-IncludeBlocks: Regroup
+ColumnLimit: 90
+IncludeBlocks: Merge
 AccessModifierOffset: -4
-AllowShortLoopsOnASingleLine: false
