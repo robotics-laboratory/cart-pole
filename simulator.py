@@ -4,6 +4,7 @@ import pybullet as pb
 from pybullet_utils import bullet_client as pbc
 
 from state import Error, State
+from . import util
 
 import gym
 import logging
@@ -11,7 +12,7 @@ import os
 import time
 
 
-world_center = [0,0,0]
+world_center = [0, 0, 0]
 no_rotation = [0, 0, 0, 1]
 
 class CartPoleSimulator(gym.Env):
@@ -212,7 +213,7 @@ class CartPoleSimulator(gym.Env):
         self.step_count += 1 
         state = self.state()
         
-        reward = np.exp(-np.cos(state.pole_angle))
+        reward = util.reward(state)
         finish = False
         if self.step_count >= self.step_n:
             finish = True

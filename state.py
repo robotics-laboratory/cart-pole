@@ -4,14 +4,17 @@ class Error(enum.IntEnum):
     NO_ERROR = 0
     NOT_INITIALIZED = 1
     INVALID_CART_POSITION = 2
-    INVALID_CART_VELOCITY = 3 # future
+    INVALID_CART_VELOCITY = 3
+    INVALID_CART_ACCELERATION = 4
+    TMC_STALL = 5
 
     def __bool__(self):
         '''
         Returns:
-        True if there is any error.
+            True if there is any error.
         '''
         return self.value != Error.NO_ERROR
+
 
 class State:
     """
@@ -51,7 +54,7 @@ class State:
     def __bool__(self):
         '''
         Returns:
-        True if there is no any error
+            True if there is no any error
         '''
         return not self.error
 
@@ -60,4 +63,4 @@ class State:
             f'cart_velocity={self.cart_velocity}, ' + \
             f'pole_angle={self.pole_angle}, ' + \
             f'pole_velocity={self.pole_velocity}, ' + \
-            f'error={self.error})' 
+            f'error={self.error})'
