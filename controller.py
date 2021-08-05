@@ -1,92 +1,65 @@
+print(__name__)
 import typing
 
-import serial
-import enum
 import logging
 
-import util
-from state import State, Error
+from cart_pole import util
+from cart_pole.interface import Error, State, StateKeys, Action
+from cart_pole.serial_connection import SerialConnection
 
 
-LOGGER = logging.getLogger('controller')
-
-class StateKeys:
-    CURR_X = 'curr_x'
-    TRGT_X = 'trgt_x'
-    CURR_V = 'curr_v'
-    TRGT_V = 'trgt_v'
-    CURR_A = 'curr_a'
-    TRGT_A = 'trgt_a'
-    POLE_ANG = 'pole_ang'
-    POLE_VEL = 'pole_vel'
-    TIMESTAMP = 'timestamp'
-    ERRCODE = 'errcode'
-
-
-class ActionType(enum.Enum):
-    PositionControl = 1
-    VelocityControl = 2
-    AccelerationControl = 3
-
-
-class Action:
-    def __init__(self, action_type: ActionType, value: float) -> None:
-        self.type = action_type
-        self.value = value
-
-    def __str__(self) -> str:
-        action_str = {
-            ActionType.PositionControl: StateKeys.TRGT_X, 
-            ActionType.VelocityControl: StateKeys.TRGT_V,
-            ActionType.AccelerationControl: StateKeys.TRGT_A,
-            }[self.type]
-        return f'{action_str}={self.value}'
+LOGGER = logging.getLogger(__name__)
 
 
 class CartPoleController:
-    def __init__(self, device: str, baud_rate: int, step_n: int) -> None:
-        self.serial = serial.Serial(port=device, baudrate=baud_rate)
-        LOGGER.info(f'Opened serial connection to port {self.serial.name}')
-
-        self.step_n = step_n
+    def __init__(self, serial_connection: SerialConnection, max_steps: int) -> None:
+        self.serial = serial_connection
+        self.max_steps = max_steps
         self.step_count = 0
 
     @staticmethod
     def _parse_state(line: str) -> State:
         kv = dict(kv_token.split('=') for kv_token in line.split())
         return State(
-            cart_position=float(kv[StateKeys.CURR_X]),
-            cart_velocity=float(kv[StateKeys.CURR_V]),
-            pole_angle=float(kv[StateKeys.POLE_ANG]),
-            pole_velocity=float(kv[StateKeys.POLE_VEL]),
-            error=Error(int(kv[StateKeys.ERRCODE]))
+            cart_position=float(kv[StateKeys.CURR_X.value]),
+            cart_velocity=float(kv[StateKeys.CURR_V.value]),
+            pole_angle=float(kv[StateKeys.POLE_ANG.value]),
+            pole_velocity=float(kv[StateKeys.POLE_VEL.value]),
+            error=Error(int(kv[StateKeys.ERRCODE.value]))
         )
 
-    @staticmethod
-    def _log_get_error(line: str):
-        if line.startswith('!'):
-            LOGGER.error(f'Failed to get state, got response: {line}')
-
     def state(self) -> State:
-        self.serial.write(f'state get {StateKeys.CURR_X} {StateKeys.CURR_V} {StateKeys.CURR_A} '
-            f'{StateKeys.POLE_ANG} {StateKeys.POLE_VEL} {StateKeys.TIMESTAMP} {StateKeys.ERRCODE}')
-        line = self.serial.readline().lower()
-        return self._parse_state(line)
+        response = self.serial.request(f'state get {StateKeys.CURR_X.value} {StateKeys.CURR_V.value} {StateKeys.CURR_A.value} '
+            f'{StateKeys.POLE_ANG.value} {StateKeys.POLE_VEL.value} {StateKeys.TIMESTAMP.value} {StateKeys.ERRCODE.value}')
+        return self._parse_state(response)
 
     def reset(self) -> State:
-        self.serial.write('state reset')
-        line = self.serial.readline()
-        return self._parse_state(line)
+        """
+        Resets the environment. 
+        Caution: May take up to 30 seconds to complete.
+
+        Returns:
+            Initial State.
+        """
+        response = self.serial.request('state reset')
+        return self._parse_state(response)
 
     def info(self) -> dict:
         return {util.STEP_COUNT: self.step_count}
 
     def step(self, action: Action) -> typing.Tuple[State, float, bool, typing.Any]:
-        self.serial.write(f'state set {action}')
-        line: str = self.serial.readline()
-        if line.startswith('!'):
-            LOGGER.error(f'Failed to set state with action {action}, got response: {line}')
-            return None, 0.0, True, self.info()
+        """
+        Caution: Currently there is no way to tell precisely when given action will be applied to physical device.
+
+        Returns:
+            - State after action has been applied.
+            - Reward for given action.
+            - Flag that says if environment is finished and needs to be reset before sending new actions.
+            - Additional information :see `info` method:
+        """
+
+        LOGGER.info(f'Stepping with action {action}')
+        _ = self.serial.request(f'state set {action}')
 
         state = self.state()  # ? we don't know how much time has passed since `state set`
 
@@ -95,9 +68,6 @@ class CartPoleController:
             return state, 0.0, True, self.info()
 
         self.step_count += 1
-        if self.step_count == self.step_n:
-            finish = True
-        else:
-            finish = False
+        finish = self.step_count >= self.max_steps
 
         return state, util.reward(state), finish, self.info()

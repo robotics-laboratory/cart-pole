@@ -1,5 +1,40 @@
 import enum
 
+
+class StateKeys(enum.Enum):
+    CURR_X = 'curr_x'
+    TRGT_X = 'trgt_x'
+    CURR_V = 'curr_v'
+    TRGT_V = 'trgt_v'
+    CURR_A = 'curr_a'
+    TRGT_A = 'trgt_a'
+    POLE_ANG = 'pole_ang'
+    POLE_VEL = 'pole_vel'
+    TIMESTAMP = 'timestamp'
+    ERRCODE = 'errcode'
+
+
+class ActionType(enum.IntEnum):
+    PositionControl = 1
+    VelocityControl = 2
+    AccelerationControl = 3
+
+
+ACTION_TYPE_NAMES = {
+    ActionType.PositionControl: StateKeys.TRGT_X.value, 
+    ActionType.VelocityControl: StateKeys.TRGT_V.value,
+    ActionType.AccelerationControl: StateKeys.TRGT_A.value,
+}
+
+
+class Action:
+    def __init__(self, value: float) -> None:
+        self.value = value
+
+    def __str__(self) -> str:
+        return f'{ACTION_TYPE_NAMES[ActionType.PositionControl]}={self.value}'
+
+
 class Error(enum.IntEnum):
     NO_ERROR = 0
     NOT_INITIALIZED = 1

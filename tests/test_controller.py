@@ -1,9 +1,10 @@
 import functools
-from state import State
 import mock
+import pytest
 
-import controller
-import util
+from cart_pole import controller, util
+from cart_pole.interface import State, Action
+from cart_pole.serial_connection import SerialConnection
 
 
 class MockSerial:
@@ -29,8 +30,12 @@ class MockSerial:
 
 class TestController:
     @staticmethod
-    def default_controller(n_step=10):
-        return controller.CartPoleController('/dev/cheburek', 0, n_step)
+    def default_controller(max_steps: int=10):
+        return controller.CartPoleController(serial_connection=SerialConnection(), max_steps=max_steps)
+
+    @staticmethod
+    def default_action() -> Action:
+        return Action(1)
 
     @staticmethod
     def assert_state(state):
@@ -56,7 +61,7 @@ class TestController:
     def test_step(self):
         with mock.patch('serial.Serial', MockSerial):
             c = self.default_controller()
-        state, reward, finish, info = c.step(controller.Action(controller.ActionType.PositionControl, 1))
+        state, reward, finish, info = c.step(self.default_action())
         assert isinstance(state, State)
         assert state.cart_position == 1
         assert state.cart_velocity == 1
@@ -69,16 +74,13 @@ class TestController:
     def test_step_with_error(self):
         with mock.patch('serial.Serial', functools.partial(MockSerial, with_error=True)):
             c = self.default_controller()
-        state, reward, finish, info = c.step(controller.Action(controller.ActionType.PositionControl, 1))
-        assert state is None
-        assert reward == 0.0
-        assert finish == True
-        assert info == {'step_count': 0}
-
+        with pytest.raises(ValueError):
+            c.step(self.default_action())
+        
     def test_step_with_finish(self):
         with mock.patch('serial.Serial', MockSerial):
             c = self.default_controller(1)
-        state, reward, finish, info = c.step(controller.Action(controller.ActionType.PositionControl, 1))
+        state, reward, finish, info = c.step(self.default_action())
         assert isinstance(state, State)
         assert state.cart_position == 1
         assert state.cart_velocity == 1
