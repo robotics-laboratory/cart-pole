@@ -5,3 +5,4 @@ FixNamespaceComments: false
 ColumnLimit: 90
 IncludeBlocks: Merge
 AccessModifierOffset: -4
+AllowShortLoopsOnASingleLine: true

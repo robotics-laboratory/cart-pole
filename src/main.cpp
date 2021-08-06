@@ -3,7 +3,9 @@
 #include "TMCStepper.h"
 #undef min
 #undef max
+
 #include <math.h>
+#include <cstdio>
 #include <map>
 #include <memory>
 #include <sstream>
@@ -19,8 +21,8 @@ namespace config {
     float max_x = 0;            // [m] Absolute max cart position
     float max_v = 0.5;          // [m/s] Absolute max cart velocity
     float max_a = 1.0;          // [m/s^2] Absolute max cart acceleration
-    const float hw_max_v = 10;  // [m/s] Absolute max hardware-allowed velocity
-    const float hw_max_a = 10;  // [m/s^2] Absolute max hardware-allowed acceleration
+    float hw_max_v = 10;        // [m/s] Absolute max hardware-allowed velocity
+    float hw_max_a = 10;        // [m/s^2] Absolute max hardware-allowed acceleration
     bool clamp_x = false;       // Clamp X to allowed range instead of raising error
     bool clamp_v = false;       // Clamp V to allowed range instead of raising error
     bool clamp_a = false;       // Clamp A to allowed range instead of raising error
@@ -37,16 +39,23 @@ namespace state {
         E5_STALL_DETECTED = 5,  // TMC StallGuard is triggered (stepper missed steps)
     };
 
+    enum class ACTION : int {
+        A1_X = 1,  // Current action is position control (X)
+        A2_V = 2,  // Current action is velocity control (V)
+        A3_A = 3,  // Current action is acceleration control (A)
+    };
+
     float curr_x = 0;                 // [m] Current cart position
-    float trgt_x = NAN;               // [m] Target cart position
+    float trgt_x = 0;                 // [m] Target cart position
     float curr_v = 0;                 // [m/s] Current cart velocity
-    float trgt_v = NAN;               // [m/s] Target cart velocity
+    float trgt_v = 0;                 // [m/s] Target cart velocity
     float curr_a = 0;                 // [m/s^2] Current cart acceleration
-    float trgt_a = NAN;               // [m/s^2] Target cart acceleration
+    float trgt_a = 0;                 // [m/s^2] Target cart acceleration
     float pole_ang = 0;               // [rad] Current pole angle
     float pole_vel = 0;               // [rad/s] Current pole angular velocity
     float timestamp = 0;              // [s] Current internal timestamp
     ERR errcode = ERR::E1_NEED_INIT;  // Current error code
+    ACTION action = ACTION::A1_X;     // Current action
 };
 
 namespace pins {
@@ -73,100 +82,9 @@ namespace misc {
     const int full_steps_per_m = 5000;
     const float homing_speed = 0.1;
     const float homing_accel = 0.5;
-};
-
-/* ===== DYNAMIC GET/SET ===== */
-
-enum class FID {  // Field ID
-    safe_margin,
-    max_x,
-    max_v,
-    max_a,
-    hw_max_v,
-    hw_max_a,
-    clamp_x,
-    clamp_v,
-    clamp_a,
-    stepper_current,
-    curr_x,
-    trgt_x,
-    curr_v,
-    trgt_v,
-    curr_a,
-    trgt_a,
-    pole_ang,
-    pole_vel,
-    timestamp,
-    errcode,
-};
-
-class FieldBase {
-public:
-    virtual ~FieldBase() = default;
-    virtual string get();             // Return string representation of current value
-    virtual void set(string &input);  // Parse input string, update field value
-    virtual void reset();             // Reset to default
-};
-
-// Pre define
-template <typename T, FID V>
-class Field;
-
-// Format field value to string
-template <typename T, FID V>
-struct format_field {
-    string operator()(const Field<T, V> &field) {
-        throw std::runtime_error("Not implemented");
-    };
-};
-
-// Parse input string, validate, return new value
-template <typename T, FID V>
-struct parse_field {
-    T operator()(const Field<T, V> &field, const string &input) {
-        throw std::runtime_error("Not implemented");
-    };
-};
-
-// Called when field value is about to update
-// Can implement additional validation and/or field-specific logic
-template <typename T, FID V>
-void set_callback(Field<T, V> &field, T &new_value){
-    // Default impl: do nothing
-};
-
-/* ===== FIELD DEFINITION ===== */
-
-template <typename T, FID V>
-class Field : public FieldBase {
-public:
-    T &value;
-    const T default_value;
-    const bool readonly;
-    const bool allow_nan;
-
-    Field(T &value, bool readonly, bool allow_nan)
-        : value(value), readonly(readonly), allow_nan(allow_nan) {}
-
-    string get() { return format_field<T, V>{}(this->value); }
-
-    void set(string &input) {
-        if (readonly) throw std::runtime_error("This field is readonly");
-        T new_value = parse_field<T, V>{}(*this, input);
-        set_callback(*this, new_value);
-        this->value = value;
-    }
-};
-
-// clang-format off
-#define MAKE_FIELD(namespace, key, type, args...) \
-{#key, std::unique_ptr<FieldBase>(new Field <type, FID::key>(namespace::key, args))}
-// clang-format on
-
-std::map<string, std::unique_ptr<FieldBase>> CONFIG_FIELDS{
-    // MAKE_FIELD(NAMESPACE, KEY, TYPE, READONLY, ALLOW_NAN)
-    MAKE_FIELD(config, max_v, float, false, false),
-    MAKE_FIELD(config, clamp_x, bool, false, false),
+    const float min_stepper_current = 0.1;
+    const float max_stepper_current = 2.0;
+    float full_length_m = 0;
 };
 
 /* ===== STRING-RELATED HELPERS ===== */
@@ -181,57 +99,6 @@ string string_format(const string &format, Args... args) {
     std::snprintf(buf.get(), size, format.c_str(), args...);
     return string(buf.get(), buf.get() + size - 1);
 }
-
-/* ===== FORMAT IMPLEMENTATIONS ===== */
-
-template <FID V>
-struct format_field<float, V> {
-    string operator()(const Field<float, V> &field) {
-        return string_format("%.5f", field.value);
-    };
-};
-
-template <FID V>
-struct format_field<bool, V> {
-    string operator()(const Field<bool, V> &field) {
-        return field.value ? "true" : "false";
-    };
-};
-
-template <FID V>
-struct format_field<state::ERR, V> {
-    string operator()(const Field<state::ERR, V> &field) {
-        return string_format("%d", field.value);
-    };
-};
-
-/* ===== PARSE IMPLEMENTATIONS ===== */
-
-template <FID V>
-struct parse_field<float, V> {
-    float operator()(const Field<float, V> &field, const string &input) {
-        try {
-            float value = std::stof(input);
-            if (!std::isfinite(value))
-                throw std::runtime_error("Non-finite values not allowed");
-            if (std::isnan(value))
-                // TODO: Implement parse_field for trgt_x, trgt_v, trgt_a (allow nan)
-                throw std::runtime_error("NaN not allowed");
-            return value;
-        } catch (std::logic_error) {
-            throw std::runtime_error("Failed to parse float");
-        }
-    };
-};
-
-template <FID V>
-struct parse_field<bool, V> {
-    bool operator()(const Field<bool, V> &field, const string &input) {
-        if (input == "true") return true;
-        if (input == "false") return false;
-        throw std::runtime_error("Failed to parse bool");
-    };
-};
 
 /* ===== STEPPER LOGIC ===== */
 
@@ -291,10 +158,21 @@ namespace stepper {
         fas_stepper->setAcceleration(steps_per_ss);
     }
 
+    void set_current(float value) { tmc_driver.rms_current(value * 1000); }
+
     void force_stop() {
         misc::cmd_serial_port.println("# Stepper force stop");
         fas_stepper->forceStopAndNewPosition(fas_stepper->getCurrentPosition());
-        delay(50);
+    }
+
+    float get_current_pos() {
+        int pos_steps = fas_stepper->getCurrentPosition();
+        return (float)pos_steps / tmc::microsteps / misc::full_steps_per_m;
+    }
+
+    void set_target_pos(float value) {
+        int pos_steps = value * misc::full_steps_per_m * tmc::microsteps;
+        fas_stepper->moveTo(pos_steps);
     }
 
     void homing() {
@@ -309,6 +187,7 @@ namespace stepper {
         };
         force_stop();
         fas_stepper->setCurrentPosition(0);
+        delay(50);
 
         // RUN RIGHT
         fas_stepper->runForward();
@@ -317,6 +196,7 @@ namespace stepper {
         force_stop();
         int delta_steps = fas_stepper->getCurrentPosition();
         fas_stepper->setCurrentPosition(delta_steps);
+        delay(50);
 
         // GOTO CENTER
         fas_stepper->moveTo(delta_steps / 2);
@@ -324,16 +204,292 @@ namespace stepper {
         };
 
         // UPDATE CONFIG
-        float full_length = (float)delta_steps / tmc::microsteps / misc::full_steps_per_m;
-        config::max_x = full_length / 2 - config::safe_margin;
+        misc::full_length_m =
+            (float)delta_steps / tmc::microsteps / misc::full_steps_per_m;
+        config::max_x = misc::full_length_m / 2 - config::safe_margin;
         assert(config::max_x > 0);
         // TODO: Reset state?
         state::errcode = state::ERR::E0_NO_ERROR;
         misc::cmd_serial_port.printf("# Full length: %d steps, %.3f meters\n",
-                                     delta_steps, full_length);
+                                     delta_steps, misc::full_length_m);
         misc::cmd_serial_port.printf("# Valid X range: %.3f ... %.3f\n", -config::max_x,
                                      config::max_x);
     }
+};
+
+/* ===== DYNAMIC FIELDS ===== */
+
+enum class FID {  // Field ID
+    safe_margin,
+    max_x,
+    max_v,
+    max_a,
+    hw_max_v,
+    hw_max_a,
+    clamp_x,
+    clamp_v,
+    clamp_a,
+    stepper_current,
+    curr_x,
+    trgt_x,
+    curr_v,
+    trgt_v,
+    curr_a,
+    trgt_a,
+    pole_ang,
+    pole_vel,
+    timestamp,
+    errcode,
+    action,
+};
+
+class FieldBase {
+public:
+    virtual ~FieldBase() = default;
+    virtual string format();            // Current value -> string representation
+    virtual void parse(string &input);  // Parse input string, save pending value
+    virtual void validate();            // Validate pending value
+    virtual void commit();              // Set current value = pending value
+    virtual void update();              // Call field-specific callbacks
+    virtual void reset();               // Reset field to default value, then update()
+};
+
+/* ===== FIELD DEFINITION ===== */
+
+template <typename T>
+string format_field(T value) {
+    throw std::runtime_error("Not implemented");
+}
+
+template <typename T>
+T parse_field(string &input) {
+    throw std::runtime_error("Not implemented");
+}
+
+template <typename T, FID V>
+T validate_field(T value) {
+    return value;
+}
+
+template <typename T, FID V>
+void update_field(T value) {
+    // Do nothing
+}
+
+template <typename T, FID V>
+class Field : public FieldBase {
+public:
+    T &value;
+    T pending_value;
+    const T default_value;
+    const bool readonly;
+
+    Field(T &value, bool readonly)
+        : value(value), pending_value(value), default_value(value), readonly(readonly) {}
+
+    string format() { return format_field<T>(value); }
+
+    void parse(string &input) {
+        if (readonly) throw std::runtime_error("This field is readonly");
+        pending_value = parse_field<T>(input);
+    };
+
+    void validate() { pending_value = validate_field<T, V>(pending_value); }
+
+    void commit() { value = pending_value; }
+
+    void update() { update_field<T, V>(value); }
+
+    void reset() {
+        value = default_value;
+        update();
+    }
+};
+
+/* ===== FORMAT IMPLEMENTATIONS ===== */
+
+template <>
+string format_field<float>(float value) {
+    return string_format("%.5f", value);
+};
+
+template <>
+string format_field<bool>(bool value) {
+    return value ? "true" : "false";
+};
+
+template <>
+string format_field<state::ERR>(state::ERR value) {
+    return string_format("%d", (int)value);
+};
+
+template <>
+string format_field<state::ACTION>(state::ACTION value) {
+    return string_format("%d", (int)value);
+};
+
+/* ===== PARSE IMPLEMENTATIONS ===== */
+
+template <>
+float parse_field<float>(string &input) {
+    std::istringstream kek(input);
+    float value;
+    kek >> value;
+    if (kek.fail()) throw std::runtime_error("Failed to parse float");
+    if (std::isinf(value)) throw std::runtime_error("Infinite values not allowed");
+    if (std::isnan(value)) throw std::runtime_error("NaN not allowed");
+    return value;
+};
+
+template <>
+bool parse_field<bool>(string &input) {
+    if (input == "true") return true;
+    if (input == "false") return false;
+    throw std::runtime_error("Failed to parse bool");
+};
+
+/* ===== VALIDATE IMPLEMENTATIONS ===== */
+
+float validate_min_max(float value, float min, float max, bool clamp = false) {
+    if (value <= min) {
+        if (clamp) return min;
+        throw std::runtime_error(string_format("Out of range: %.5f < %.5f", value, min));
+    }
+    if (value >= max) {
+        if (clamp) return max;
+        throw std::runtime_error(string_format("Out of range: %.5f > %.5f", value, max));
+    }
+    return value;
+}
+
+template <>
+float validate_field<float, FID::safe_margin>(float value) {
+    if (state::errcode != state::ERR::E0_NO_ERROR)
+        throw std::runtime_error("Homing is needed");
+    return validate_min_max(value, 0, config::max_x / 2);
+}
+
+template <>
+float validate_field<float, FID::max_v>(float value) {
+    return validate_min_max(value, 0, config::hw_max_v);
+}
+
+template <>
+float validate_field<float, FID::max_a>(float value) {
+    return validate_min_max(value, 0, config::hw_max_a);
+}
+
+template <>
+float validate_field<float, FID::stepper_current>(float value) {
+    return validate_min_max(value, misc::min_stepper_current, misc::max_stepper_current);
+}
+
+template <>
+float validate_field<float, FID::trgt_x>(float value) {
+    try {
+        return validate_min_max(value, -config::max_x, config::max_x, config::clamp_x);
+    } catch (std::runtime_error &e) {
+        state::errcode = state::ERR::E2_X_OVERFLOW;
+        throw;
+    }
+}
+
+template <>
+float validate_field<float, FID::trgt_v>(float value) {
+    try {
+        return validate_min_max(value, -config::max_v, config::max_v, config::clamp_v);
+    } catch (std::runtime_error &e) {
+        state::errcode = state::ERR::E3_V_OVERFLOW;
+        throw;
+    }
+}
+
+template <>
+float validate_field<float, FID::trgt_a>(float value) {
+    try {
+        return validate_min_max(value, -config::max_a, config::max_a, config::clamp_a);
+    } catch (std::runtime_error &e) {
+        state::errcode = state::ERR::E4_A_OVERFLOW;
+        throw;
+    }
+}
+
+/* ===== FIELD UPDATE CALLBACKS ===== */
+
+template <>
+void update_field<float, FID::safe_margin>(float value) {
+    config::max_x = misc::full_length_m / 2 - config::safe_margin;
+}
+
+template <>
+void update_field<float, FID::max_v>(float value) {
+    stepper::set_speed(value);
+}
+
+template <>
+void update_field<float, FID::max_a>(float value) {
+    stepper::set_accel(value);
+}
+
+template <>
+void update_field<float, FID::stepper_current>(float value) {
+    stepper::set_current(value);
+}
+
+template <>
+void update_field<float, FID::trgt_x>(float value) {
+    stepper::set_target_pos(value);
+    state::action = state::ACTION::A1_X;
+}
+
+template <>
+void update_field<float, FID::trgt_v>(float value) {
+    // TODO
+    state::action = state::ACTION::A2_V;
+}
+
+template <>
+void update_field<float, FID::trgt_a>(float value) {
+    // TODO
+    state::action = state::ACTION::A3_A;
+}
+
+/* ===== FIELD REGISTRY ===== */
+
+// clang-format off
+#define MAKE_FIELD(namespace, key, type, args...) \
+{#key, std::unique_ptr<FieldBase>(new Field <type, FID::key>(namespace::key, args))}
+// clang-format on
+
+using fields_map_t = std::map<string, std::unique_ptr<FieldBase>>;
+
+fields_map_t CONFIG_FIELDS{
+    // MAKE_FIELD(NAMESPACE, KEY, TYPE, READONLY)
+    MAKE_FIELD(config, safe_margin, float, false),
+    MAKE_FIELD(config, max_x, float, true),
+    MAKE_FIELD(config, max_v, float, false),
+    MAKE_FIELD(config, max_a, float, false),
+    MAKE_FIELD(config, hw_max_v, float, true),
+    MAKE_FIELD(config, hw_max_a, float, true),
+    MAKE_FIELD(config, clamp_x, bool, false),
+    MAKE_FIELD(config, clamp_v, bool, false),
+    MAKE_FIELD(config, clamp_a, bool, false),
+    MAKE_FIELD(config, stepper_current, float, false),
+};
+
+fields_map_t STATE_FIELDS{
+    // MAKE_FIELD(NAMESPACE, KEY, TYPE, READONLY)
+    MAKE_FIELD(state, curr_x, float, true),
+    MAKE_FIELD(state, trgt_x, float, false),
+    MAKE_FIELD(state, curr_v, float, true),
+    MAKE_FIELD(state, trgt_v, float, false),
+    MAKE_FIELD(state, curr_a, float, true),
+    MAKE_FIELD(state, trgt_a, float, false),
+    MAKE_FIELD(state, pole_ang, float, true),
+    MAKE_FIELD(state, pole_vel, float, true),
+    MAKE_FIELD(state, timestamp, float, true),
+    MAKE_FIELD(state, errcode, state::ERR, true),
+    MAKE_FIELD(state, action, state::ACTION, true),
 };
 
 /* ===== PROTOCOL PARSER LOGIC ===== */
@@ -349,22 +505,26 @@ namespace protocol {
         misc::cmd_serial_port.println("# CARTPOLE CONTROLLER");
     }
 
-    void get_keys(iss &in, oss &out,
-                  std::map<string, std::unique_ptr<FieldBase>> &fields) {
+    void parse_keys(iss &in, fields_map_t &fields, std::vector<string> &keys) {
         while (!in.eof()) {
             string key;
             in >> key;
             if (fields.find(key) == std::end(fields))
                 throw std::runtime_error("Unknown key: " + key);
+            keys.push_back(key);
+        }
+    }
+
+    void print_keys(oss &out, fields_map_t &fields, std::vector<string> &keys) {
+        for (auto &&key : keys) {
             FieldBase *field = fields[key].get();
-            out << key << "=" << field->get() << " ";
+            out << key << "=" << field->format() << " ";
         }
         out.seekp(-1, std::ios_base::end);
         out << '\0';
     }
 
-    void set_keys(iss &in, std::map<string, std::unique_ptr<FieldBase>> &fields) {
-        std::vector<std::pair<string, string>> kv_pairs;
+    void set_keys(iss &in, fields_map_t &fields, std::vector<string> &keys) {
         while (!in.eof()) {
             string key_value;
             in >> key_value;
@@ -376,17 +536,61 @@ namespace protocol {
             if (fields.find(key) == std::end(fields))
                 throw std::runtime_error("Unknown key: " + key);
             FieldBase *field = fields[key].get();
-            try {
-                field->set(value);  // Not good
-            } catch (std::runtime_error e) {
-                throw std::runtime_error(e.what() +
-                                         string_format(" [at %s=%s]", key, value));
-            }
+            field->parse(value);
+            field->validate();
+            keys.push_back(key);
+        }
+        for (auto &&key : keys) {
+            FieldBase *field = fields[key].get();
+            field->update();
         }
     }
 
-    void reset_keys(iss &in, std::map<string, std::unique_ptr<FieldBase>> &fields) {
-        // TODO
+    void reset_keys(fields_map_t &fields, std::vector<string> &keys) {
+        for (auto &&key : keys) {
+            FieldBase *field = fields[key].get();
+            field->reset();
+        }
+    }
+
+    void cmd_config_group(iss &in, oss &out) {
+        string cmd;
+        in >> cmd;
+        std::vector<string> keys;
+        if (cmd == "get") {
+            parse_keys(in, CONFIG_FIELDS, keys);
+            print_keys(out, CONFIG_FIELDS, keys);
+        } else if (cmd == "set") {
+            set_keys(in, CONFIG_FIELDS, keys);
+            print_keys(out, CONFIG_FIELDS, keys);
+        } else if (cmd == "reset") {
+            parse_keys(in, CONFIG_FIELDS, keys);
+            reset_keys(CONFIG_FIELDS, keys);
+            print_keys(out, CONFIG_FIELDS, keys);
+        } else {
+            throw std::runtime_error("Invalid subcommand: " + cmd);
+        }
+    }
+
+    void cmd_state_group(iss &in, oss &out) {
+        string cmd;
+        in >> cmd;
+        std::vector<string> keys;
+        if (cmd == "get") {
+            parse_keys(in, STATE_FIELDS, keys);
+            print_keys(out, STATE_FIELDS, keys);
+        } else if (cmd == "set") {
+            set_keys(in, STATE_FIELDS, keys);
+            print_keys(out, STATE_FIELDS, keys);
+        } else if (cmd == "reset") {
+            parse_keys(in, STATE_FIELDS, keys);
+            reset_keys(STATE_FIELDS, keys);
+            print_keys(out, STATE_FIELDS, keys);
+        } else if (cmd == "echo") {
+            throw std::runtime_error("Not implemented (yet)");
+        } else {
+            throw std::runtime_error("Invalid subcommand: " + cmd);
+        }
     }
 
     void cmd_reset(iss &in, oss &out) {
@@ -394,22 +598,6 @@ namespace protocol {
         stepper::homing();
         out << "ok";
     }
-
-    void cmd_config_group(iss &in, oss &out) {
-        string cmd;
-        in >> cmd;
-        if (cmd == "get") {
-            get_keys(in, out, CONFIG_FIELDS);
-        } else if (cmd == "set") {
-            // TODO
-        } else if (cmd == "reset") {
-            // TODO
-        } else {
-            throw std::runtime_error("Invalid subcommand: " + cmd);
-        }
-    }
-
-    void cmd_state_group(iss &in, oss &out) {}
 
     void handle_command(iss &in, oss &out) {
         try {
