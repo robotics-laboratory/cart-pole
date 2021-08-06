@@ -7,6 +7,7 @@
 #include <math.h>
 #include <cstdio>
 #include <map>
+#include <unordered_map>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -92,11 +93,11 @@ namespace misc {
 template <typename... Args>
 string string_format(const string &format, Args... args) {
     // https://stackoverflow.com/a/26221725/6152172
-    int size_s = std::snprintf(nullptr, 0, format.c_str(), args...) + 1;
+    int size_s = std::sprintf(nullptr, format.c_str(), args...) + 1;
     if (size_s <= 0) throw std::runtime_error("Error during formatting");
     auto size = static_cast<size_t>(size_s);
-    auto buf = std::make_unique<char[]>(size);
-    std::snprintf(buf.get(), size, format.c_str(), args...);
+    auto buf = std::unique_ptr<char>(new char[size]);
+    std::sprintf(buf.get(), format.c_str(), args...);
     return string(buf.get(), buf.get() + size - 1);
 }
 
@@ -458,39 +459,46 @@ void update_field<float, FID::trgt_a>(float value) {
 
 // clang-format off
 #define MAKE_FIELD(namespace, key, type, args...) \
-{#key, std::unique_ptr<FieldBase>(new Field <type, FID::key>(namespace::key, args))}
+map[#key] = std::move(std::unique_ptr<Field<type, FID::key>>(new Field<type, FID::key>(namespace::key, args)));
 // clang-format on
 
-using fields_map_t = std::map<string, std::unique_ptr<FieldBase>>;
+using fields_map_t = std::unordered_map<string, std::unique_ptr<FieldBase>>;
 
-fields_map_t CONFIG_FIELDS{
-    // MAKE_FIELD(NAMESPACE, KEY, TYPE, READONLY)
-    MAKE_FIELD(config, safe_margin, float, false),
-    MAKE_FIELD(config, max_x, float, true),
-    MAKE_FIELD(config, max_v, float, false),
-    MAKE_FIELD(config, max_a, float, false),
-    MAKE_FIELD(config, hw_max_v, float, true),
-    MAKE_FIELD(config, hw_max_a, float, true),
-    MAKE_FIELD(config, clamp_x, bool, false),
-    MAKE_FIELD(config, clamp_v, bool, false),
-    MAKE_FIELD(config, clamp_a, bool, false),
-    MAKE_FIELD(config, stepper_current, float, false),
-};
+fields_map_t _construct_config_fields() {
+    fields_map_t map;
+    MAKE_FIELD(config, safe_margin, float, false)
+    // MAKE_FIELD(config, max_x, float, true)
+    // MAKE_FIELD(config, max_v, float, false)
+    // MAKE_FIELD(config, max_a, float, false)
+    // MAKE_FIELD(config, hw_max_v, float, true)
+    // MAKE_FIELD(config, hw_max_a, float, true)
+    // MAKE_FIELD(config, clamp_x, bool, false)
+    // MAKE_FIELD(config, clamp_v, bool, false)
+    // MAKE_FIELD(config, clamp_a, bool, false)
+    // MAKE_FIELD(config, stepper_current, float, false)
+    return map;
+}
 
-fields_map_t STATE_FIELDS{
+fields_map_t CONFIG_FIELDS = _construct_config_fields();
+
+fields_map_t _construct_state_fields() {
+    fields_map_t map;
     // MAKE_FIELD(NAMESPACE, KEY, TYPE, READONLY)
-    MAKE_FIELD(state, curr_x, float, true),
-    MAKE_FIELD(state, trgt_x, float, false),
-    MAKE_FIELD(state, curr_v, float, true),
-    MAKE_FIELD(state, trgt_v, float, false),
-    MAKE_FIELD(state, curr_a, float, true),
-    MAKE_FIELD(state, trgt_a, float, false),
-    MAKE_FIELD(state, pole_ang, float, true),
-    MAKE_FIELD(state, pole_vel, float, true),
-    MAKE_FIELD(state, timestamp, float, true),
-    MAKE_FIELD(state, errcode, state::ERR, true),
-    MAKE_FIELD(state, action, state::ACTION, true),
-};
+    // MAKE_FIELD(state, curr_x, float, true)
+    // MAKE_FIELD(state, trgt_x, float, false)
+    // MAKE_FIELD(state, curr_v, float, true)
+    // MAKE_FIELD(state, trgt_v, float, false)
+    // MAKE_FIELD(state, curr_a, float, true)
+    // MAKE_FIELD(state, trgt_a, float, false)
+    // MAKE_FIELD(state, pole_ang, float, true)
+    // MAKE_FIELD(state, pole_vel, float, true)
+    // MAKE_FIELD(state, timestamp, float, true)
+    // MAKE_FIELD(state, errcode, state::ERR, true)
+    // MAKE_FIELD(state, action, state::ACTION, true)
+    return map;
+}
+
+fields_map_t STATE_FIELDS = _construct_state_fields();
 
 /* ===== PROTOCOL PARSER LOGIC ===== */
 
