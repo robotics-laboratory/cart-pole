@@ -1,4 +1,3 @@
-from os import error
 import typing
 
 import logging

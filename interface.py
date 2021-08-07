@@ -34,7 +34,7 @@ class MetaParameters(type):
 
             wire_format_names = [v for k, v in vars(keys).items() if not k.startswith('_')]
 
-            args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, annotations = inspect.getfullargspec(dct['__init__'])
+            args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, _ = inspect.getfullargspec(dct['__init__'])
             assert args == ['self'], 'Must have no arguments'
             assert varargs is None, 'Must have no variable args'
             assert varkw is None, 'Must have no variable kwargs'
