@@ -1,10 +1,10 @@
-print(__name__)
+from os import error
 import typing
 
 import logging
 
 from cart_pole import util
-from cart_pole.interface import Error, State, StateKeys, Action
+from cart_pole.interface import State, action, StateInterface
 from cart_pole.serial_connection import SerialConnection
 
 
@@ -13,25 +13,13 @@ LOGGER = logging.getLogger(__name__)
 
 class CartPoleController:
     def __init__(self, serial_connection: SerialConnection, max_steps: int) -> None:
-        self.serial = serial_connection
+        self.state_interface = StateInterface(serial_connection)
         self.max_steps = max_steps
         self.step_count = 0
 
-    @staticmethod
-    def _parse_state(line: str) -> State:
-        kv = dict(kv_token.split('=') for kv_token in line.split())
-        return State(
-            cart_position=float(kv[StateKeys.CURR_X.value]),
-            cart_velocity=float(kv[StateKeys.CURR_V.value]),
-            pole_angle=float(kv[StateKeys.POLE_ANG.value]),
-            pole_velocity=float(kv[StateKeys.POLE_VEL.value]),
-            error=Error(int(kv[StateKeys.ERRCODE.value]))
-        )
-
     def state(self) -> State:
-        response = self.serial.request(f'state get {StateKeys.CURR_X.value} {StateKeys.CURR_V.value} {StateKeys.CURR_A.value} '
-            f'{StateKeys.POLE_ANG.value} {StateKeys.POLE_VEL.value} {StateKeys.TIMESTAMP.value} {StateKeys.ERRCODE.value}')
-        return self._parse_state(response)
+        request = State(cart_position=1.0, cart_velocity=1.0, pole_velocity=1.0, pole_angle=1.0, error_code=1)
+        return self.state_interface.get(request)
 
     def reset(self) -> State:
         """
@@ -41,13 +29,14 @@ class CartPoleController:
         Returns:
             Initial State.
         """
-        response = self.serial.request('state reset')
-        return self._parse_state(response)
+        state = self.state_interface.reset()
+        self.step_count = 0
+        return state
 
     def info(self) -> dict:
         return {util.STEP_COUNT: self.step_count}
 
-    def step(self, action: Action) -> typing.Tuple[State, float, bool, typing.Any]:
+    def step(self, action_value: float) -> typing.Tuple[State, float, bool, typing.Any]:
         """
         Caution: Currently there is no way to tell precisely when given action will be applied to physical device.
 
@@ -58,9 +47,9 @@ class CartPoleController:
             - Additional information :see `info` method:
         """
 
-        LOGGER.info(f'Stepping with action {action}')
-        _ = self.serial.request(f'state set {action}')
-
+        LOGGER.info(f'Stepping with action {action(action_value).to_dict_format()}')
+        _ = self.state_interface.set(action(action_value))
+        
         state = self.state()  # ? we don't know how much time has passed since `state set`
 
         if not state:

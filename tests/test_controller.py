@@ -3,7 +3,7 @@ import mock
 import pytest
 
 from cart_pole import controller, util
-from cart_pole.interface import State, Action
+from cart_pole.interface import State, action
 from cart_pole.serial_connection import SerialConnection
 
 
@@ -34,8 +34,8 @@ class TestController:
         return controller.CartPoleController(serial_connection=SerialConnection(), max_steps=max_steps)
 
     @staticmethod
-    def default_action() -> Action:
-        return Action(1)
+    def default_action() -> State:
+        return 1
 
     @staticmethod
     def assert_state(state):

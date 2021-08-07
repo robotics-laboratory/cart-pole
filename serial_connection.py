@@ -16,7 +16,7 @@ class SerialConnection:
         self.serial = serial.Serial(port=port, baudrate=baud_rate, timeout=read_timeout, write_timeout=write_timeout, exclusive=True)
         LOGGER.debug(f'Opened serial connection to {self.serial.name}')
 
-    def request(self, text: str):
+    def request(self, text: str = ''):
         LOGGER.debug(f'Request to serial connection "{text}"')
         self.serial.write(text)
 

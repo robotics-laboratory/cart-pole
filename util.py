@@ -1,9 +1,14 @@
 import math
 
-from cart_pole.interface import State
-
 
 STEP_COUNT = 'step_count'
 
-def reward(state: State) -> float:
+
+def as_bool(s) -> bool:
+    if isinstance(s, str):
+        return s.lower() == 'true'
+    return bool(s)
+
+
+def reward(state) -> float:
     return math.exp(-math.cos(state.pole_angle))

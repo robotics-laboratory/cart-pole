@@ -1,4 +1,5 @@
 .env
+.pio
 .vscode
 **/__pycache__
 **/.pytest_cache
