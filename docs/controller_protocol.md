@@ -128,17 +128,9 @@ Updates values of given keys and returns them back (format matches "get" command
 <<< ! Value out of range: 1000 > 10 [at max_v=1000]
 ```
 
-### `reset <group> [key1 key2 ...]`
-Resets given keys to default values and returns them back (format matches "get" command). If no keys are specified, resets all keys from gived group.
-```
->>> reset config max_v max_a
-<<< + max_v=0.5 max_a=1.0
->>> reset target
-<<< + x=0 v=0 a=0
-```
-
-### `homing`
-Performs homing procedure. This command may take a long time to complete, so it will periodically send keepalive `~` messages. After completion, returns the word "ok".
+### `reset`
+Performs homing procedure and resets **all** variables. This command may take a long time to complete,
+so it will periodically send keepalive `~` messages. After completion, returns the word "ok".
 ```
 >>> homing
 <<< ~
