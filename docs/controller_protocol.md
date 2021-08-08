@@ -89,8 +89,8 @@ operation may be unstable (probably, `MOTOR_STALLED` error will be raised at som
 | V   | m/s, float   | 0       | [-MAX_V, MAX_V] | Target cart velocity     |
 | A   | m/s^2, float | 0       | [-MAX_A, MAX_A] | Target cart acceleration |
   
-Note: validation logic of TRGT_* variables depends on CLAMP_* flags. If set, invalid 
-values are silently clamped to allowed range. Otherwise, corresponding *_OVERFLOW error is raised.
+Note: validation logic of `TRGT_*` variables depends on `CLAMP_*` flags. If set, invalid 
+values are silently clamped to allowed range. Otherwise, corresponding `*_OVERFLOW` error is raised.
 
 ### Error codes (enum):
 
@@ -107,7 +107,7 @@ values are silently clamped to allowed range. Otherwise, corresponding *_OVERFLO
 ## Commands
   
 ### `get <group> [key1 key2 ...]`
-Returns values for given keys in the form of space-separated “key=value” pairs. If no keys are specified, returns all keys from gived group.
+Returns values for given keys in the form of space-separated "key=value" pairs. If no keys are specified, returns all keys from gived group.
 ```
 >>> get config max_x
 <<< + max_x=123.456
@@ -118,7 +118,7 @@ Returns values for given keys in the form of space-separated “key=value” pai
 ```
 
 ### `set <group> [key1=val1 key2=val2 ...]`
-Updates values of given keys and returns them back (format matches “get” command).
+Updates values of given keys and returns them back (format matches "get" command).
 ```
 >>> set state x=123
 <<< ! This key is readonly
@@ -129,7 +129,7 @@ Updates values of given keys and returns them back (format matches “get” com
 ```
 
 ### `reset <group> [key1 key2 ...]`
-Resets given keys to default values and returns them back (format matches “get” command). If no keys are specified, resets all keys from gived group.
+Resets given keys to default values and returns them back (format matches "get" command). If no keys are specified, resets all keys from gived group.
 ```
 >>> reset config max_v max_a
 <<< + max_v=0.5 max_a=1.0
@@ -138,7 +138,7 @@ Resets given keys to default values and returns them back (format matches “get
 ```
 
 ### `homing`
-Performs homing procedure. This command may take a long time to complete, so it will periodically send keepalive “~” messages. After completion, returns the word “ok”.
+Performs homing procedure. This command may take a long time to complete, so it will periodically send keepalive `~` messages. After completion, returns the word "ok".
 ```
 >>> homing
 <<< ~
