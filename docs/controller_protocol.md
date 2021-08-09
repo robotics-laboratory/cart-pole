@@ -9,8 +9,7 @@
 - [Commands](#commands)
   - [Get variable](#get-group-key1-key2-)
   - [Set variable](#set-group-key1val1-key2val2-)
-  - [Reset variable](#reset-group-key1-key2-)
-  - [Homing](#homing)
+  - [Reset](#reset)
 
 ## Overview
 
@@ -31,8 +30,8 @@ only sends replies to those requests. Request-reply pairs (also called “comman
 are described in a separate section below. There are several types of replies, 
 which can be determined by message prefix:
 
-- `+ <data>` - Successful request. <data> is a response payload.
-- `! <data>` - Request failed. <data> is an error description.
+- `+ <data>` - Successful request. `<data>` is a response payload.
+- `! <data>` - Request failed. `<data>` is an error description.
 - `# <data>` - Debug message. Could be ignored and/or logged.
 - `~` - Request in progress. This message is sent to prevent timeouts.
 
@@ -89,7 +88,7 @@ operation may be unstable (probably, `MOTOR_STALLED` error will be raised at som
 | V   | m/s, float   | 0       | [-MAX_V, MAX_V] | Target cart velocity     |
 | A   | m/s^2, float | 0       | [-MAX_A, MAX_A] | Target cart acceleration |
   
-Note: validation logic of `TRGT_*` variables depends on `CLAMP_*` flags. If set, invalid 
+Note: validation logic of `X`, `V` and `A` variables depends on `CLAMP_*` flags. If set, invalid 
 values are silently clamped to allowed range. Otherwise, corresponding `*_OVERFLOW` error is raised.
 
 ### Error codes (enum):
@@ -97,7 +96,7 @@ values are silently clamped to allowed range. Otherwise, corresponding `*_OVERFL
 | KEY           | INT | COMMENT                                                               |
 |---------------|-----|-----------------------------------------------------------------------|
 | NO_ERROR      | 0   | This is fine (no errors, motion is allowed)                           |
-| NEED_HOMING   | 1   | Device needs homing (see homing command)                              |
+| NEED_RESET    | 1   | Device needs homing (see reset command)                               |
 | X_OVERFLOW    | 2   | Current or target position was out of allowed range                   |
 | V_OVERFLOW    | 3   | Current or target velocity was out of allowed range                   |
 | A_OVERFLOW    | 4   | Current or target acceleration was out of allowed range               |
@@ -107,7 +106,7 @@ values are silently clamped to allowed range. Otherwise, corresponding `*_OVERFL
 ## Commands
   
 ### `get <group> [key1 key2 ...]`
-Returns values for given keys in the form of space-separated "key=value" pairs. If no keys are specified, returns all keys from gived group.
+Returns values for given keys in the form of space-separated "key=value" pairs. If no keys are specified, returns all keys from given group.
 ```
 >>> get config max_x
 <<< + max_x=123.456
@@ -129,10 +128,10 @@ Updates values of given keys and returns them back (format matches "get" command
 ```
 
 ### `reset`
-Performs homing procedure and resets **all** variables. This command may take a long time to complete,
+Performs homing procedure and resets all variables. This command may take a long time to complete,
 so it will periodically send keepalive `~` messages. After completion, returns the word "ok".
 ```
->>> homing
+>>> reset
 <<< ~
 <<< ~
 <<< ~
