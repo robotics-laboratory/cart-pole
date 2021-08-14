@@ -16,7 +16,6 @@ enum class Error {
 };
 
 struct Globals {
-    /* CONFIG */
     float max_x;     // [m] Absolute max cart position
     float max_v;     // [m/s] Absolute max cart velocity
     float max_a;     // [m/s^2] Absolute max cart acceleration
@@ -26,22 +25,16 @@ struct Globals {
     bool clamp_x;    // Clamp X to allowed range instead of raising error
     bool clamp_v;    // Clamp V to allowed range instead of raising error
     bool clamp_a;    // Clamp A to allowed range instead of raising error
-    bool debug_led;  // Debug LED pin to indicate start of session
-    /* STATE */
     float curr_x;    // [m] Current cart position
+    float trgt_x;    // [m] Target cart position
     float curr_v;    // [m/s] Current cart velocity
+    float trgt_v;    // [m/s] Target cart velocity
     float curr_a;    // [m/s^2] Current cart acceleration
+    float trgt_a;    // [m/s^2] Target cart acceleration
     float pole_x;    // [rad] Current pole angle
     float pole_v;    // [rad/s] Current pole angular velocity
     Error errcode;   // Current error code
-    float imu_a;     // [m/s^2] Cart acceleration measured by IMU
-    float motor_x;   // [rad] Rotation of the motor shaft (secondary encoder)
-    float motor_v;   // [rad/s] Velocity of the motor shaft (secondary encoder)
-    /* TARGET */
-    float trgt_x;    // [m] Target cart position
-    float trgt_v;    // [m/s] Target cart velocity
-    float trgt_a;    // [m/s^2] Target cart acceleration
-    /* MISC */
+
     float full_length_meters;  // [m] Total Length as determined during homing
 
     std::string Get(const std::string &group, const std::string &key) const;
