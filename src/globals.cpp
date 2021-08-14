@@ -175,12 +175,12 @@ namespace {
 
     template <>
     void updateField<float, FieldID::max_v>(float value) {
-        S.SetSpeed(value);
+        // S.SetSpeed(value);  // fixme
     }
 
     template <>
     void updateField<float, FieldID::max_a>(float value) {
-        S.SetAcceleration(value);
+        // S.SetAcceleration(value);  // fixme
     }
 
     template <>

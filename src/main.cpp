@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 #include "protocol_processor.h"
 
 ProtocolProcessor &P = GetProtocolProcessor();
@@ -5,6 +7,6 @@ ProtocolProcessor &P = GetProtocolProcessor();
 void setup() {
 }
 
-void loop() {
+void loop() { 
     P.Poll();
 }

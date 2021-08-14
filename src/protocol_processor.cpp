@@ -19,17 +19,17 @@ ProtocolProcessor::ProtocolProcessor() : serial_port(Serial) {
 }
 
 void ProtocolProcessor::Poll() {
-    std::string buffer;
+    static std::string buffer;
     while (serial_port.available()) {
         char c = serial_port.read();
         if (c == '\n') {
+            std::stringstream stream(buffer);
+            handleCommand(stream);
+            buffer = "";
             break;
         }
         buffer += std::tolower(c);
     }
-
-    std::stringstream stream(buffer);
-    handleCommand(stream);
 }
 
 void ProtocolProcessor::handleCommand(std::stringstream &stream) {
@@ -82,22 +82,22 @@ std::string ProtocolProcessor::get(const std::string &group, std::stringstream &
     std::string key;
     bool first = true;
     while (stream >> key) {
-        result << key << "=" << G.Get(group, key);
         if (first) {
             first = false;
         } else {
             result << ' ';
         }
+        result << key << "=" << G.Get(group, key);
     }
     if (first) {
         auto res = G.Get(group);
         for (auto &&kv : res) {
-            result << kv.first << ' ' << kv.second;
             if (first) {
                 first = false;
             } else {
                 result << ' ';
             }
+            result << kv.first << '=' << kv.second;
         }
     }
 
@@ -124,25 +124,25 @@ std::string ProtocolProcessor::set(const std::string &group, std::stringstream &
     bool first = true;
     for (const auto &key : request_keys) {
         G.Commit(group, key);
-        result << key << "=" << G.Get(group, key);
         if (first) {
             first = false;
         } else {
             result << ' ';
         }
+        result << key << '=' << G.Get(group, key);
     }
 
     return result.str();
 }
 
 std::string ProtocolProcessor::reset() {
+    G.Reset();
+
     S.AsyncHoming();
     while (!S.IsDoneHoming()) {
         KeepAlive();
         delay(500);
     }
-
-    G.Reset();
 
     return "";
 }

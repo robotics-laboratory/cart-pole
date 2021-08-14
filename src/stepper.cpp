@@ -82,7 +82,7 @@ void Stepper::ForceStop() {
 
 float Stepper::GetCurrentPosition() {
     int pos_steps = fas_stepper->getCurrentPosition();
-    return static_cast<float>(pos_steps) / METERS_TO_STEPS_MULTIPLIER;
+    return static_cast<float>(pos_steps) / METERS_TO_STEPS_MULTIPLIER - G.full_length_meters / 2;
 }
 
 void Stepper::Homing() {
@@ -115,8 +115,8 @@ void Stepper::Homing() {
     G.full_length_meters = static_cast<float>(delta_steps) / METERS_TO_STEPS_MULTIPLIER;
     G.hw_max_x = G.full_length_meters / 2;
     
-    // TODO: Reset state?
     G.errcode = Error::NO_ERROR;
+
     std::stringstream stream;
     stream << std::fixed << std::setprecision(5) << "Full length: " << 
         delta_steps << " steps" << G.full_length_meters << " meters";
@@ -165,7 +165,7 @@ void Stepper::SetAcceleration(float value) {
 }
 
 void Stepper::SetTargetPosition(float value) {
-    int pos_steps = static_cast<int>(value * METERS_TO_STEPS_MULTIPLIER);
+    int pos_steps = static_cast<int>((value + G.full_length_meters / 2) * METERS_TO_STEPS_MULTIPLIER);
     fas_stepper->moveTo(pos_steps);
 }
 
