@@ -4,9 +4,6 @@
 
 ProtocolProcessor &P = GetProtocolProcessor();
 
-void setup() {
-}
+void setup() {}
 
-void loop() { 
-    P.Poll();
-}
+void loop() { P.Poll(); }

@@ -1,20 +1,19 @@
 #include "protocol_processor.h"
 
+#include <vector>
+
 #include "globals.h"
 #include "stepper.h"
 
-#include <vector>
-
 namespace {
-    const int SERIAL_SPEED = 115200;
+const HardwareSerial PROTOCOL_SERIAL_PORT = Serial;
+const int SERIAL_SPEED = 115200;
+}  // namespace
 
-    Globals &G = GetGlobals();
-    Stepper &S = GetStepper();
-}
-
-ProtocolProcessor::ProtocolProcessor() : serial_port(Serial) {
+ProtocolProcessor::ProtocolProcessor() : serial_port(PROTOCOL_SERIAL_PORT) {
     serial_port.begin(SERIAL_SPEED);
-    while (!serial_port) {}  // Wait for init
+    while (!serial_port) {
+    }  // Wait for init
     Log("CARTPOLE CONTROLLER STARTED");
 }
 
@@ -23,16 +22,17 @@ void ProtocolProcessor::Poll() {
     while (serial_port.available()) {
         char c = serial_port.read();
         if (c == '\n') {
-            std::stringstream stream(buffer);
-            handleCommand(stream);
-            buffer = "";
+            handleCommand(buffer);
+            buffer.clear();
             break;
         }
         buffer += std::tolower(c);
     }
 }
 
-void ProtocolProcessor::handleCommand(std::stringstream &stream) {
+void ProtocolProcessor::handleCommand(const std::string &line) {
+    std::stringstream stream{line};
+
     std::string command;
     stream >> command;
 
@@ -45,14 +45,14 @@ void ProtocolProcessor::handleCommand(std::stringstream &stream) {
             result = get(group, stream);
         } else if (command == "set") {
             std::string group;
-            stream >> group;  
+            stream >> group;
             result = set(group, stream);
         } else if (command == "reset") {
             result = reset();
         } else {
             throw std::runtime_error{"Unknown command: " + command};
         }
-    } catch(std::exception &e) {
+    } catch (std::exception &e) {
         Error(e.what());
         return;
     }
@@ -64,19 +64,16 @@ void ProtocolProcessor::Success(const std::string &text) {
     serial_port.printf("+ %s\n", text.c_str());
 }
 
-void ProtocolProcessor::Log(const std::string &text) {
-    serial_port.printf("# %s\n", text.c_str());
-}
+void ProtocolProcessor::Log(const std::string &text) { serial_port.printf("# %s\n", text.c_str()); }
 
 void ProtocolProcessor::Error(const std::string &text) {
     serial_port.printf("! %s\n", text.c_str());
 }
 
-void ProtocolProcessor::KeepAlive() {
-    serial_port.printf("~\n");
-}
+void ProtocolProcessor::KeepAlive() { serial_port.printf("~\n"); }
 
 std::string ProtocolProcessor::get(const std::string &group, std::stringstream &stream) {
+    Globals &G = GetGlobals();
     std::stringstream result;
 
     std::string key;
@@ -105,6 +102,7 @@ std::string ProtocolProcessor::get(const std::string &group, std::stringstream &
 }
 
 std::string ProtocolProcessor::set(const std::string &group, std::stringstream &stream) {
+    Globals &G = GetGlobals();
     std::stringstream result;
 
     std::vector<std::string> request_keys;
@@ -136,6 +134,9 @@ std::string ProtocolProcessor::set(const std::string &group, std::stringstream &
 }
 
 std::string ProtocolProcessor::reset() {
+    Stepper &S = GetStepper();
+    Globals &G = GetGlobals();
+
     G.Reset();
 
     S.AsyncHoming();

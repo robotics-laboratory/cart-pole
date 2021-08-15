@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 
-
 enum class Error {
     NO_ERROR = 0,       // This is fine
     NEED_RESET = 1,     // Homing procedure is required ("reset" command)
