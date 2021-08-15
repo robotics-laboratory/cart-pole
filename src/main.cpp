@@ -1,12 +1,15 @@
 #include <Arduino.h>
+#include <Wire.h>
 
+#include "encoder.h"
 #include "protocol_processor.h"
 
-ProtocolProcessor &P = GetProtocolProcessor();
+ProtocolProcessor &protocol = GetProtocolProcessor();
+Encoder &encoder = GetEncoder();
 
-void setup() {
-}
+void setup() {}
 
-void loop() { 
-    P.Poll();
+void loop() {
+    protocol.Poll();
+    encoder.Poll();
 }

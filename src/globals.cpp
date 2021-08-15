@@ -1,6 +1,6 @@
 #include "globals.h"
-
 #include "stepper.h"
+#include "encoder.h"
 
 #include <iomanip>
 #include <sstream>
@@ -21,7 +21,6 @@ namespace {
 
     Globals &G = GetGlobals();
     Stepper &S = GetStepper();
-
 
     enum class FieldID {
         max_x,
@@ -175,12 +174,12 @@ namespace {
 
     template <>
     void updateField<float, FieldID::max_v>(float value) {
-        S.SetSpeed(value);  // fixme
+        S.SetSpeed(value);
     }
 
     template <>
     void updateField<float, FieldID::max_a>(float value) {
-        S.SetAcceleration(value);  // fixme
+        S.SetAcceleration(value);
     }
 
     template <>
