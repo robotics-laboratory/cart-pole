@@ -68,6 +68,8 @@ Stepper::Stepper()
 void Stepper::Poll() {
     Globals &G = GetGlobals();
     G.curr_x = GetCurrentPosition();
+    G.curr_v = GetCurrentVelocity();
+    G.curr_a = GetCurrentAcceleration();
 }
 
 void Stepper::Enable() {
@@ -92,6 +94,17 @@ float Stepper::GetCurrentPosition() {
     Globals &G = GetGlobals();
     int pos_steps = fas_stepper->getCurrentPosition();
     return static_cast<float>(pos_steps) / METERS_TO_STEPS_MULTIPLIER - G.full_length_meters / 2;
+}
+
+float Stepper::GetCurrentVelocity() {
+    Globals &G = GetGlobals();
+    int vel_steps_per_ms = fas_stepper->getCurrentSpeedInMilliHz();
+    return static_cast<float>(vel_steps_per_ms) / METERS_TO_STEPS_MULTIPLIER * 1000;
+}
+
+float Stepper::GetCurrentAcceleration() {
+    int steps_per_ss = fas_stepper->getCurrentAcceleration();
+    return static_cast<float>(steps_per_ss) / METERS_TO_STEPS_MULTIPLIER;
 }
 
 void Stepper::Homing() {
@@ -179,6 +192,14 @@ void Stepper::SetTargetPosition(float value) {
     int pos_steps =
         static_cast<int>((value + G.full_length_meters / 2) * METERS_TO_STEPS_MULTIPLIER);
     fas_stepper->moveTo(pos_steps);
+}
+
+void Stepper::SetTargetVelocity(float value) {
+    // TODO
+}
+
+void Stepper::SetTargetAcceleration(float value) {
+    // TODO
 }
 
 Stepper &GetStepper() {
