@@ -8,6 +8,8 @@
 namespace {
 const HardwareSerial PROTOCOL_SERIAL_PORT = Serial;
 const int SERIAL_SPEED = 115200;
+
+using ErrorEnum = Error;
 }  // namespace
 
 ProtocolProcessor::ProtocolProcessor() : serial_port(PROTOCOL_SERIAL_PORT) {
@@ -137,13 +139,16 @@ std::string ProtocolProcessor::reset() {
     Stepper &S = GetStepper();
     Globals &G = GetGlobals();
 
-    G.Reset();
-
     S.AsyncHoming();
     while (!S.IsDoneHoming()) {
         KeepAlive();
         delay(500);
     }
+
+    float hw_max_x = G.hw_max_x;
+    G.Reset();
+    G.errcode = ErrorEnum::NO_ERROR;
+    G.hw_max_x = hw_max_x;
 
     return "";
 }
