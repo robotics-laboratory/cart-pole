@@ -34,7 +34,6 @@ struct Globals {
     float pole_x;    // [rad] Current pole angle
     float pole_v;    // [rad/s] Current pole angular velocity
     Error errcode;   // Current error code
-
     float full_length_meters;  // [m] Total Length as determined during homing
 
     std::string Get(const std::string &group, const std::string &key) const;
