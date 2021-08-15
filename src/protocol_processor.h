@@ -6,7 +6,7 @@
 
 
 class ProtocolProcessor {
-    HardwareSerial serial_port;
+    // HardwareSerial serial_port;  // Fixme
     
 public:
     static constexpr int SERIAL_SPEED = 115200;

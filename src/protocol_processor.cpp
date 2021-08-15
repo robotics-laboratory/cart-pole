@@ -5,6 +5,8 @@
 
 #include <vector>
 
+#define serial_port Serial  // Fixme
+
 namespace {
     const int SERIAL_SPEED = 115200;
 
@@ -12,7 +14,7 @@ namespace {
     Stepper &S = GetStepper();
 }
 
-ProtocolProcessor::ProtocolProcessor() : serial_port(Serial) {
+ProtocolProcessor::ProtocolProcessor() {
     serial_port.begin(SERIAL_SPEED);
     while (!serial_port) {}  // Wait for init
     Log("CARTPOLE CONTROLLER STARTED");
