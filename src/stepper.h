@@ -15,6 +15,8 @@ class Stepper {
 public:
     Stepper();
 
+    void Poll();
+
     void Enable();
     void Disable();
 

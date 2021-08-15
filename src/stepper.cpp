@@ -65,6 +65,11 @@ Stepper::Stepper()
     fas_stepper->setDirectionPin(TMC_DIR, REVERSE_STEPPER);
 }
 
+void Stepper::Poll() {
+    Globals &G = GetGlobals();
+    G.curr_x = GetCurrentPosition();
+}
+
 void Stepper::Enable() {
     ProtocolProcessor &P = GetProtocolProcessor();
     tmc_driver.toff(TOFF_VALUE);
