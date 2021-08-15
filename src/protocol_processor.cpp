@@ -105,6 +105,10 @@ std::string ProtocolProcessor::get(const std::string &group, std::stringstream &
 
 std::string ProtocolProcessor::set(const std::string &group, std::stringstream &stream) {
     Globals &G = GetGlobals();
+    if (G.errcode != ErrorEnum::NO_ERROR) {
+        throw std::runtime_error{"Global error code is set"};
+    }
+
     std::stringstream result;
 
     std::vector<std::string> request_keys;
