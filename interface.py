@@ -1,8 +1,8 @@
 import enum
 
 class Error(enum.IntEnum):
-    NO_CONTROL = -1
     NO_ERROR = 0
+    NO_CONTROL = 1
     NOT_INITIALIZED = 2
     INVALID_CART_POSITION = 3
     INVALID_CART_VELOCITY = 4
