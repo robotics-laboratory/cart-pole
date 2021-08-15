@@ -2,8 +2,6 @@
 #include "stepper.h"
 #include "encoder.h"
 
-#include "stepper.h"
-
 #include <iomanip>
 #include <sstream>
 #include <unordered_map>
@@ -23,7 +21,6 @@ namespace {
 
     Globals &G = GetGlobals();
     Stepper &S = GetStepper();
-
 
     enum class FieldID {
         max_x,
