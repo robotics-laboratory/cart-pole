@@ -1,6 +1,6 @@
 #include "globals.h"
-
 #include "stepper.h"
+#include "encoder.h"
 
 #include <iomanip>
 #include <sstream>
@@ -21,7 +21,6 @@ namespace {
 
     Globals &G = GetGlobals();
     Stepper &S = GetStepper();
-
 
     enum class FieldID {
         max_x,
