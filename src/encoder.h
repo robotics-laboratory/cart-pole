@@ -5,8 +5,8 @@
 
 class Encoder {
     AS5600 as5600;
-    float prevAngle;
     unsigned long prevTime;
+    float prevAngle;
 
 public:
     Encoder();
