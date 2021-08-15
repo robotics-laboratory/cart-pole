@@ -6,7 +6,6 @@
 
 #include "globals.h"
 
-
 class Stepper {
     HardwareSerial tmc_serial_port;
     TMC2209Stepper tmc_driver;
