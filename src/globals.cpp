@@ -335,25 +335,25 @@ void Globals::Reset() {
 
 Globals &GetGlobals() {
     static Globals globals{
-        0.0,
-        0.5,
-        1.0,
-        0.0,
-        10,  // fixme
-        10,  // fixme
-        false,
-        false,
-        false,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        Error::NEED_RESET,
-        0.0,
+        0.0,  // [m] Absolute max cart position
+        0.5,  // [m/s] Absolute max cart velocity
+        1.0,  // [m/s^2] Absolute max cart acceleration
+        0.0,  // [m] Absolute max hardware-allowed position
+        10,  // [m/s] Absolute max hardware-allowed velocity [FIXME!]
+        10,  // [m/s^2] Absolute max hardware-allowed acceleration [FIXME!]
+        false,  // Clamp X to allowed range instead of raising error
+        false,  // Clamp V to allowed range instead of raising error
+        false,  // Clamp A to allowed range instead of raising error
+        0.0,  // [m] Current cart position
+        0.0,  // [m] Target cart position
+        0.0,  // [m/s] Current cart velocity
+        0.0,  // [m/s] Target cart velocity
+        0.0,  // [m/s^2] Current cart acceleration
+        0.0,  // [m/s^2] Target cart acceleration
+        0.0,  // [rad] Current pole angle
+        0.0,  // [rad/s] Current pole angular velocity
+        Error::NEED_RESET,  // Current error code
+        0.0,  // [m] Total Length as determined during homing
     };
     return globals;
 }
