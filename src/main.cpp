@@ -3,12 +3,12 @@
 #include "protocol_processor.h"
 #include "stepper.h"
 
-ProtocolProcessor &P = GetProtocolProcessor();
-Stepper &S = GetStepper();
-
 void setup() {}
 
 void loop() {
+    ProtocolProcessor &P = GetProtocolProcessor();
+    Stepper &S = GetStepper();
+
     P.Poll();
     S.Poll();
 }
