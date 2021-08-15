@@ -149,6 +149,7 @@ std::string ProtocolProcessor::reset() {
     G.Reset();
     G.errcode = ErrorEnum::NO_ERROR;
     G.hw_max_x = hw_max_x;
+    G.max_x = G.hw_max_x;
 
     return "";
 }
