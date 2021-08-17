@@ -23,14 +23,20 @@ class WireInterface:
         self.serial.close()
 
     def request(self, command: str = '') -> str:
+        command = command.strip()
+
         LOGGER.debug(f'Request to serial connection "{command}"')
         RAW_COMMANDS_LOGGER.debug(command)
-        self.serial.write(command)
+        self.serial.write((command + '\n').encode('utf-8'))
 
         while True:
-            received = self.serial.readline().strip()
+            received = self.serial.readline().decode('utf-8').strip()
+            if received == '':
+                LOGGER.warning(f'Serial read timeout during "{command}" request')
+                continue
+        
             RAW_COMMANDS_LOGGER.debug(received)
-            
+
             if received.startswith('~'):
                 LOGGER.debug(f'Received processing message during "{command}" request')
                 continue
@@ -49,7 +55,7 @@ class WireInterface:
                 LOGGER.debug(f'Received unknown response line: {received}')
 
     def _command(self, command: str, group: str = '', args: str = '') -> str:
-        return self.serial_connection.request(f'{command} {group} {args}')
+        return self.request(f'{command} {group} {args}')
 
     def set(self, params: DeviceVariableGroup) -> DeviceVariableGroup:
         response = self._command('set', params.PROTOCOL_GROUP_NAME, params.to_dict_format())
