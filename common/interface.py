@@ -3,9 +3,9 @@ import enum
 from typing import Type, Tuple
 
 
-class Error(enum.IntEnum):
+class Error(enum.Enum):
     NO_ERROR = 0
-    NEED_HOMING = 1
+    NEED_RESET = 1
     X_OVERFLOW = 2
     V_OVERFLOW = 3
     A_OVERFLOW = 4
@@ -50,6 +50,10 @@ class DeviceVariableGroup:
         Error: lambda s: Error(int(s)),
     }
 
+    def __init_subclass__(cls) -> None:
+        super().__init_subclass__()
+        assert cls.PROTOCOL_GROUP_NAME is not None, 'PROTOCOL_GROUP_NAME is not set'
+
     @classmethod
     def _type_lookup(cls, type: Type, kv: dict):
         for possible_type, value in kv.items():
@@ -72,10 +76,8 @@ class DeviceVariableGroup:
         Returns:
             Command string in dict wire format.
         '''
-        assert self.PROTOCOL_GROUP_NAME is not None, 'PROTOCOL_GROUP_NAME is not set'
-
         return ' '.join(
-            f'{field.metadata[WIRE_NAME]}={self._type_lookup(field.type, self._to_string_lookup)}'
+            f'{field.metadata[WIRE_NAME]}={self._type_lookup(field.type, self._to_string_lookup)(getattr(self, field.name))}'
             for field in dc.fields(self)
             if getattr(self, field.name) is not None
         )
@@ -88,8 +90,6 @@ class DeviceVariableGroup:
         Returns:
             Command string in list wire format.
         '''
-        assert self.PROTOCOL_GROUP_NAME is not None, 'PROTOCOL_GROUP_NAME is not set'
-
         return ' '.join(field.metadata[WIRE_NAME] for field in dc.fields(self) if getattr(self, field.name) is not None)
 
     @classmethod
@@ -100,8 +100,6 @@ class DeviceVariableGroup:
         Returns:
             Class instance, constructed from wire format representation.
         '''
-        assert cls.PROTOCOL_GROUP_NAME is not None, 'PROTOCOL_GROUP_NAME is not set'
-
         field_lookup = {field.metadata[WIRE_NAME]: field for field in dc.fields(cls)}
         data_dict = {}
         for pair in text.split():

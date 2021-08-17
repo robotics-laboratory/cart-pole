@@ -53,4 +53,4 @@ class Operator(CartPoleBase):
         _ = self.interface.set(Target(position=target))
     
     def close(self) -> None:
-        pass
+        self.interface.close()

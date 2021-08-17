@@ -19,32 +19,34 @@ class WireInterface:
         self.serial = serial.Serial(port=port, baudrate=baud_rate, timeout=read_timeout, write_timeout=write_timeout, exclusive=True)
         LOGGER.debug(f'Opened serial connection to {self.serial.name}')
 
-    def request(self, text: str = '') -> str:
-        LOGGER.debug(f'Request to serial connection "{text}"')
-        RAW_COMMANDS_LOGGER.debug(text)
-        self.serial.write(text)
+    def close(self):
+        self.serial.close()
+
+    def request(self, command: str = '') -> str:
+        LOGGER.debug(f'Request to serial connection "{command}"')
+        RAW_COMMANDS_LOGGER.debug(command)
+        self.serial.write(command)
 
         while True:
-            line = self.serial.readline().strip()
-            RAW_COMMANDS_LOGGER.debug(text)
+            received = self.serial.readline().strip()
+            RAW_COMMANDS_LOGGER.debug(received)
             
-            if line.startswith('~'):
-                LOGGER.debug(f'Received processing message during "{text}" request')
+            if received.startswith('~'):
+                LOGGER.debug(f'Received processing message during "{command}" request')
                 continue
 
-            stripped = line[1:].strip()
-            if line.startswith('#'):
-                LOGGER.debug(f'Received log message during "{text}" request: {stripped}')
+            stripped = received[1:].strip()
+            if received.startswith('#'):
+                LOGGER.debug(f'Received log message during "{command}" request: {stripped}')
                 continue
-            elif line.startswith('!'):
-                LOGGER.error(f'Received error response during "{text}" request: {stripped}')
+            elif received.startswith('!'):
+                LOGGER.error(f'Received error response during "{command}" request: {stripped}')
                 raise RuntimeError(f'Received error response: {stripped}')
-            elif line.startswith('+'):
-                LOGGER.debug(f'Responding to request "{text}" with "{line}"')
+            elif received.startswith('+'):
+                LOGGER.debug(f'Responding to request "{command}" with "{received}"')
                 return stripped
             else:
-                LOGGER.debug(f'Received unknown response line: {line}')
-                raise RuntimeError(f'Received unknown response line: {line}')
+                LOGGER.debug(f'Received unknown response line: {received}')
 
     def _command(self, command: str, group: str = '', args: str = '') -> str:
         return self.serial_connection.request(f'{command} {group} {args}')
