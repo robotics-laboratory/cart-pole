@@ -2,20 +2,33 @@ import numpy as np
 import pybullet as pb
 
 from pybullet_utils import bullet_client as pbc
+from interface import CartPoleBase,CartPoleConfig, Error, State
 
-from state import Error, State
-from . import util
-
-import gym
 import logging
-import os
-import time
 
 
 world_center = [0, 0, 0]
 no_rotation = [0, 0, 0, 1]
 
-class CartPoleSimulator(gym.Env):
+debug_state_position = [0.30, 0.05, 0.3]
+debug_state_color = [255, 0 , 0] 
+debug_state_orientation = pb.getQuaternionFromEuler([np.pi/2, 0, np.pi])
+debug_state_size = 0.06
+
+def short_view(state, target):
+    return 'p={p:+.2f}/{t:+.2f} v={v:+.2f} a={a:+.2f} w={w:+.2f}'.format(
+        p=state.cart_position,
+        t=target,
+        v=state.cart_velocity,
+        a=state.pole_angle,
+        w=state.pole_velocity,
+        e=int(state.error)
+    )
+
+
+log = logging.getLogger('simulator')
+
+class CartPoleSimulator(CartPoleBase):
     '''
     Description:
         Сlass implements a physical simulation of the cart-pole device.
@@ -25,38 +38,54 @@ class CartPoleSimulator(gym.Env):
     Source:
         This environment is some variation of the cart-pole problem
         described by Barto, Sutton, and Anderson
-    Reward:
-        Reward is exp(-cos(a)), where a is pole angle in radians.
     Initial state:
         A pole is at starting position 0 with no velocity and acceleration.
-    Episode Termination:
+    Session termination:
         - Cart position is violated.
-        - Episode length is greater than limit.
     Technical details:
         Each environment runs its own isolated pybullet physics engine.
     '''
 
     def __init__(self,
-            time_step=1/50,
-            step_n=1000,
-            position_limit=0.20,
-            gravity=9.8):
-        self.time_step = time_step
-        self.position_limit = position_limit
-        self.step_n = step_n
+            gravity: float = 9.8,
+            debug_mode: bool = False):
+        '''
+        Args:
+          * position_limit – cart center must be in [-position_limit, +position_limit] range.
+          * gravity – gravity force
+          * debug_mode – enable engine GUI
+        '''
+
+        log.info(f'gravity={gravity}, debug_mode={debug_mode}')
+
+        self.config = None
         self.step_count = 0
 
-        self.client = pbc.BulletClient(pb.DIRECT)
-        self.client.setTimeStep(self.time_step)
+        self.debug_mode = debug_mode
+        self.debug_state_id = None
+
+        if self.debug_mode:
+            self.client = pbc.BulletClient(pb.GUI)
+            self.client.configureDebugVisualizer(pb.COV_ENABLE_DEPTH_BUFFER_PREVIEW, False)
+            self.client.configureDebugVisualizer(pb.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, False)
+            self.client.configureDebugVisualizer(pb.COV_ENABLE_RGB_BUFFER_PREVIEW, False)
+            self.client.resetDebugVisualizerCamera(
+                cameraDistance=0.5,
+                cameraYaw=180,
+                cameraPitch=0,
+                cameraTargetPosition=[0, 0.5, 0],
+            )
+
+        else:
+            self.client = pbc.BulletClient(pb.DIRECT)
 
         self.object_id = self.client.loadURDF(
             'cart_pole_v0.urdf',
             basePosition = world_center,
-            baseOrientation = no_rotation,
             useFixedBase=True,
             flags=pb.URDF_USE_SELF_COLLISION,
         )
-        
+
         self.index_by_name = {}
         for index in range(self.client.getNumJoints(self.object_id)):
             _, name, *__ = self.client.getJointInfo(self.object_id, index)
@@ -80,15 +109,18 @@ class CartPoleSimulator(gym.Env):
             angularDamping=0
         )
 
+        self.client.setTimeStep(1/50)
+        self.target = 0
+
         # configure cart contraints
         self.client.setJointMotorControl2(
             bodyUniqueId=self.object_id, 
             jointIndex=self.slider_to_cart_index,
             controlMode=pb.POSITION_CONTROL,
+            targetPosition=self.target,
             force=100.0, # N
             positionGain=1.0,
             velocityGain=0.0,
-            maxVelocity=0.5,  # m/s
         )
         
         # disable any damping
@@ -106,7 +138,16 @@ class CartPoleSimulator(gym.Env):
         # Done for similarity with real control, where need to make homing.
         self.error = Error.NOT_INITIALIZED
 
-    def state(self):
+        if self.debug_mode:
+            self.debug_state_id = self.client.addUserDebugText(
+                text=short_view(self.get_state(), self.get_target()),
+                textPosition=debug_state_position,
+                textColorRGB=debug_state_color,
+                textSize=debug_state_size,
+                textOrientation=debug_state_orientation
+            )
+
+    def get_state(self) -> State:
         '''
         Returns:
             Current state of system.
@@ -129,125 +170,101 @@ class CartPoleSimulator(gym.Env):
             pole_velocity=pole_velocity,
             error=self.error
         )
-        
-    def reset(self):
+
+    def get_target(self) -> float:
+        return self.target
+
+    def get_config(self):
+        assert self.config
+        return self.config
+
+    def reset(self, config: CartPoleConfig = CartPoleConfig()) -> tuple[State, float]:
         '''
         Description:
-            Resets the environment to an initial state. The pole is at rest position.
+            Resets the environment to an initial state.
+            The pole is at rest position and cart is centered.
 
         Returns:
-            Initial state. 
+            Returns (initial_state, initial_target).
         '''
+        log.info(f'reset')
 
-        initial_state = State(
-            cart_position=0,
-            cart_velocity=0,
-            pole_angle=0,
-            pole_velocity=0
-        )
-
-        return self.reset_to(initial_state)
-
-    def reset_to(self, state):
-        '''
-        Description:
-            Resets the environment to required state.
-            The method is out of scope gym env and robot control.
-            May be useful for training purposes.
-
-        Returns:
-            Initial state. 
-        '''
-
-        assert state
-        self.error = state.error
+        self.config = config
+        self.target = 0
+        self.step_count = 0
 
         self.client.resetJointState(
             bodyUniqueId=self.object_id,
             jointIndex=self.cart_to_pole_index,
-            targetValue=state.pole_angle,
-            targetVelocity=state.pole_velocity
+            targetValue=0,
+            targetVelocity=0,
         )
 
         self.client.resetJointState(
             bodyUniqueId=self.object_id,
             jointIndex=self.slider_to_cart_index,
-            targetValue=state.cart_position,
-            targetVelocity=state.cart_velocity
+            targetValue=0,
+            targetVelocity=0,
         )
 
-        return self.state()
-
-    def validate(self, action):    
-        if self.error:
-            return self.error
-
-        if abs(action) > self.position_limit:
-            return Error.INVALID_CART_POSITION
-        
-        return Error.NO_ERROR
-
-
-    def step(self, action):
-        self.error = self.validate(action)
-        
-        if self.error:
-            reward = 0
-            finish = True
-            self.error = Error.INVALID_CART_POSITION
-        
-            info = {
-                'step_count': self.step_count
-            }
-
-            return self.state(), reward, finish, info
-        
         self.client.setJointMotorControl2(
             bodyUniqueId=self.object_id,
             jointIndex=self.slider_to_cart_index,
             controlMode=pb.POSITION_CONTROL,
-            targetPosition=action
+            targetPosition=self.target,
+            maxVelocity=self.config.cart_velocity_limit
         )
 
-        self.client.stepSimulation()
-        self.step_count += 1 
-        state = self.state()
-        
-        reward = util.reward(state)
-        finish = False
-        if self.step_count >= self.step_n:
-            finish = True
+        self.error = Error.NO_ERROR
 
-        info = {
+        return self.get_state(), self.get_target()
+
+    def set_target(self, target: float) -> None:
+        log.debug(f'set target {self.config.action_type.target_name()}={target}')
+        if self.error:
+            return
+
+        config = self.get_config()
+        if config.clamp_position:
+            target = np.clip(target, -config.cart_position_limit, config.cart_position_limit)
+        elif abs(target) > config.cart_position_limit:
+            self.error = Error.INVALID_CART_POSITION
+            return 
+
+        self.target = target
+
+        self.client.setJointMotorControl2(
+            bodyUniqueId=self.object_id, 
+            jointIndex=self.slider_to_cart_index,
+            controlMode=pb.POSITION_CONTROL,
+            targetPosition=self.target
+        )
+
+    def step(self, delta: float) -> None:
+        if self.error:
+            return
+    
+        log.debug(f'Make step {self.step_count}')
+
+        self.step_count += 1
+        self.client.setTimeStep(delta)
+        self.client.stepSimulation()
+
+        if self.debug_mode:
+            state = self.get_state()
+            self.client.addUserDebugText(
+                text=short_view(self.get_state(), self.get_target()),
+                textPosition=debug_state_position,
+                textColorRGB=debug_state_color,
+                textSize=debug_state_size,
+                textOrientation=debug_state_orientation,
+                replaceItemUniqueId=self.debug_state_id
+            )
+
+    def get_info(self):
+        return {
             'step_count': self.step_count
         }
-        
-        return state, reward, finish, info
 
-
-    def render(self, width=300, height=300):
-        view_matrix = self.client.computeViewMatrix(
-            cameraTargetPosition=[0, 0.5, 0],
-            cameraEyePosition=[0, 0.7, 0],
-            cameraUpVector=[0, 0, 1]
-        )
-
-        proj_matrix = self.client.computeProjectionMatrixFOV(
-            fov=60,
-            aspect=width / height,
-            nearVal=0.1,
-            farVal=10.0
-        )
-
-        width, height, pixels, depth, segmentation = self.client.getCameraImage(
-            width=width,
-            height=height,
-            viewMatrix=view_matrix,
-            projectionMatrix=proj_matrix,
-            shadow=1,
-            renderer=pb.ER_TINY_RENDERER,
-            flags=pb.ER_NO_SEGMENTATION_MASK
-        )
-
-        rgb = np.reshape(np.array(pixels, dtype=np.uint8), (height, width, -1))
-        return rgb[:,:,:3]
+    def close(self):
+        self.client.disconnect()
