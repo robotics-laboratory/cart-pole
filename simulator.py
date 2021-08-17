@@ -180,7 +180,7 @@ class Simulator(CartPoleBase):
         assert self.config
         return self.config
 
-    def reset(self, config: Config = Config()) -> Tuple[State, float]:
+    def reset(self, config: Config = None) -> Tuple[State, float]:
         '''
         Description:
             Resets the environment to an initial state.
@@ -191,7 +191,7 @@ class Simulator(CartPoleBase):
         '''
         LOGGER.info(f'reset')
 
-        self.config = config
+        self.config = config or Config()
         self.target = 0
         self.step_count = 0
 

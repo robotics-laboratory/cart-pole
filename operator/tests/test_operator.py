@@ -8,11 +8,8 @@ EPS = 1e-6
 
 class TestOperator:
     @staticmethod
-    def get_operator(max_steps: int = 10):
-        return Operator(
-            interface=mock.MagicMock(),
-            max_steps=max_steps,
-        )
+    def get_operator():
+        return Operator(interface=mock.MagicMock())
 
     def test_reset(self):
         op = self.get_operator()

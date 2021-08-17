@@ -16,9 +16,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Operator(CartPoleBase):
-    def __init__(self, interface: WireInterface, max_steps: int) -> None:
-        self.interface = interface
-        self.max_steps = max_steps
+    def __init__(self, interface: WireInterface = None) -> None:
+        self.interface = interface or WireInterface()
         self.step_count = 0
         self.get_state_timestamp = None
 
