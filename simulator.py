@@ -247,7 +247,7 @@ class Simulator(CartPoleBase):
         if self.error:
             return
 
-        log.debug(f'Make step {self.step_count}')
+        LOGGER.debug(f'Make step {self.step_count}')
 
         self.step_count += 1
         self.client.setTimeStep(delta)
