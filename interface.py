@@ -24,7 +24,7 @@ class Config:
     max_position: float = dc.field(default=None)
     max_velocity: float = dc.field(default=None)
     max_acceleration: float = dc.field(default=None)
-    hardware_max_postition: float = dc.field(default=None)
+    hardware_max_position: float = dc.field(default=None)
     hardware_max_velocity: float = dc.field(default=None)
     hardware_max_acceleration: float = dc.field(default=None)
     clamp_position: bool = dc.field(default=None)

@@ -14,7 +14,7 @@ const int ENDSTOP_LEFT = 18;
 const int ENDSTOP_RIGHT = 19;
 
 const HardwareSerial STEPPER_SERIAL_PORT = Serial2;
-const float STEPPER_CURRENT = 1.2;
+const float STEPPER_CURRENT = 2.0;
 const int SERIAL_SPEED = 115200;
 const int ADDRESS = 0b00;
 const float R_SENSE = 0.11;
@@ -73,6 +73,7 @@ void Stepper::Poll() {
 void Stepper::Enable() {
     ProtocolProcessor &P = GetProtocolProcessor();
     tmc_driver.toff(TOFF_VALUE);
+    tmc_driver.rms_current(STEPPER_CURRENT * 1000);
     P.Log("Stepper enabled");
 }
 

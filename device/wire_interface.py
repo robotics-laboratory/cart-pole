@@ -127,6 +127,7 @@ class DeviceState(DeviceVariableGroup, State):
     }
 
 
+@dc.dataclass
 class DeviceTarget(DeviceVariableGroup):
     GROUP_NAME = 'target'
     SERIALIZATION_MAP = {
@@ -189,14 +190,12 @@ class WireInterface:
         return self.request(f'{command} {group} {args}')
 
     def set(self, params: Union[DeviceConfig, DeviceTarget]) -> DeviceVariableGroup:
-        promoted = _promote_variable_group(params)
-        response = self._command('set', promoted.GROUP_NAME, promoted.to_dict_format())
-        return promoted.from_dict_format(response)
+        response = self._command('set', params.GROUP_NAME, params.to_dict_format())
+        return params.from_dict_format(response)
 
     def get(self, params: Union[DeviceConfig, DeviceState, DeviceTarget]) -> DeviceVariableGroup:
-        promoted = _promote_variable_group(params)
-        response = self._command('get', promoted.GROUP_NAME, promoted.to_list_format())
-        return promoted.from_dict_format(response)
+        response = self._command('get', params.GROUP_NAME, params.to_list_format())
+        return params.from_dict_format(response)
 
     def reset(self) -> None:
         _ = self._command('reset')
