@@ -1,19 +1,22 @@
 import numpy as np
 import pybullet as pb
-
 from pybullet_utils import bullet_client as pbc
-from interface import CartPoleBase,CartPoleConfig, Error, State
+from typing import Tuple
+
+from cart_pole import util
+from cart_pole.interface import CartPoleBase, Error, Config, State
 
 import logging
 
 
-world_center = [0,0,0]
+world_center = [0, 0, 0]
 no_rotation = [0, 0, 0, 1]
 
 debug_state_position = [0.30, 0.05, 0.3]
-debug_state_color = [255, 0 , 0] 
+debug_state_color = [255, 0, 0]
 debug_state_orientation = pb.getQuaternionFromEuler([np.pi/2, 0, np.pi])
 debug_state_size = 0.06
+
 
 def short_view(state, target):
     return 'p={p:+.2f}/{t:+.2f} v={v:+.2f} a={a:+.2f} w={w:+.2f}'.format(
@@ -27,6 +30,7 @@ def short_view(state, target):
 
 
 log = logging.getLogger('simulator')
+
 
 class CartPoleSimulator(CartPoleBase):
     '''
@@ -46,9 +50,7 @@ class CartPoleSimulator(CartPoleBase):
         Each environment runs its own isolated pybullet physics engine.
     '''
 
-    def __init__(self,
-            gravity: float = 9.8,
-            debug_mode: bool = False):
+    def __init__(self, gravity: float = 9.8, debug_mode: bool = False):
         '''
         Args:
           * position_limit – cart center must be in [-position_limit, +position_limit] range.
@@ -81,7 +83,7 @@ class CartPoleSimulator(CartPoleBase):
 
         self.object_id = self.client.loadURDF(
             'cart_pole_v0.urdf',
-            basePosition = world_center,
+            basePosition=world_center,
             useFixedBase=True,
             flags=pb.URDF_USE_SELF_COLLISION,
         )
@@ -96,14 +98,14 @@ class CartPoleSimulator(CartPoleBase):
 
         # enable free pole rotation
         self.client.setJointMotorControl2(
-            bodyUniqueId=self.object_id, 
+            bodyUniqueId=self.object_id,
             jointIndex=self.cart_to_pole_index,
             controlMode=pb.VELOCITY_CONTROL,
             force=0
         )
-        
+
         self.client.changeDynamics(
-            bodyUniqueId=self.object_id, 
+            bodyUniqueId=self.object_id,
             linkIndex=self.cart_to_pole_index,
             linearDamping=0,
             angularDamping=0
@@ -114,18 +116,18 @@ class CartPoleSimulator(CartPoleBase):
 
         # configure cart contraints
         self.client.setJointMotorControl2(
-            bodyUniqueId=self.object_id, 
+            bodyUniqueId=self.object_id,
             jointIndex=self.slider_to_cart_index,
             controlMode=pb.POSITION_CONTROL,
             targetPosition=self.target,
-            force=100.0, # N
+            force=100.0,  # N
             positionGain=1.0,
             velocityGain=0.0,
         )
-        
+
         # disable any damping
         self.client.changeDynamics(
-            bodyUniqueId=self.object_id, 
+            bodyUniqueId=self.object_id,
             linkIndex=self.slider_to_cart_index,
             linearDamping=0,
             angularDamping=0
@@ -136,7 +138,7 @@ class CartPoleSimulator(CartPoleBase):
 
         # Formally, we need reset env to reset error.
         # Done for similarity with real control, where need to make homing.
-        self.error = Error.NOT_INITIALIZED
+        self.error = Error.NEED_RESET
 
         if self.debug_mode:
             self.debug_state_id = self.client.addUserDebugText(
@@ -164,32 +166,29 @@ class CartPoleSimulator(CartPoleBase):
         )
 
         return State(
-            cart_position=cart_position,
-            cart_velocity=cart_velocity,
+            position=cart_position,
+            velocity=cart_velocity,
             pole_angle=pole_angle,
-            pole_velocity=pole_velocity,
-            error=self.error
+            pole_angular_velocity=pole_velocity,
+            error_code=self.error
         )
 
     def get_target(self) -> float:
         return self.target
 
-    def get_config(self):
+    def get_config(self) -> Config:
         assert self.config
         return self.config
 
-    def reset(self, config: CartPoleConfig = CartPoleConfig()) -> tuple[State, float]:
+    def reset(self, config: Config = None) -> None:
         '''
         Description:
             Resets the environment to an initial state.
             The pole is at rest position and cart is centered.
-
-        Returns:
-            Returns (initial_state, initial_target).
         '''
         log.info(f'reset')
 
-        self.config = config
+        self.config = config or Config()
         self.target = 0
         self.step_count = 0
 
@@ -217,8 +216,6 @@ class CartPoleSimulator(CartPoleBase):
 
         self.error = Error.NO_ERROR
 
-        return self.get_state(), self.get_target()
-
     def set_target(self, target: float) -> None:
         log.debug(f'set target {self.config.action_type.target_name()}={target}')
         if self.error:
@@ -226,15 +223,16 @@ class CartPoleSimulator(CartPoleBase):
 
         config = self.get_config()
         if config.clamp_position:
-            target = np.clip(target, -config.cart_position_limit, config.cart_position_limit)
+            target = np.clip(target, -config.cart_position_limit,
+                             config.cart_position_limit)
         elif abs(target) > config.cart_position_limit:
-            self.error = Error.INVALID_CART_POSITION
-            return 
+            self.error = Error.X_OVERFLOW
+            return
 
         self.target = target
 
         self.client.setJointMotorControl2(
-            bodyUniqueId=self.object_id, 
+            bodyUniqueId=self.object_id,
             jointIndex=self.slider_to_cart_index,
             controlMode=pb.POSITION_CONTROL,
             targetPosition=self.target
@@ -243,7 +241,7 @@ class CartPoleSimulator(CartPoleBase):
     def step(self, delta: float) -> None:
         if self.error:
             return
-    
+
         log.debug(f'Make step {self.step_count}')
 
         self.step_count += 1
@@ -251,7 +249,6 @@ class CartPoleSimulator(CartPoleBase):
         self.client.stepSimulation()
 
         if self.debug_mode:
-            state = self.get_state()
             self.client.addUserDebugText(
                 text=short_view(self.get_state(), self.get_target()),
                 textPosition=debug_state_position,
@@ -263,7 +260,7 @@ class CartPoleSimulator(CartPoleBase):
 
     def get_info(self):
         return {
-            'step_count': self.step_count
+            util.STEP_COUNT: self.step_count
         }
 
     def close(self):
