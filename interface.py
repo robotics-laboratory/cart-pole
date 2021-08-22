@@ -1,6 +1,5 @@
 import dataclasses as dc
 import enum
-from typing import Type
 
 
 class Error(enum.Enum):
@@ -20,17 +19,8 @@ class Error(enum.Enum):
         return self.value != Error.NO_ERROR
 
 
-class VariableGroupBase:
-    @classmethod
-    def full(cls) -> 'VariableGroupBase':
-        '''
-        Constructs instance initialized with filler value
-        '''
-        return cls(**{field.name: True for field in dc.fields(cls)})
-
-
 @dc.dataclass
-class Config(VariableGroupBase):
+class Config:
     max_position: float = dc.field(default=None)
     max_velocity: float = dc.field(default=None)
     max_acceleration: float = dc.field(default=None)
@@ -43,7 +33,7 @@ class Config(VariableGroupBase):
 
 
 @dc.dataclass
-class State(VariableGroupBase):
+class State:
     position: float = dc.field(default=None)
     velocity: float = dc.field(default=None)
     acceleration: float = dc.field(default=None)
@@ -51,12 +41,6 @@ class State(VariableGroupBase):
     pole_angular_velocity: float = dc.field(default=None)
     error_code: Error = dc.field(default=None)
 
-
-@dc.dataclass
-class Target(VariableGroupBase):
-    position: float = dc.field(default=None)
-    velocity: float = dc.field(default=None)
-    acceleration: float = dc.field(default=None)
 
 
 class CartPoleBase:

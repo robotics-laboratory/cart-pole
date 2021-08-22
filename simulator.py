@@ -29,7 +29,7 @@ def short_view(state, target):
     )
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('simulator')
 
 
 class CartPoleSimulator(CartPoleBase):

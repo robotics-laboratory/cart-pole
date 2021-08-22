@@ -3,7 +3,7 @@ import logging
 import serial
 from typing import Union, Type
 
-from cart_pole.interface import Error, Config, State, Target, VariableGroupBase
+from cart_pole.interface import Error, Config, State
 
 
 LOGGER = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ class DeviceVariableGroup:
 
     # Field formatters (value -> string)
     _to_string_lookup = {
-        float: lambda v: f'{round(v, 5)}',
+        float: lambda v: f'{v:.5f}',
         bool: lambda v: 'true' if v else 'false',
         int: lambda v: str(v),
         Error: lambda v: str(v.value),
@@ -42,6 +42,13 @@ class DeviceVariableGroup:
         super().__init_subclass__()
         assert cls.GROUP_NAME is not None, 'GROUP_NAME is not set'
         assert cls.SERIALIZATION_MAP is not None, 'SERIALIZATION_MAP is not set'
+
+    @classmethod
+    def full(cls) -> 'DeviceVariableGroup':
+        '''
+        Constructs instance initialized with filler value
+        '''
+        return cls(**{field.name: True for field in dc.fields(cls)})
 
     @classmethod
     def _type_lookup(cls, type: Type, kv: dict):
@@ -120,7 +127,7 @@ class DeviceState(DeviceVariableGroup, State):
     }
 
 
-class DeviceTarget(DeviceVariableGroup, Target):
+class DeviceTarget(DeviceVariableGroup):
     GROUP_NAME = 'target'
     SERIALIZATION_MAP = {
         'position': 'x',
@@ -128,13 +135,9 @@ class DeviceTarget(DeviceVariableGroup, Target):
         'acceleration': 'a',
     }
 
-
-def _promote_variable_group(obj: VariableGroupBase) -> DeviceVariableGroup:
-    for cls in [DeviceConfig, DeviceState, DeviceTarget]:
-        if issubclass(cls, obj.__class__):
-            obj.__class__ = cls
-            return obj
-    assert False, 'No suitable class for promotion is found'
+    position: float = dc.field(default=None)
+    velocity: float = dc.field(default=None)
+    acceleration: float = dc.field(default=None)
 
 
 class WireInterface:
@@ -145,7 +148,7 @@ class WireInterface:
         write_timeout: float = 0.2,
     ) -> None:
         self.serial = serial.Serial(port=port, baudrate=baud_rate, timeout=read_timeout, write_timeout=write_timeout, exclusive=True)
-        LOGGER.debug(f'Opened serial connection to {self.serial.name}')
+        LOGGER.info(f'Opened serial connection to {self.serial.name}')
 
     def close(self):
         self.serial.close()
@@ -160,7 +163,7 @@ class WireInterface:
         while True:
             received = self.serial.readline().decode('utf-8').strip()
             if received == '':
-                LOGGER.warning(f'Serial read timeout during "{command}" request')
+                LOGGER.error(f'Serial read timeout during "{command}" request')
                 continue
         
             RAW_COMMANDS_LOGGER.debug(received)
@@ -185,12 +188,12 @@ class WireInterface:
     def _command(self, command: str, group: str = '', args: str = '') -> str:
         return self.request(f'{command} {group} {args}')
 
-    def set(self, params: VariableGroupBase) -> DeviceVariableGroup:
+    def set(self, params: Union[DeviceConfig, DeviceTarget]) -> DeviceVariableGroup:
         promoted = _promote_variable_group(params)
         response = self._command('set', promoted.GROUP_NAME, promoted.to_dict_format())
         return promoted.from_dict_format(response)
 
-    def get(self, params: VariableGroupBase) -> DeviceVariableGroup:
+    def get(self, params: Union[DeviceConfig, DeviceState, DeviceTarget]) -> DeviceVariableGroup:
         promoted = _promote_variable_group(params)
         response = self._command('get', promoted.GROUP_NAME, promoted.to_list_format())
         return promoted.from_dict_format(response)
