@@ -138,7 +138,7 @@ class CartPoleSimulator(CartPoleBase):
 
         # Formally, we need reset env to reset error.
         # Done for similarity with real control, where need to make homing.
-        self.error = Error.NEED_HOMING
+        self.error = Error.NEED_RESET
 
         if self.debug_mode:
             self.debug_state_id = self.client.addUserDebugText(
@@ -226,7 +226,7 @@ class CartPoleSimulator(CartPoleBase):
             target = np.clip(target, -config.cart_position_limit,
                              config.cart_position_limit)
         elif abs(target) > config.cart_position_limit:
-            self.error = Error.INVALID_CART_POSITION
+            self.error = Error.X_OVERFLOW
             return
 
         self.target = target
