@@ -14,7 +14,7 @@ const int ENDSTOP_LEFT = 18;
 const int ENDSTOP_RIGHT = 19;
 
 const HardwareSerial STEPPER_SERIAL_PORT = Serial2;
-const float STEPPER_CURRENT = 0.6;
+const float STEPPER_CURRENT = 1.2;
 const int SERIAL_SPEED = 115200;
 const int ADDRESS = 0b00;
 const float R_SENSE = 0.11;
