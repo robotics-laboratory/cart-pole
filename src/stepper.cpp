@@ -21,7 +21,7 @@ const float R_SENSE = 0.11;
 const int TOFF_VALUE = 5;
 const int MICROSTEPS = 16;
 const bool REVERSE_STEPPER = true;
-const int FULL_STEPS_PER_METER = 5000;
+const int FULL_STEPS_PER_METER = 1666;
 const float HOMING_SPEED = 0.1;
 const float HOMING_ACCELERATION = 0.5;
 
