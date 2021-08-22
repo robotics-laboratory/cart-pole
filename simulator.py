@@ -3,8 +3,8 @@ import pybullet as pb
 from pybullet_utils import bullet_client as pbc
 from typing import Tuple
 
-from cart_pole.common import util
-from cart_pole.common.interface import CartPoleBase, Error, Config, State
+from cart_pole import util
+from cart_pole.interface import CartPoleBase, Error, Config, State
 
 import logging
 
@@ -29,10 +29,10 @@ def short_view(state, target):
     )
 
 
-LOGGER = logging.getLogger(__name__)
+log = logging.getlog(__name__)
 
 
-class Simulator(CartPoleBase):
+class CartPoleSimulator(CartPoleBase):
     '''
     Description:
         Сlass implements a physical simulation of the cart-pole device.
@@ -58,7 +58,7 @@ class Simulator(CartPoleBase):
           * debug_mode – enable engine GUI
         '''
 
-        LOGGER.info(f'gravity={gravity}, debug_mode={debug_mode}')
+        log.info(f'gravity={gravity}, debug_mode={debug_mode}')
 
         self.config = None
         self.step_count = 0
@@ -176,20 +176,17 @@ class Simulator(CartPoleBase):
     def get_target(self) -> float:
         return self.target
 
-    def get_config(self):
+    def get_config(self) -> Config:
         assert self.config
         return self.config
 
-    def reset(self, config: Config = None) -> Tuple[State, float]:
+    def reset(self, config: Config = None) -> None:
         '''
         Description:
             Resets the environment to an initial state.
             The pole is at rest position and cart is centered.
-
-        Returns:
-            Returns (initial_state, initial_target).
         '''
-        LOGGER.info(f'reset')
+        log.info(f'reset')
 
         self.config = config or Config()
         self.target = 0
@@ -219,10 +216,8 @@ class Simulator(CartPoleBase):
 
         self.error = Error.NO_ERROR
 
-        return self.get_state(), self.get_target()
-
     def set_target(self, target: float) -> None:
-        LOGGER.debug(f'set target {self.config.action_type.target_name()}={target}')
+        log.debug(f'set target {self.config.action_type.target_name()}={target}')
         if self.error:
             return
 
@@ -247,7 +242,7 @@ class Simulator(CartPoleBase):
         if self.error:
             return
 
-        LOGGER.debug(f'Make step {self.step_count}')
+        log.debug(f'Make step {self.step_count}')
 
         self.step_count += 1
         self.client.setTimeStep(delta)
