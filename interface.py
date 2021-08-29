@@ -16,7 +16,8 @@ class Error(enum.Enum):
         Returns:
             True if there is any error.
         '''
-        return self.value != Error.NO_ERROR
+
+        return self != Error.NO_ERROR
 
 
 @dc.dataclass
@@ -30,6 +31,17 @@ class Config:
     clamp_position: bool = dc.field(default=None)
     clamp_velocity: bool = dc.field(default=None)
     clamp_acceleration: bool = dc.field(default=None)
+
+    @staticmethod
+    def default():
+        return Config(
+            max_position=0.19,
+            max_velocity=1.0,
+            max_acceleration=1.0,
+            clamp_position=False,
+            clamp_velocity=False,
+            clamp_acceleration=False,
+        )
 
 
 @dc.dataclass
