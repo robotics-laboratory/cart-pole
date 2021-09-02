@@ -4,17 +4,17 @@ from cart_pole.interface import Config, Error, State
 from cart_pole.simulator import CartPoleSimulator, PhysicalParams
 
 
-def eval_path_length(v, a, n, dt):
+def eval_path_length(velocity, acceleration, step_n, delta_time):
     '''
     Evaluate path with uniform acceleration and discrete speed control.
     Args:
-        * v - start velocity
-        * a - acceleration
-        * n - step number
-        * dt - time step
+        * velocity - start velocity
+        * acceleration - constant acceleration
+        * step_n - number of discrete velocity changes
+        * delta_time - time delta between velocities changes
     '''
-    t = n * dt
-    return v * t + (t + dt) * t / 2 * a
+    duration = step_n * delta_time
+    return velocity * duration + (duration + delta_time) * duration / 2 * acceleration
 
 class TestCaseBase(unittest.TestCase):
     def setUp(self):
@@ -32,16 +32,16 @@ class TestCaseBase(unittest.TestCase):
     def tearDown(self):
         self.simulator.close()
 
-    def assertEqualFloat(self, first, second, delta=1e-6):
+    def assert_equal_float(self, first, second, delta=1e-6):
         self.assertAlmostEqual(first, second, delta=delta)
 
-    def assertEqualState(self, first, second, delta=1e-6):
-        self.assertEqualFloat(first.position, second.position, delta=delta)
-        self.assertEqualFloat(first.velocity, second.velocity, delta=delta)
-        self.assertEqualFloat(first.acceleration, second.acceleration, delta=delta)
+    def assert_equal_state(self, first, second, delta=1e-6):
+        self.assert_equal_float(first.position, second.position, delta=delta)
+        self.assert_equal_float(first.velocity, second.velocity, delta=delta)
+        self.assert_equal_float(first.acceleration, second.acceleration, delta=delta)
 
-        self.assertEqualFloat(first.pole_angle, second.pole_angle, delta=delta)
-        self.assertEqualFloat(
+        self.assert_equal_float(first.pole_angle, second.pole_angle, delta=delta)
+        self.assert_equal_float(
             first.pole_angular_velocity,
             second.pole_angular_velocity,
             delta=delta
@@ -65,12 +65,12 @@ class ResetTest(TestCaseBase):
             error_code=Error.NO_ERROR
         )
 
-        self.assertEqualState(self.simulator.get_state(), expected)
+        self.assert_equal_state(self.simulator.get_state(), expected)
 
     def test_target(self):
         "Also cart has no acceleration target"
 
-        self.assertEqualFloat(self.simulator.get_target(), 0.0)
+        self.assert_equal_float(self.simulator.get_target(), 0.0)
 
 
 class AccelerationTest(TestCaseBase):
@@ -88,12 +88,12 @@ class AccelerationTest(TestCaseBase):
         target = 0.5
         simulator.set_target(target)
 
-        self.assertEqualFloat(simulator.get_target(), target)
+        self.assert_equal_float(simulator.get_target(), target)
 
         state = simulator.get_state()
-        self.assertEqualFloat(state.position, before.position)
-        self.assertEqualFloat(state.velocity, before.velocity)
-        self.assertEqualFloat(state.acceleration, target)
+        self.assert_equal_float(state.position, before.position)
+        self.assert_equal_float(state.velocity, before.velocity)
+        self.assert_equal_float(state.acceleration, target)
 
         simulator.make_step()
 
@@ -101,12 +101,12 @@ class AccelerationTest(TestCaseBase):
         delta_v = target * delta_t
         delta_x = delta_v * delta_t
 
-        self.assertEqualFloat(simulator.get_target(), target)
+        self.assert_equal_float(simulator.get_target(), target)
 
         state = simulator.get_state()
-        self.assertEqualFloat(state.acceleration, target)
-        self.assertEqualFloat(state.velocity, before.velocity + delta_v)
-        self.assertEqualFloat(state.position, before.position + delta_x)
+        self.assert_equal_float(state.acceleration, target)
+        self.assert_equal_float(state.velocity, before.velocity + delta_v)
+        self.assert_equal_float(state.position, before.position + delta_x)
 
 
     def test_multiple_step_acc(self):
@@ -122,24 +122,24 @@ class AccelerationTest(TestCaseBase):
 
         target = 0.1
         simulator.set_target(target)
-        self.assertEqualFloat(simulator.get_target(), target)
+        self.assert_equal_float(simulator.get_target(), target)
 
         state = simulator.get_state()
-        self.assertEqualFloat(state.position, before.position)
-        self.assertEqualFloat(state.velocity, before.velocity)
-        self.assertEqualFloat(state.acceleration, target)
+        self.assert_equal_float(state.position, before.position)
+        self.assert_equal_float(state.velocity, before.velocity)
+        self.assert_equal_float(state.acceleration, target)
 
         delta_t, step_n = simulator.run(1.0)
 
         delta_v = target * delta_t
         delta_x = eval_path_length(state.velocity, target, step_n, time_step)
 
-        self.assertEqualFloat(simulator.get_target(), target)
+        self.assert_equal_float(simulator.get_target(), target)
 
         state = simulator.get_state()
-        self.assertEqualFloat(state.acceleration, target)
-        self.assertEqualFloat(state.velocity, before.velocity + delta_v)
-        self.assertEqualFloat(state.position, before.position + delta_x)
+        self.assert_equal_float(state.acceleration, target)
+        self.assert_equal_float(state.velocity, before.velocity + delta_v)
+        self.assert_equal_float(state.position, before.position + delta_x)
 
     def test_complex_acc(self):
         '''
@@ -163,9 +163,9 @@ class AccelerationTest(TestCaseBase):
         delta_x = eval_path_length(before.velocity, target, step_n, time_step)
 
         state = simulator.get_state()
-        self.assertEqualFloat(state.acceleration, target)
-        self.assertEqualFloat(state.velocity, before.velocity + delta_v)
-        self.assertEqualFloat(state.position, before.position + delta_x)
+        self.assert_equal_float(state.acceleration, target)
+        self.assert_equal_float(state.velocity, before.velocity + delta_v)
+        self.assert_equal_float(state.position, before.position + delta_x)
 
         before = state
 
@@ -177,9 +177,9 @@ class AccelerationTest(TestCaseBase):
         delta_x = eval_path_length(before.velocity, target, step_n, time_step)
 
         state = simulator.get_state()
-        self.assertEqualFloat(state.acceleration, target)
-        self.assertEqualFloat(state.velocity, before.velocity + delta_v)
-        self.assertEqualFloat(state.position, before.position + delta_x)
+        self.assert_equal_float(state.acceleration, target)
+        self.assert_equal_float(state.velocity, before.velocity + delta_v)
+        self.assert_equal_float(state.position, before.position + delta_x)
 
         before = state
 
@@ -191,9 +191,9 @@ class AccelerationTest(TestCaseBase):
         delta_x = eval_path_length(before.velocity, target, step_n, time_step)
 
         state = simulator.get_state()
-        self.assertEqualFloat(state.acceleration, target)
-        self.assertEqualFloat(state.velocity, before.velocity + delta_v)
-        self.assertEqualFloat(state.position, before.position + delta_x)
+        self.assert_equal_float(state.acceleration, target)
+        self.assert_equal_float(state.velocity, before.velocity + delta_v)
+        self.assert_equal_float(state.position, before.position + delta_x)
 
 class AccelerationClampTest(unittest.TestCase):
     def test_clamp(self):

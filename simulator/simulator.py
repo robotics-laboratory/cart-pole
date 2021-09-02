@@ -1,15 +1,14 @@
-import pybullet as pb
-from pybullet_utils import bullet_client as pbc
-from typing import Dict, Tuple
-
-from cart_pole import util
-from cart_pole.interface import CartPoleBase, Error, Config, State
-
 import dataclasses
 import math
 import logging
 import os
 
+from typing import Dict, Tuple
+
+import pybullet as pb
+from pybullet_utils import bullet_client as pbc
+
+from cart_pole.interface import CartPoleBase, Error, Config, State
 
 log = logging.getLogger('simulator')
 
@@ -32,13 +31,13 @@ def clamp(value: float, limit: float) -> Tuple[float, bool]:
 
     return value, False
 
-world_center = [0, 0, 0]
-no_rotation = [0, 0, 0, 1]
+WORLD_CENTER = [0, 0, 0]
+NO_ROTATION = [0, 0, 0, 1]
 
-debug_state_position = [0.40, 0.05, 0.30]
-debug_state_color = [255, 0, 0]
-debug_state_orientation = pb.getQuaternionFromEuler([math.pi/2, 0, math.pi])
-debug_state_size = 0.06
+DEBUG_STATE_POSITION = [0.40, 0.05, 0.30]
+DEBUG_STATE_COLOR = [255, 0, 0]
+DEBUG_STATE_ORIENTATION = pb.getQuaternionFromEuler([math.pi/2, 0, math.pi])
+DEBUG_STATE_SIZE = 0.06
 
 class CartPoleSimulator(CartPoleBase):
     '''
@@ -90,7 +89,7 @@ class CartPoleSimulator(CartPoleBase):
         # load urdf model
         self.object_id = self.client.loadURDF(
             get_urdf_path(),
-            basePosition=world_center,
+            basePosition=WORLD_CENTER,
             useFixedBase=True,
             flags=pb.URDF_USE_SELF_COLLISION,
         )
@@ -117,10 +116,10 @@ class CartPoleSimulator(CartPoleBase):
 
             self.debug_state_id = self.client.addUserDebugText(
                 text='...',
-                textPosition=debug_state_position,
-                textColorRGB=debug_state_color,
-                textSize=debug_state_size,
-                textOrientation=debug_state_orientation
+                textPosition=DEBUG_STATE_POSITION,
+                textColorRGB=DEBUG_STATE_COLOR,
+                textSize=DEBUG_STATE_SIZE,
+                textOrientation=DEBUG_STATE_ORIENTATION
             )
 
     def update_debug_info(self) -> None:
@@ -129,13 +128,13 @@ class CartPoleSimulator(CartPoleBase):
         '''
 
         if not self.debug_mode:
-            return 
+            return
 
         state = self.get_state()
         text = 'p={p:+.2f} v={v:+.2f}/{acc:+.2f} a={a:+.2f} w={w:+.2f} err={e}'.format(
             p=state.position,
             v=state.velocity,
-            acc=self.acceleration,
+            acc=self.target_acceleration,
             a=state.pole_angle,
             w=state.pole_angular_velocity,
             e=str(state.error_code.value)
@@ -143,10 +142,10 @@ class CartPoleSimulator(CartPoleBase):
 
         self.client.addUserDebugText(
             text=text,
-            textPosition=debug_state_position,
-            textColorRGB=debug_state_color,
-            textSize=debug_state_size,
-            textOrientation=debug_state_orientation,
+            textPosition=DEBUG_STATE_POSITION,
+            textColorRGB=DEBUG_STATE_COLOR,
+            textSize=DEBUG_STATE_SIZE,
+            textOrientation=DEBUG_STATE_ORIENTATION,
             replaceItemUniqueId=self.debug_state_id
         )
 
@@ -155,7 +154,7 @@ class CartPoleSimulator(CartPoleBase):
         Reset physical parameters of device model.
         '''
 
-        log.info(f'reset physical params {params}')
+        log.info('reset physical params %s', params)
         self.error = Error.NEED_RESET
 
         self.physical_params = params
@@ -236,7 +235,7 @@ class CartPoleSimulator(CartPoleBase):
         Resets the environment to an initial state.
         The pole is at rest position and cart is centered.
         '''
-        log.info(f'reset config {config}')
+        log.info('reset config %s', config)
 
         assert self.physical_params
         if config.clamp_velocity or config.clamp_position:
@@ -284,7 +283,7 @@ class CartPoleSimulator(CartPoleBase):
         Set joint velocity
         '''
 
-        log.debug(f'set motor velocity {velocity}')
+        log.debug('set motor velocity %.2f', velocity)
 
         self.client.setJointMotorControl2(
             bodyUniqueId=self.object_id,
@@ -296,14 +295,14 @@ class CartPoleSimulator(CartPoleBase):
     def set_target(self, target: float) -> None:
         '''
         Controll acceleration of cart.
-        It is assumed that the torque is sufficient to execute the command.            
+        It is assumed that the torque is sufficient to execute the command.
 
         Args:
             * target – desired acceleration of cart m/s
         '''
 
         if self.error:
-            log.warning(f'set target, error={self.error}')
+            log.warning('set target, error=%s', self.error)
             return
 
         config = self.get_config()
@@ -311,9 +310,9 @@ class CartPoleSimulator(CartPoleBase):
 
         if clamped and not config.clamp_acceleration:
             self.error = Error.A_OVERFLOW
-            return 
+            return
 
-        log.debug(f'set acc={target}')
+        log.debug('set acc=%.2f', target)
         self.delta_velocity = self.target_acceleration * self.physical_params.time_step
 
     def validate(self) -> bool:
@@ -332,7 +331,7 @@ class CartPoleSimulator(CartPoleBase):
         if abs(state.position) > config.max_position:
             self.error = Error.X_OVERFLOW
             return False
-    
+
         return True
 
     def make_step(self, step_n=1) -> None:
@@ -340,12 +339,11 @@ class CartPoleSimulator(CartPoleBase):
         Makes step_n sequential simulation steps.
         '''
         if self.error:
-            log.warning(f'make step, error={self.error}')
+            log.warning('make step, error=%.2f', self.error)
             return
 
         for _ in range(step_n):
-            log.debug(f'make step {self.step_count}')
-            self.acceleration = self.target_acceleration
+            log.debug('make step %i', self.step_count)
             self.velocity += self.delta_velocity
             self.__set_motor_velocity(self.velocity)
             self.client.stepSimulation()
