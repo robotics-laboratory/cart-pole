@@ -8,7 +8,7 @@ from typing import Dict, Tuple
 import pybullet as pb
 from pybullet_utils import bullet_client as pbc
 
-from cart_pole.interface import CartPoleBase, Error, Config, State
+from interface import CartPoleBase, Error, Config, State
 
 log = logging.getLogger('simulator')
 
