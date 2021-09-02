@@ -25,6 +25,6 @@ jobs:
         echo "PYTHONPATH=$PYTHONPATH:$GITHUB_WORKSPACE" >> $GITHUB_ENV
         echo $PYTHONPATH
     - name: Python linter 
-      run: pylint `ls -R|grep .py$|xargs`
+      run: pylint --rcfile rcfile.txt $(find . -type f -iname "*\.py" -not -path "./device/*")
     - name: Test simulator
       run: python3 -m unittest simulator/test_*
