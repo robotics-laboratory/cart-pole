@@ -1,1 +1,1 @@
-from cart_pole.simulator.simulator import CartPoleSimulator, PhysicalParams
+from simulator.simulator import CartPoleSimulator, PhysicalParams
