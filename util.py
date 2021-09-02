@@ -1,6 +1,6 @@
 import math
 
-from cart_pole.interface import State
+from interface import State
 
 STEP_COUNT = 'step_count'
 
