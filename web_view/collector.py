@@ -15,23 +15,6 @@ LOGGER = logging.getLogger(__name__)
 HEX_DIGITS = list(string.digits + string.ascii_lowercase[:6])
 
 
-class ConsumerFlag:
-    def __init__(self) -> None:
-        self._data_flag = threading.Event()
-        self._consumption_flag = threading.Lock()
-
-    def set(self) -> None:
-        self._data_flag.set()
-
-    def aquire(self) -> None:
-        self._data_flag.wait()
-        self._consumption_flag.set()
-
-    def release(self) -> None:
-        self._data_flag.clear()
-        self._consumption_flag.clear()
-
-
 class Collector:
     GROUP_CLASSES = (DeviceState, DeviceTarget)
     STORAGE_DIR = 'sessions'
