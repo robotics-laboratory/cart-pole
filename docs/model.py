@@ -1,5 +1,4 @@
 import argparse
-import sys
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arc, Rectangle
@@ -57,13 +56,16 @@ ax.annotate(r'$g$', (-3.5, -7), size=20, color='blue')
 ax.annotate(r'$f$', (-5, 0.5), size=20, color='blue')
 ax.annotate(r'$\theta$', (1, -4), size=20, color='green')
 
-pole_kinetic = r'$T_p =\frac{m_p}{2} \cdot \big[ \dot{x}^2 +\frac{l^2 \dot{\theta}^2}{3} +l \dot{x} \dot{\theta}\cos\theta \big]$'
-pole_potential = r'$U_p = -m_p g\frac{l}{2}\cos\theta$'
-cart_kinetic = r'$T_c = \frac{m_c}{2}\dot{x}^2$'
+POLE_KINETIC = r'$T_p = \frac{m_p}{2} \cdot \big[' \
+    r'\dot{x}^2 +\frac{l^2 \dot{\theta}^2}{3} + l \dot{x} \dot{\theta}\cos\theta' \
+    r'\big]$'
 
-ax.annotate(pole_kinetic, (-19, 9), size=16, color='gray')
-ax.annotate(pole_potential, (-19, 7), size=16, color='gray')
-ax.annotate(cart_kinetic, (-19, 5), size=16, color='gray')
+POLE_POTENTIAL = r'$U_p = -m_p g\frac{l}{2}\cos\theta$'
+CART_KINETIC = r'$T_c = \frac{m_c}{2}\dot{x}^2$'
+
+ax.annotate(POLE_KINETIC, (-19, 9), size=16, color='gray')
+ax.annotate(POLE_POTENTIAL, (-19, 7), size=16, color='gray')
+ax.annotate(CART_KINETIC, (-19, 5), size=16, color='gray')
 
 plt.axis('off')
 plt.savefig(args.path)
