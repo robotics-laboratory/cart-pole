@@ -247,10 +247,12 @@ class CartPoleSimulator(CartPoleBase):
         self.delta_velocity = 0
         self.step_count = 0
 
+        eps = 0.05
+
         self.client.resetJointState(
             bodyUniqueId=self.object_id,
             jointIndex=self.cart_to_pole_index,
-            targetValue=0,
+            targetValue=math.pi + eps,
             targetVelocity=0,
         )
 

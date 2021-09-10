@@ -1,6 +1,6 @@
 import mock
 
-from cart_pole.interface import State, Target, Config
+from cart_pole.interface import State, Config
 from cart_pole.device import CartPoleDevice
 
 

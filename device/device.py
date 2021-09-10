@@ -39,6 +39,6 @@ class CartPoleDevice(CartPoleBase):
 
     def set_target(self, target: float) -> None:
         _ = self.interface.set(DeviceTarget(position=target))
-    
+
     def close(self) -> None:
         self.interface.close()
