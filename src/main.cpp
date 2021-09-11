@@ -10,6 +10,8 @@ Encoder &encoder = GetEncoder();
 void setup() {}
 
 void loop() {
-    protocol.Poll();
-    encoder.Poll();
+    GetStepper().Poll();
+    GetEncoder().Poll();
+    GetAccelerometer().Poll();
+    GetProtocolProcessor().Poll();
 }
