@@ -39,6 +39,19 @@ def test_homing(interface: WireInterface) -> None:
     assert abs(t.acceleration) < EPS
     
 
+def test_move_by_acceleration(interface: WireInterface) -> None:
+    a = 0.4
+    t = DeviceTarget(acceleration=a)    
+    for _ in range(20):
+        interface.set(t)
+        time.sleep(0.5)
+        _ = interface.get(DeviceState.full())
+        t.acceleration = -t.acceleration
+        interface.set(t)
+        time.sleep(0.5)
+    interface.set(DeviceTarget(position=0))
+
+
 def test_command_logging(interface: WireInterface) -> None:
     pass
 
@@ -142,6 +155,15 @@ def test_halt_on_error(interface: WireInterface) -> None:
     pass
 
 
+def test_rapid_movement(interface: WireInterface) -> None:
+    interface.set(DeviceConfig(max_velocity=1, max_acceleration=2))
+    target = 0.1
+    for i in range(50):
+        interface.set(DeviceTarget(position=target))
+        time.sleep(0.5)
+        target = -target
+
+
 def main():
     logging.basicConfig(level=logging.DEBUG, encoding='utf-8')
     logging.getLogger('cart_pole.operator.wire_interface').setLevel(logging.ERROR)
@@ -149,19 +171,14 @@ def main():
     interface = WireInterface(port='COM4')
 
     test_homing(interface)
+    test_move_by_acceleration(interface)
     # test_command_logging(interface)
     # test_run_left_right(interface)
     # test_change_max_pos_and_run(interface)
     # test_change_speed_and_run(interface)
     # test_x_overflow(interface)
     # test_halt_on_error(interface)
-
-    interface.set(DeviceConfig(max_velocity=1, max_acceleration=2))
-    target = 0.1
-    for i in range(50):
-        interface.set(DeviceTarget(position=target))
-        time.sleep(0.5)
-        target = -target
+    # test_rapid_movement(interface)
 
     interface.close()
 
