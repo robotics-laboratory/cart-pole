@@ -1,7 +1,7 @@
 import unittest
 
-from interface import Config, Error, State
-from simulator import CartPoleSimulator, PhysicalParams
+from cart_pole.interface import Config, Error, State
+from cart_pole.simulator.simulator import CartPoleSimulator, PhysicalParams
 
 
 def eval_path_length(velocity, acceleration, step_n, delta_time):
