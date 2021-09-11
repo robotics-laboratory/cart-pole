@@ -12,10 +12,10 @@ class Error(enum.Enum):
     ENDSTOP_HIT = 6
 
     def __bool__(self) -> bool:
-        '''
+        """
         Returns:
             True if there is any error.
-        '''
+        """
 
         return self != Error.NO_ERROR
 
@@ -54,42 +54,41 @@ class State:
     error_code: Error = dc.field(default=None)
 
 
-
 class CartPoleBase:
     def reset(self, config: Config) -> None:
-        '''
+        """
         Resets the device to the initial state.
         The pole is at rest position and cart is centered.
         It must be called at the beginning of any session.
-        '''
+        """
         raise NotImplementedError
 
     def get_state(self) -> State:
-        '''
+        """
         Returns current device state.
-        '''
+        """
         raise NotImplementedError
 
     def get_info(self) -> dict:
-        '''
+        """
         Returns usefull debug information.
-        '''
+        """
         raise NotImplementedError
 
     def get_target(self) -> float:
-        '''
+        """
         Returns current target value.
-        '''
+        """
         raise NotImplementedError
 
     def set_target(self, target: float) -> None:
-        '''
+        """
         Set desired target value.
-        '''
+        """
         raise NotImplementedError
 
     def close(self) -> None:
-        '''
+        """
         Free all allocated resources.
-        '''
+        """
         raise NotImplementedError

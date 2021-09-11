@@ -6,6 +6,7 @@ from cart_pole.device import CartPoleDevice
 
 EPS = 1e-6
 
+
 class TestCartPoleDevice:
     @staticmethod
     def get_device():

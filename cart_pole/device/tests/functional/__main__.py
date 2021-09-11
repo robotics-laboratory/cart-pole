@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 
-'''
+"""
 Functional tests for cart pole device serial interface and logic.
 
 At the beginning of most tests it is presumed that caret is centered
 as if right after homing procedure.
-'''
+"""
 
 import logging
 import time
 
 from cart_pole.device.wire_interface import (
-    WireInterface, 
-    DeviceTarget, 
+    WireInterface,
+    DeviceTarget,
     DeviceState,
     DeviceConfig,
 )
@@ -33,19 +33,19 @@ def test_homing(interface: WireInterface) -> None:
     # assert abs(s.pole_angle) < EPS
     # assert abs(s.pole_angular_velocity) < EPS
     assert s.error_code == Error.NO_ERROR
-    
+
     t: DeviceTarget = interface.get(DeviceTarget.full())
     assert abs(t.position) < EPS
     assert abs(t.velocity) < EPS
     assert abs(t.acceleration) < EPS
-    
+
 
 def test_move_by_acceleration(interface: WireInterface) -> None:
     a = 0.4
-    t = DeviceTarget(acceleration=a)    
+    t = DeviceTarget(acceleration=a)
     for _ in range(20):
         interface.set(t)
-        
+
         for i in range(5):
             time.sleep(0.1)
             _ = interface.get(DeviceState.full())
@@ -72,32 +72,40 @@ def test_run_left_right(interface: WireInterface) -> None:
     time.sleep(1)
 
     s: DeviceState = interface.get(DeviceState(position=True))
-    assert s.position > acceptable_target, f'Run to right has not achieved DeviceTarget position of {acceptable_target}'
+    assert (
+        s.position > acceptable_target
+    ), f"Run to right has not achieved DeviceTarget position of {acceptable_target}"
 
     interface.set(DeviceTarget(position=-x))
     time.sleep(2)
 
     s: DeviceState = interface.get(DeviceState(position=True))
-    assert s.position < -acceptable_target, f'Run to left has not achieved DeviceTarget position of {-acceptable_target}'
+    assert (
+        s.position < -acceptable_target
+    ), f"Run to left has not achieved DeviceTarget position of {-acceptable_target}"
 
     interface.set(DeviceTarget(position=0))
     time.sleep(1)
 
     s: DeviceState = interface.get(DeviceState(position=True))
-    assert abs(s.position) < EPS, f'Run to center has not achieved DeviceTarget position of 0.0'
+    assert (
+        abs(s.position) < EPS
+    ), f"Run to center has not achieved DeviceTarget position of 0.0"
 
 
 def test_change_max_pos_and_run(interface: WireInterface) -> None:
     try:
         interface.set(DeviceTarget(position=100500))
-        assert False, 'Expected RuntimeError raised'
+        assert False, "Expected RuntimeError raised"
     except RuntimeError:
         pass
     interface.reset()  # reset to drop error code
 
 
 def test_change_speed_and_run(interface: WireInterface) -> None:
-    c: DeviceConfig = interface.get(DeviceConfig(max_position=True, max_velocity=True, max_acceleration=True))
+    c: DeviceConfig = interface.get(
+        DeviceConfig(max_position=True, max_velocity=True, max_acceleration=True)
+    )
     target = c.max_position * 0.9
 
     velocity = c.max_velocity * 0.25
@@ -113,12 +121,14 @@ def test_change_speed_and_run(interface: WireInterface) -> None:
     # make a run with basic velocity constraint
     interface.set(DeviceTarget(position=target))
     time.sleep(run_delay)
-    s: DeviceState = interface.get(DeviceState(position=True, velocity=True, acceleration=True))
+    s: DeviceState = interface.get(
+        DeviceState(position=True, velocity=True, acceleration=True)
+    )
     interface.set(DeviceTarget(position=0.0))
     baseline_position = s.position
     time.sleep(run_back_delay)
 
-    LOGGER.info(f'Baseline position = {baseline_position}')
+    LOGGER.info(f"Baseline position = {baseline_position}")
 
     # increase velocity
     interface.set(DeviceConfig(max_velocity=increased_velocity))
@@ -126,12 +136,14 @@ def test_change_speed_and_run(interface: WireInterface) -> None:
     # make a run with increased velocity constraint
     interface.set(DeviceTarget(position=target))
     time.sleep(run_delay)
-    s: DeviceState = interface.get(DeviceState(position=True, velocity=True, acceleration=True))
+    s: DeviceState = interface.get(
+        DeviceState(position=True, velocity=True, acceleration=True)
+    )
     interface.set(DeviceTarget(position=0.0))
     iv_position = s.position
     time.sleep(run_back_delay)
-    
-    LOGGER.info(f'Increased velocity position = {iv_position}')
+
+    LOGGER.info(f"Increased velocity position = {iv_position}")
 
     # decrease velocity
     interface.set(DeviceConfig(max_velocity=decreased_velocity))
@@ -139,20 +151,26 @@ def test_change_speed_and_run(interface: WireInterface) -> None:
     # make a run with decreased velocity constraint
     interface.set(DeviceTarget(position=target))
     time.sleep(run_delay)
-    s: DeviceState = interface.get(DeviceState(position=True, velocity=True, acceleration=True))
+    s: DeviceState = interface.get(
+        DeviceState(position=True, velocity=True, acceleration=True)
+    )
     interface.set(DeviceTarget(position=0.0))
     dv_position = s.position
     time.sleep(run_back_delay)
 
-    LOGGER.info(f'Decreased velocity position = {dv_position}')
+    LOGGER.info(f"Decreased velocity position = {dv_position}")
 
-    interface.set(DeviceConfig(max_velocity=c.max_velocity, max_acceleration=c.max_acceleration))
+    interface.set(
+        DeviceConfig(max_velocity=c.max_velocity, max_acceleration=c.max_acceleration)
+    )
 
-    assert 1.75 * baseline_position < iv_position < 2.25 * baseline_position, \
-        'Increased velocity position is out of expected range'
+    assert (
+        1.75 * baseline_position < iv_position < 2.25 * baseline_position
+    ), "Increased velocity position is out of expected range"
 
-    assert 0.25 * baseline_position < dv_position < 0.75 * baseline_position, \
-        'Decreased velocity position is out of expected range'
+    assert (
+        0.25 * baseline_position < dv_position < 0.75 * baseline_position
+    ), "Decreased velocity position is out of expected range"
 
 
 def test_x_overflow(interface: WireInterface) -> None:
@@ -173,10 +191,10 @@ def test_rapid_movement(interface: WireInterface) -> None:
 
 
 def main():
-    logging.basicConfig(level=logging.DEBUG, encoding='utf-8')
-    logging.getLogger('cart_pole.operator.wire_interface').setLevel(logging.ERROR)
+    logging.basicConfig(level=logging.DEBUG, encoding="utf-8")
+    logging.getLogger("cart_pole.operator.wire_interface").setLevel(logging.ERROR)
 
-    interface = WireInterface(port='COM4')
+    interface = WireInterface(port="COM4")
 
     test_homing(interface)
     test_move_by_acceleration(interface)
@@ -190,8 +208,8 @@ def main():
 
     interface.close()
 
-    LOGGER.info('PASSED')
+    LOGGER.info("PASSED")
 
 
-assert __name__ == '__main__'
+assert __name__ == "__main__"
 main()

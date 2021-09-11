@@ -10,7 +10,7 @@ In file `MPU6050.h` at line `45` change
 #include <avr/pgmspace.h>
 ```
 
-to 
+to
 
 ```cpp
 #ifdef __AVR__

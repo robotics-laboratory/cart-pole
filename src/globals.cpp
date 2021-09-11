@@ -306,7 +306,7 @@ FieldBase *getField(const FieldMap &map, const std::string &key) {
         stream << "Unknown key: " << key;
         throw std::runtime_error{stream.str()};
     }
-    return it->second.get(); 
+    return it->second.get();
 }
 }  // namespace
 

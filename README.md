@@ -24,7 +24,7 @@ It allows us to easily train model and make inference on device, use transfer le
 positon       | m        | Position of the cart along the guide axis. The middle is a reference point.
 velocity      | m/s      | Instantaneous linear speed of the cart.
 accelerration | m/s^2    | Instantaneous acceleration of the cart.
-pole_angle    | rad      | Angle of pole (ccw). The he lowest position is the reference point. 
+pole_angle    | rad      | Angle of pole (ccw). The he lowest position is the reference point.
 pole_velocity | rad/s    | Instantaneous angular velocity of the pole.
 error_code    | enum     | Current error code
 
