@@ -1,8 +1,8 @@
 #include <Arduino.h>
 
+#include "accelerometer.h"
 #include "protocol_processor.h"
 #include "stepper.h"
-#include "accelerometer.h"
 
 void setup() {}
 

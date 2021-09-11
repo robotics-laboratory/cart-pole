@@ -4,23 +4,27 @@
 
 #include <sstream>
 
-#include "protocol_processor.h"
 #include "globals.h"
+#include "protocol_processor.h"
 
 namespace {
-    int SENSETIVITY = MPU6050_ACCEL_FS_2;  // 16384 LSB / g
-    float G_ACCELERATION = 9.81509;
+int SENSETIVITY = MPU6050_ACCEL_FS_2;  // 16384 LSB / g
+float G_ACCELERATION = 9.81509;
 
-    float convertToG(int16_t lsb, int sensetivity = SENSETIVITY) {
-        switch (sensetivity) {
-        case MPU6050_ACCEL_FS_2: return static_cast<float>(lsb) / 16384;
-        case MPU6050_ACCEL_FS_4: return static_cast<float>(lsb) / 8192;
-        case MPU6050_ACCEL_FS_8: return static_cast<float>(lsb) / 4096;
-        case MPU6050_ACCEL_FS_16: return static_cast<float>(lsb) / 2048;
-        }
-        throw std::runtime_error{"Unknown sensetivity in lsb to G conversion"};
+float convertToG(int16_t lsb, int sensetivity = SENSETIVITY) {
+    switch (sensetivity) {
+        case MPU6050_ACCEL_FS_2:
+            return static_cast<float>(lsb) / 16384;
+        case MPU6050_ACCEL_FS_4:
+            return static_cast<float>(lsb) / 8192;
+        case MPU6050_ACCEL_FS_8:
+            return static_cast<float>(lsb) / 4096;
+        case MPU6050_ACCEL_FS_16:
+            return static_cast<float>(lsb) / 2048;
     }
+    throw std::runtime_error{"Unknown sensetivity in lsb to G conversion"};
 }
+}  // namespace
 
 Accelerometer::Accelerometer() : mpu() {
     ProtocolProcessor &P = GetProtocolProcessor();
