@@ -8,8 +8,8 @@
 #include "protocol_processor.h"
 
 namespace {
-int SENSETIVITY = MPU6050_ACCEL_FS_2;  // 16384 LSB / g
-float G_ACCELERATION = 9.81509;
+const int SENSETIVITY = MPU6050_ACCEL_FS_2;  // 16384 LSB / g
+const float G_ACCELERATION = 9.81509;
 
 float convertToG(int16_t lsb, int sensetivity = SENSETIVITY) {
     switch (sensetivity) {
