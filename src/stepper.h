@@ -16,6 +16,10 @@ public:
     Stepper();
 
     void Poll();
+    void CheckStallGuard();
+    void CheckEndstops();
+    void CheckLimits();
+    void SetError(Error err, std::string what);
 
     void Enable();
     void Disable();
