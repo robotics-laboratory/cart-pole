@@ -261,8 +261,8 @@ FieldMap constructStateFieldMap() {
     Globals &G = GetGlobals();
     FieldMap map;
     map["x"] = makeField<float, FieldID::curr_x, false>(G.curr_x);
-    map["v"] = makeField<float, FieldID::curr_v, false>(G.curr_a);
-    map["a"] = makeField<float, FieldID::curr_a, false>(G.curr_v);
+    map["v"] = makeField<float, FieldID::curr_v, false>(G.curr_v);
+    map["a"] = makeField<float, FieldID::curr_a, false>(G.curr_a);
     map["pole_x"] = makeField<float, FieldID::pole_x, false>(G.pole_x);
     map["pole_v"] = makeField<float, FieldID::pole_v, false>(G.pole_v);
     map["errcode"] = makeField<Error, FieldID::errcode, false>(G.errcode);
