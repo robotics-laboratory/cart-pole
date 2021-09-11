@@ -1,5 +1,22 @@
-matplotlib==3.4
-numpy==1.21
-pybullet==3.0.8
-scipy==1.7
+aiohttp==3.7.4.post0; python_version >= "3.6"
+async-timeout==3.0.1; python_full_version >= "3.5.3" and python_version >= "3.6"
+attrs==21.2.0; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.6"
+chardet==4.0.0; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.6"
+cycler==0.10.0; python_version >= "3.7"
+future==0.18.2; python_version >= "2.6" and python_full_version < "3.0.0" or python_full_version >= "3.3.0"
+idna==3.2; python_version >= "3.6"
+iso8601==0.1.16
+kiwisolver==1.3.2; python_version >= "3.7"
+matplotlib==3.4.3; python_version >= "3.7"
+multidict==5.1.0; python_version >= "3.6"
+numpy==1.21.2; python_version >= "3.7" and python_version < "3.11"
+pillow==8.3.2; python_version >= "3.7"
+pybullet==3.1.8
+pyparsing==2.4.7; python_version >= "3.7" and python_full_version < "3.0.0" or python_full_version >= "3.3.0" and python_version >= "3.7"
+python-dateutil==2.8.2; python_version >= "3.7" and python_full_version < "3.0.0" or python_full_version >= "3.3.0" and python_version >= "3.7"
+pyyaml==5.4.1; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.6.0"
+scipy==1.7.1; python_version >= "3.7" and python_version < "3.10"
 serial==0.0.97
+six==1.16.0; python_version >= "3.7" and python_full_version < "3.0.0" or python_full_version >= "3.3.0" and python_version >= "3.7"
+typing-extensions==3.10.0.2; python_version >= "3.6"
+yarl==1.6.3; python_version >= "3.6"
