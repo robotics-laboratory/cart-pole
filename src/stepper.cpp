@@ -14,18 +14,18 @@ const int ENDSTOP_LEFT = 18;
 const int ENDSTOP_RIGHT = 19;
 
 const HardwareSerial STEPPER_SERIAL_PORT = Serial2;
-const float STEPPER_CURRENT = 0.6;
+const float STEPPER_CURRENT = 2.0;
 const int SERIAL_SPEED = 115200;
 const int ADDRESS = 0b00;
 const float R_SENSE = 0.11;
 const int TOFF_VALUE = 5;
-const int MICROSTEPS = 16;
-const bool REVERSE_STEPPER = true;
-const int FULL_STEPS_PER_METER = 5000;
+const int MICROSTEPS = 0;
+const bool REVERSE_STEPPER = false;
+const int FULL_STEPS_PER_METER = 1666;
 const float HOMING_SPEED = 0.1;
 const float HOMING_ACCELERATION = 0.5;
 
-const int METERS_TO_STEPS_MULTIPLIER = MICROSTEPS * FULL_STEPS_PER_METER;
+const int METERS_TO_STEPS_MULTIPLIER = FULL_STEPS_PER_METER;
 
 TaskHandle_t HOMING_TASK_HANDLE = nullptr;
 bool IS_DONE_HOMING = false;
@@ -75,6 +75,7 @@ void Stepper::Poll() {
 void Stepper::Enable() {
     ProtocolProcessor &P = GetProtocolProcessor();
     tmc_driver.toff(TOFF_VALUE);
+    tmc_driver.rms_current(STEPPER_CURRENT * 1000);
     P.Log("Stepper enabled");
 }
 
@@ -199,7 +200,11 @@ void Stepper::SetTargetVelocity(float value) {
 }
 
 void Stepper::SetTargetAcceleration(float value) {
-    // TODO
+    Globals &G = GetGlobals();
+    SetSpeed(G.max_v);
+
+    uint32_t steps_per_ss = static_cast<uint32_t>(value * METERS_TO_STEPS_MULTIPLIER);
+    fas_stepper->moveByAcceleration(steps_per_ss);
 }
 
 Stepper &GetStepper() {

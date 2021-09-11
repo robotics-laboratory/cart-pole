@@ -146,7 +146,7 @@ std::string ProtocolProcessor::reset() {
     S.AsyncHoming();
     while (!S.IsDoneHoming()) {
         KeepAlive();
-        delay(500);
+        delay(100);
     }
 
     float hw_max_x = G.hw_max_x;

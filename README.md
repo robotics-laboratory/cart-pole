@@ -1,84 +1,40 @@
 # Cart pole
 
+[![CI](https://github.com/dasimagin/cart_pole/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/dasimagin/cart_pole/actions/workflows/ci.yml)
+
+## Overview
+This is a student project that is designed to learn the basics of robotics.
+The environment is some variation of the cart-pole problem described by Barto, Sutton, and Anderson.
+A pole is attached by an joint to a cart, which moves along guide axis.
+Some stepper drives the cart. The motor is controlled by discrete velocity changing.
+The control target is desired acceleration of the cart.
+
+The cart starts at the middle with no velocity and acceleration. The pole is initially at rest state.
+The goal is to swing up the pole and maintain it in upright pose by increasing and reducing the cart's velocity.
+
+![schema](https://github.com/dasimagin/cart_pole/blob/master/docs/model.svg)
+
 ## Interface
-We declare a common interface both for simulator and control.
-It allows us to easily train model and make inference on device,
-use transfer learning, generate real training samples and etc.
+We declare a common [interface](https://github.com/dasimagin/cart_pole/blob/master/interface.py) both for simulator and control.
+It allows us to easily train model and make inference on device, use transfer learning, generate real training samples and etc.
 
 ### State
 **Field**     | **Unit** | **Description**
 ------------- | -------- | ---------------
-cart_positon  | m        | Position of the cart along the guide axis. The middle is a reference point.
-cart_velocity | m/s      | Instantaneous linear speed of the cart.
+positon       | m        | Position of the cart along the guide axis. The middle is a reference point.
+velocity      | m/s      | Instantaneous linear speed of the cart.
+accelerration | m/s^2    | Instantaneous acceleration of the cart.
 pole_angle    | rad      | Angle of pole (ccw). The he lowest position is the reference point. 
 pole_velocity | rad/s    | Instantaneous angular velocity of the pole.
-pole_velocity | Enum     | Error codes describing the state of the cart-pole.
+error_code    | enum     | Current error code
 
-**Code**              | **Int** | **Description**
---------------------- | ------- | ---------------
-NO_ERROR              | 0       | Position of the cart along the guide axis. The middle is a reference point.
-NO_CONTROL            | 1       | Environment loose control (use soft or hard reset).
-NOT_INITIALIZED       | 2       | Neeed initial device reset.
-INVALID_CART_POSITION | 3       | The maximum allowed position is achieved.
-INVALID_CART_VELOCITY | 4       | The maximum speed is exceeded.
-
-### Target space
-Before usage, you should set config, specifying the type of control:
-- POSTION_CONTROL
-- VELOCITY_CONTROL
-- ACCELERATION_CONTROL
-
-The target space is always some interval (defined with acceptable limits)
-so control target is encoded as float scalar.
-
-### API
-```
-class CartPoleBase:
-    def reset(self) -> (State, float):
-        '''
-        Resets the device to the initial state. The pole is at rest position.
-        Returns (initial_state, initial_target).
-        '''
-
-    def step(self, delta: float) -> None:
-        '''
-        Make delta time step (delta > 1/240 seconds). In case of control it's a fake call.
-        '''
-
-    def set_config(self, config) -> None:
-        '''
-        Reset common config for all envs.
-        Specific implementations may have additional settings (e.g sampling parameters in the simulator).
-        '''
-
-    def get_state(self) -> State:
-        '''
-        Returns current device state.
-        '''
-
-    def get_info(self) -> dict:
-        '''
-        Returns usefull debug information.
-        '''
-
-    def get_target(self) -> float:
-        '''
-        Returns current target value.
-        '''
-
-    def set_target(self, target: float) -> None:
-        '''
-        Set desired target value.
-        '''
-
-    def close(self) -> None:
-        '''
-        Free all allocated resources.
-        '''
-```
-
-## Control
-Comming soon (short description and link to protocol)...
-
-## Simulator
-Comming soon (more about simulation and sampling of model parameters)...
+### Error code
+**Code**       | **Int** | **Description**
+---------------| ------- | ---------------
+NO_ERROR       | 0       | Position of the cart along the guide axis. The middle is a reference point.
+NEED_RESET     | 1       | Environment loose control (use soft or hard reset).
+X_OVERFLOW     | 2       | The maximum allowed position is achieved.
+V_OVERFLOW     | 3       | The maximum allowed velocity is achieved.
+A_OVERFLOW     | 4       | The maximum allowed acceleration is achieved.
+MOTOR_STALLED  | 5       | Some problems with stepper.
+ENDSTOP_HIT    | 6       | The cart has touched one of endstop hit.

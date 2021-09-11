@@ -100,7 +100,7 @@
       <geometry>
         <cylinder radius="0.004" length="0.3"/>
       </geometry>
-      <origin xyz="0.0 0.0 -0.13"/>
+      <origin xyz="0.0 0.0 -0.15"/>
       <material name="blue"/>
     </visual>
     <inertial>

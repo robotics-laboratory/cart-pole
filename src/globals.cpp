@@ -198,8 +198,8 @@ void updateField<float, FieldID::trgt_v>(float value) {
 
 template <>
 void updateField<float, FieldID::trgt_a>(float value) {
-    // Stepper &S = GetStepper();
-    // S.SetTargetAcceleration(value);
+    Stepper &S = GetStepper();
+    S.SetTargetAcceleration(value);
 }
 
 template <typename T, FieldID F, bool readonly = false>
