@@ -19,13 +19,13 @@ const int SERIAL_SPEED = 115200;
 const int ADDRESS = 0b00;
 const float R_SENSE = 0.11;
 const int TOFF_VALUE = 5;
-const int MICROSTEPS = 16;
-const bool REVERSE_STEPPER = true;
+const int MICROSTEPS = 0;
+const bool REVERSE_STEPPER = false;
 const int FULL_STEPS_PER_METER = 1666;
 const float HOMING_SPEED = 0.1;
 const float HOMING_ACCELERATION = 0.5;
 
-const int METERS_TO_STEPS_MULTIPLIER = MICROSTEPS * FULL_STEPS_PER_METER;
+const int METERS_TO_STEPS_MULTIPLIER = FULL_STEPS_PER_METER;
 
 TaskHandle_t HOMING_TASK_HANDLE = nullptr;
 bool IS_DONE_HOMING = false;
@@ -180,6 +180,14 @@ void Stepper::SetTargetPosition(float value) {
     int pos_steps =
         static_cast<int>((value + G.full_length_meters / 2) * METERS_TO_STEPS_MULTIPLIER);
     fas_stepper->moveTo(pos_steps);
+}
+
+void Stepper::SetTargetAcceleration(float value) {
+    Globals &G = GetGlobals();
+    SetSpeed(G.max_v);
+
+    uint32_t steps_per_ss = static_cast<uint32_t>(value * METERS_TO_STEPS_MULTIPLIER);
+    fas_stepper->moveByAcceleration(steps_per_ss);
 }
 
 Stepper &GetStepper() {
