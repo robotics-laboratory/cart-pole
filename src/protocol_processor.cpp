@@ -148,6 +148,8 @@ std::string ProtocolProcessor::reset() {
         KeepAlive();
         delay(100);
     }
+    KeepAlive();
+    delay(100);
 
     float hw_max_x = G.hw_max_x;
     G.Reset();

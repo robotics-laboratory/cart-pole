@@ -160,8 +160,15 @@ void Stepper::AsyncHoming() {
 bool Stepper::IsDoneHoming() { return IS_DONE_HOMING; }
 
 void Stepper::SetSpeed(float value) {
+    ProtocolProcessor &P = GetProtocolProcessor();
+
     uint32_t speed_hz = static_cast<uint32_t>(value * METERS_TO_STEPS_MULTIPLIER);
     fas_stepper->setSpeedInHz(speed_hz);
+
+    std::stringstream stream;
+    stream << std::fixed << std::setprecision(5) << "Set stepper velocity: " << value
+           << " m/s, " << speed_hz << " steps/s";
+    P.Log(stream.str());
 }
 
 void Stepper::SetAcceleration(float value) {
@@ -183,11 +190,17 @@ void Stepper::SetTargetPosition(float value) {
 }
 
 void Stepper::SetTargetAcceleration(float value) {
+    ProtocolProcessor &P = GetProtocolProcessor();
     Globals &G = GetGlobals();
     SetSpeed(G.max_v);
 
     uint32_t steps_per_ss = static_cast<uint32_t>(value * METERS_TO_STEPS_MULTIPLIER);
     fas_stepper->moveByAcceleration(steps_per_ss);
+
+    std::stringstream stream;
+    stream << std::fixed << std::setprecision(5) << "Moving stepper by acceleration: " << value
+           << " m/s^2, " << steps_per_ss << " steps/s^2";
+    P.Log(stream.str());
 }
 
 Stepper &GetStepper() {
