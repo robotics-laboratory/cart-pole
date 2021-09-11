@@ -12,7 +12,7 @@
 namespace {
 const int ENCODER_MAX_VALUE = 4096;  // 12 bit
 const unsigned long REFRESH_INTERVAL_MILLIS = 100;
-const int ZERO_ANGLE = 1917;
+const float ZERO_ANGLE = 2.9406;  // ZERO_ANGLE >= 0
 const bool REVERSE = true;
 }  // namespace
 
@@ -26,7 +26,7 @@ void Encoder::Poll() {
     unsigned long currTime = millis();
     if (currTime - prevTime < REFRESH_INTERVAL_MILLIS) return;
     float rawAngle = as5600.getRawAngle();
-    float currAngle = (rawAngle - ZERO_ANGLE) / ENCODER_MAX_VALUE * 2 * PI;
+    float currAngle = rawAngle / ENCODER_MAX_VALUE * 2 * PI - ZERO_ANGLE;
     if (currAngle < 0) currAngle += 2 * PI;
     if (REVERSE) currAngle = 2 * PI - currAngle;
 

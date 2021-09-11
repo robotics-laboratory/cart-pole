@@ -8,13 +8,8 @@
 void setup() {}
 
 void loop() {
-    ProtocolProcessor &P = GetProtocolProcessor();
-    Encoder &E = GetEncoder();
-    Accelerometer &A = GetAccelerometer();
-    Stepper &S = GetStepper();
-
-    P.Poll();
-    E.Poll();
-    S.Poll();
-    A.Poll();
+    GetStepper().Poll();
+    GetEncoder().Poll();
+    GetAccelerometer().Poll();
+    GetProtocolProcessor().Poll();
 }
