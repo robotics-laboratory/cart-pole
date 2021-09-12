@@ -1,17 +1,32 @@
 #pragma once
-#include "globals.h"
-#include "AS5600.h"
+#include <Wire.h>
+
 #include <deque>
 
+#include "globals.h"
+
 class Encoder {
-    AS5600 as5600;
+    TwoWire *wire;
+    float *x_ref;
+    float *v_ref;
+    float prevAngle;
     unsigned long prevTime;
     float prevAngle;
 
 public:
-    Encoder();
+    Encoder(TwoWire *wire, float *x_ref, float *v_ref);
 
     void Poll();
+
+private:
+    static const int AS5600Address = 0x36;
+    static const byte RAWANGLEAddressMSB = 0x0C;
+    static const byte RAWANGLEAddressLSB = 0x0D;
+
+    float getRawAngle();
+    uint8_t getRegister(byte reg);
+    uint16_t getRegisters2(byte regMSB, byte regLSB);
 };
 
-Encoder &GetEncoder();
+Encoder &GetPoleEncoder();
+Encoder &GetMotorEncoder();
