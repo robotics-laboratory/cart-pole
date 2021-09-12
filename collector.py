@@ -22,7 +22,7 @@ class CollectorProxy(CartPoleBase):
     STORAGE_DIR = 'sessions'
     TARGET_KEY = 'target'
 
-    def __init__(self, cart_pole: CartPoleBase, interval: float = 0.02) -> None:
+    def __init__(self, cart_pole: CartPoleBase, interval: float = 0.5) -> None:
         self.cart_pole = cart_pole
         self.interval = interval
         self.session_id: str = None        
@@ -102,7 +102,7 @@ class CollectorProxy(CartPoleBase):
 
     def stop(self) -> None:
         self._stop_signal.set()
-        self._run_thread.join(timeout=60.0)
+        self._run_thread.join(timeout=5.0)
         assert not self._run_thread.is_alive()
 
     @property

@@ -35,10 +35,10 @@ class CartPoleDevice(CartPoleBase):
         return {util.STEP_COUNT: self.step_count}
 
     def get_target(self) -> float:
-        return self.interface.get(DeviceTarget(position=True)).position
+        return self.interface.get(DeviceTarget(acceleration=True)).acceleration
 
     def set_target(self, target: float) -> None:
-        _ = self.interface.set(DeviceTarget(position=target))
+        _ = self.interface.set(DeviceTarget(acceleration=target))
 
     def close(self) -> None:
         self.interface.close()
