@@ -5,7 +5,7 @@ description = ""
 authors = []
 
 [tool.poetry.dependencies]
-python = "~3.8"
+python = ">=3.8,<3.10"
 matplotlib = "^3.4.3"
 numpy = "^1.21.2"
 pybullet = "^3.1.8"
