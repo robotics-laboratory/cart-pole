@@ -8,11 +8,11 @@
 #include "protocol_processor.h"
 
 namespace {
-const int SENSETIVITY = MPU6050_ACCEL_FS_2;  // 16384 LSB / g
+const int SENSITIVITY = MPU6050_ACCEL_FS_2;  // 16384 LSB / g
 const float G_ACCELERATION = 9.81509;
 
-float convertToG(int16_t lsb, int sensetivity = SENSETIVITY) {
-    switch (sensetivity) {
+float convertToG(int16_t lsb, int sensitivity = SENSITIVITY) {
+    switch (sensitivity) {
         case MPU6050_ACCEL_FS_2:
             return static_cast<float>(lsb) / 16384;
         case MPU6050_ACCEL_FS_4:
@@ -22,7 +22,7 @@ float convertToG(int16_t lsb, int sensetivity = SENSETIVITY) {
         case MPU6050_ACCEL_FS_16:
             return static_cast<float>(lsb) / 2048;
     }
-    throw std::runtime_error{"Unknown sensetivity in lsb to G conversion"};
+    throw std::runtime_error{"Unknown sensitivity in lsb to G conversion"};
 }
 }  // namespace
 
@@ -38,14 +38,14 @@ Accelerometer::Accelerometer() : mpu() {
         P.Error("Failed to initialize accelerometer");
         throw std::runtime_error{"Failed to initialize accelerometer"};
     }
-    mpu.setFullScaleAccelRange(SENSETIVITY);
+    mpu.setFullScaleAccelRange(SENSITIVITY);
 }
 
 void Accelerometer::Poll() {
     Globals &G = GetGlobals();
 
     int16_t y = mpu.getAccelerationY();
-    G.curr_a = convertToG(y) / G_ACCELERATION;
+    G.imu_a = convertToG(y) / G_ACCELERATION;
 }
 
 Accelerometer &GetAccelerometer() {

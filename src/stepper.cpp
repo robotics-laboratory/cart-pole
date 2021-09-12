@@ -10,6 +10,7 @@ namespace {
 const int TMC_EN = 25;
 const int TMC_STEP = 26;
 const int TMC_DIR = 27;
+const int TMC_STALLGUARD = 33;
 const int ENDSTOP_LEFT = 18;
 const int ENDSTOP_RIGHT = 19;
 
@@ -19,17 +20,17 @@ const int SERIAL_SPEED = 115200;
 const int ADDRESS = 0b00;
 const float R_SENSE = 0.11;
 const int TOFF_VALUE = 5;
-const int MICROSTEPS = 0;
+const int MICROSTEPS = 1;
 const bool REVERSE_STEPPER = false;
 const int FULL_STEPS_PER_METER = 1666;
 const float HOMING_SPEED = 0.1;
 const float HOMING_ACCELERATION = 0.5;
 
-const int METERS_TO_STEPS_MULTIPLIER = FULL_STEPS_PER_METER;
+const int METERS_TO_STEPS_MULTIPLIER = MICROSTEPS * FULL_STEPS_PER_METER;
+const float LIMITS_EPS = 1e-3;
 
 TaskHandle_t HOMING_TASK_HANDLE = nullptr;
 bool IS_DONE_HOMING = false;
-
 
 void homingTask(void *) {
     Stepper &S = GetStepper();
@@ -37,8 +38,7 @@ void homingTask(void *) {
 
     IS_DONE_HOMING = true;
     vTaskDelete(HOMING_TASK_HANDLE);
-    while (true) {
-    }
+    while (true);
 }
 }  // namespace
 
@@ -47,6 +47,7 @@ Stepper::Stepper()
     pinMode(TMC_EN, OUTPUT);
     pinMode(TMC_STEP, OUTPUT);
     pinMode(TMC_DIR, OUTPUT);
+    pinMode(TMC_STALLGUARD, INPUT);
     pinMode(ENDSTOP_LEFT, INPUT);
     pinMode(ENDSTOP_RIGHT, INPUT);
 
@@ -55,7 +56,7 @@ Stepper::Stepper()
     tmc_serial_port.begin(SERIAL_SPEED);
     tmc_driver.begin();
     tmc_driver.rms_current(STEPPER_CURRENT * 1000);
-    tmc_driver.microsteps(MICROSTEPS);
+    tmc_driver.microsteps(MICROSTEPS == 1 ? 0 : MICROSTEPS);
     tmc_driver.toff(0);
 
     // Init FastAccelStepper
@@ -68,6 +69,49 @@ Stepper::Stepper()
 void Stepper::Poll() {
     Globals &G = GetGlobals();
     G.curr_x = GetCurrentPosition();
+    G.curr_v = GetCurrentVelocity();
+    G.curr_a = GetCurrentAcceleration();
+    if (G.errcode == Error::NO_ERROR) {
+        CheckStallGuard();
+        CheckEndstops();
+        CheckLimits();
+    }
+}
+
+void Stepper::CheckStallGuard() {
+    if (digitalRead(TMC_STALLGUARD)) {
+        SetError(Error::MOTOR_STALLED, "Motor stall detected");
+    }
+}
+
+void Stepper::CheckEndstops() {
+    if (digitalRead(ENDSTOP_LEFT) || digitalRead(ENDSTOP_RIGHT)) {
+        SetError(Error::ENDSTOP_HIT, "Endstop hit detected");
+    }
+}
+
+void Stepper::CheckLimits() {
+    Globals &G = GetGlobals();
+    if (std::abs(G.curr_x) > G.max_x + LIMITS_EPS)
+        return SetError(Error::X_OVERFLOW, "X overflow detected");
+    if (std::abs(G.curr_v) > G.max_v + LIMITS_EPS)
+        return SetError(Error::V_OVERFLOW, "V overflow detected");
+    if (std::abs(G.curr_a) > G.max_a + LIMITS_EPS)
+        return SetError(Error::A_OVERFLOW, "A overflow detected");
+}
+
+void Stepper::SetError(Error err, std::string what) {
+    Globals &G = GetGlobals();
+    ProtocolProcessor &P = GetProtocolProcessor();
+    G.errcode = err;
+    Disable();
+    P.Log(what);
+
+    std::stringstream ss;
+    ss << "CURR X: " << G.curr_x << " ";
+    ss << "CURR V: " << G.curr_v << " ";
+    ss << "CURR A: " << G.curr_a;
+    P.Log(ss.str());
 }
 
 void Stepper::Enable() {
@@ -93,6 +137,16 @@ float Stepper::GetCurrentPosition() {
     Globals &G = GetGlobals();
     int pos_steps = fas_stepper->getCurrentPosition();
     return static_cast<float>(pos_steps) / METERS_TO_STEPS_MULTIPLIER - G.full_length_meters / 2;
+}
+
+float Stepper::GetCurrentVelocity() {
+    int vel_steps_per_ms = fas_stepper->getCurrentSpeedInMilliHz();
+    return static_cast<float>(vel_steps_per_ms) / METERS_TO_STEPS_MULTIPLIER / 1000;
+}
+
+float Stepper::GetCurrentAcceleration() {
+    int steps_per_ss = fas_stepper->getCurrentAcceleration();
+    return static_cast<float>(steps_per_ss) / METERS_TO_STEPS_MULTIPLIER;
 }
 
 void Stepper::Homing() {
@@ -160,25 +214,24 @@ void Stepper::AsyncHoming() {
 bool Stepper::IsDoneHoming() { return IS_DONE_HOMING; }
 
 void Stepper::SetSpeed(float value) {
-    ProtocolProcessor &P = GetProtocolProcessor();
-
     uint32_t speed_hz = static_cast<uint32_t>(value * METERS_TO_STEPS_MULTIPLIER);
     fas_stepper->setSpeedInHz(speed_hz);
 
+    ProtocolProcessor &P = GetProtocolProcessor();
     std::stringstream stream;
-    stream << std::fixed << std::setprecision(5) << "Set stepper velocity: " << value
-           << " m/s, " << speed_hz << " steps/s";
+    stream << std::fixed << std::setprecision(5) << "Set stepper acceleration: "
+           << value << " m/s, " << speed_hz << " steps/s";
     P.Log(stream.str());
 }
 
 void Stepper::SetAcceleration(float value) {
-    ProtocolProcessor &P = GetProtocolProcessor();
     uint32_t steps_per_ss = static_cast<uint32_t>(value * METERS_TO_STEPS_MULTIPLIER);
     fas_stepper->setAcceleration(steps_per_ss);
 
+    ProtocolProcessor &P = GetProtocolProcessor();
     std::stringstream stream;
-    stream << std::fixed << std::setprecision(5) << "Set stepper acceleration: " << value
-           << " m/s^2, " << steps_per_ss << " steps/s^2";
+    stream << std::fixed << std::setprecision(5) << "Set stepper acceleration: "
+           << value << " m/s^2, " << steps_per_ss << " steps/s^2";
     P.Log(stream.str());
 }
 
