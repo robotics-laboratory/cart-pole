@@ -11,9 +11,10 @@ class Encoder {
     float *v_ref;
     float prevAngle;
     unsigned long prevTime;
+    float zero_angle;
 
 public:
-    Encoder(TwoWire *wire, float *x_ref, float *v_ref);
+    Encoder(TwoWire *wire, float *x_ref, float *v_ref, float zero_angle);
 
     void Poll();
 

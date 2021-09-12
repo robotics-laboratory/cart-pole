@@ -7,6 +7,8 @@
 #include "stepper.h"
 
 namespace {
+    const int DEBUG_LED_PIN = 2;
+
 std::ostream &operator<<(std::ostream &out, Error error) { return out << static_cast<int>(error); }
 
 std::istream &operator>>(std::istream &in, Error &error) {
@@ -208,7 +210,6 @@ void updateField<float, FieldID::trgt_a>(float value) {
 
 template <>
 void updateField<bool, FieldID::debug_led>(bool value) {
-    static int DEBUG_LED_PIN = 2;
     pinMode(DEBUG_LED_PIN, OUTPUT);
     digitalWrite(DEBUG_LED_PIN, value);
 }

@@ -12,15 +12,14 @@
 namespace {
 const int ENCODER_MAX_VALUE = 4096;  // 12 bit
 const unsigned long REFRESH_INTERVAL_MILLIS = 100;
-const float ZERO_ANGLE = 2.9406;  // ZERO_ANGLE >= 0
 const bool REVERSE = true;
 const float ROTATION_CARRY_THRESHOLD = 1.8 * PI;
 const int SECONDARY_ENCODER_SDA = 13;
 const int SECONDARY_ENCODER_SCL = 32;
 }  // namespace
 
-Encoder::Encoder(TwoWire *wire, float *x_ref, float *v_ref)
-    : wire(wire), x_ref(x_ref), v_ref(v_ref), prevAngle(0), prevTime(0) {
+Encoder::Encoder(TwoWire *wire, float *x_ref, float *v_ref, float zero_angle)
+    : wire(wire), x_ref(x_ref), v_ref(v_ref), prevAngle(0), prevTime(0), zero_angle(zero_angle) {
     ProtocolProcessor &P = GetProtocolProcessor();
     P.Log("Encoder init...");
     // TODO: Check if magnet is detected?
@@ -53,7 +52,7 @@ void Encoder::Poll() {
     unsigned long currTime = millis();
     if (currTime - prevTime < REFRESH_INTERVAL_MILLIS) return;
     float rawAngle = getRawAngle();
-    float currAngle = rawAngle / ENCODER_MAX_VALUE * 2 * PI - ZERO_ANGLE;
+    float currAngle = rawAngle / ENCODER_MAX_VALUE * 2 * PI - zero_angle;
     if (currAngle < 0) currAngle += 2 * PI;
     if (REVERSE) currAngle = 2 * PI - currAngle;
 
@@ -75,7 +74,7 @@ Encoder &GetPoleEncoder() {
         return &Wire;
     }();
     Globals G = GetGlobals();
-    static Encoder encoder(primaryWire, &G.pole_x, &G.pole_v);
+    static Encoder encoder(primaryWire, &G.pole_x, &G.pole_v, 2.9406);
     return encoder;
 }
 
@@ -86,6 +85,6 @@ Encoder &GetMotorEncoder() {
         return secondaryWire;
     }();
     Globals G = GetGlobals();
-    static Encoder encoder(&secondaryWire, &G.motor_x, &G.motor_v);
+    static Encoder encoder(&secondaryWire, &G.motor_x, &G.motor_v, 2.9406);
     return encoder;
 }
