@@ -134,7 +134,6 @@ float Stepper::GetCurrentPosition() {
 }
 
 float Stepper::GetCurrentVelocity() {
-    Globals &G = GetGlobals();
     int vel_steps_per_ms = fas_stepper->getCurrentSpeedInMilliHz();
     return static_cast<float>(vel_steps_per_ms) / METERS_TO_STEPS_MULTIPLIER / 1000;
 }
@@ -233,6 +232,10 @@ void Stepper::SetAcceleration(float value) {
 void Stepper::SetTargetPosition(float value) {
     int pos_steps = static_cast<int>(value * METERS_TO_STEPS_MULTIPLIER);
     fas_stepper->moveTo(pos_steps);
+}
+
+void Stepper::SetTargetAcceleration(float value) {
+    // TODO
 }
 
 Stepper &GetStepper() {
