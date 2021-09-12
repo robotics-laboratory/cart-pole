@@ -14,12 +14,3 @@ repos:
         entry: black
         language: system
         types: [ python ]
-      - id: lock-requirements
-        name: Lock requirements
-        entry: poetry lock &&
-               poetry export --without-hashes > requirements.txt &&
-               poetry export --without-hashes --dev > requirements-dev.txt
-        language: system
-        pass_filenames: false
-        always_run: true
-        verbose: true
