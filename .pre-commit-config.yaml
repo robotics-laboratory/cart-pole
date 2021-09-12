@@ -1,8 +1,15 @@
 repos:
   - repo: https://github.com/psf/black
     rev: 21.8b0
+    stages: [manual]
     hooks:
       - id: black
+
+  - repo: https://github.com/timothycrosley/isort
+    rev: 5.9.3
+    stages: [manual]
+    hooks:
+      - id: isort
 
   - repo: https://gitlab.com/pycqa/flake8
     rev: 3.9.2
@@ -10,14 +17,13 @@ repos:
       - id: flake8
         # TODO: Remove --exit-zero when we're done testing
         entry: pflake8 --exit-zero
-        additional_dependencies: [ pyproject-flake8 ]
-
-  - repo: https://github.com/timothycrosley/isort
-    rev: 5.9.3
-    hooks:
-      - id: isort
+        additional_dependencies:
+          - pyproject-flake8
+          - flake8-black
+          - flake8-isort
 
   - repo: local
+    stages: [manual]
     hooks:
       - id: lock-requirements
         name: Lock poetry requirements
@@ -40,6 +46,7 @@ repos:
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.0.1
+    stages: [manual]
     hooks:
       - id: end-of-file-fixer
       - id: trailing-whitespace
