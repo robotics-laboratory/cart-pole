@@ -1,15 +1,15 @@
 import dataclasses as dc
 import json
 import logging
-import numpy as np
 import os
 import string
 import threading
 import time
-from typing import Type, Union, List
+from typing import List, Type, Union
 
-from cart_pole.device.wire_interface import WireInterface, DeviceState, DeviceTarget
+import numpy as np
 
+from device.wire_interface import DeviceState, DeviceTarget, WireInterface
 
 LOGGER = logging.getLogger(__name__)
 HEX_DIGITS = list(string.digits + string.ascii_lowercase[:6])

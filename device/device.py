@@ -1,18 +1,8 @@
 import logging
 
-from cart_pole import util
-from cart_pole.interface import (
-    Config,
-    State,
-    CartPoleBase,
-)
-from cart_pole.device.wire_interface import (
-    WireInterface,
-    DeviceTarget,
-    DeviceConfig,
-    DeviceState,
-)
-
+from common import util
+from common.interface import CartPoleBase, Config, State
+from device.wire_interface import DeviceConfig, DeviceState, DeviceTarget, WireInterface
 
 LOGGER = logging.getLogger(__name__)
 

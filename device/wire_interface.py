@@ -1,10 +1,10 @@
 import dataclasses as dc
 import logging
+from typing import Type, Union
+
 import serial
-from typing import Union, Type
 
-from cart_pole.interface import Error, Config, State
-
+from common.interface import Config, Error, State
 
 LOGGER = logging.getLogger(__name__)
 RAW_COMMANDS_LOGGER = logging.getLogger("raw_commands")

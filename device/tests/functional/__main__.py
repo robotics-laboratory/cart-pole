@@ -10,14 +10,8 @@ as if right after homing procedure.
 import logging
 import time
 
-from cart_pole.device.wire_interface import (
-    WireInterface,
-    DeviceTarget,
-    DeviceState,
-    DeviceConfig,
-)
-from cart_pole.interface import Error
-
+from common.interface import Error
+from device.wire_interface import DeviceConfig, DeviceState, DeviceTarget, WireInterface
 
 LOGGER = logging.getLogger(__name__)
 EPS = 1e-3
