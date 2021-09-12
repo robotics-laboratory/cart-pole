@@ -11,7 +11,8 @@ void setup() {}
 
 void loop() {
     GetStepper().Poll();
-    GetEncoder().Poll();
+    GetPoleEncoder().Poll();
+    GetMotorEncoder().Poll();
     GetAccelerometer().Poll();
     GetProtocolProcessor().Poll();
 }
