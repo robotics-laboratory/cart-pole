@@ -73,7 +73,7 @@ Encoder &GetPoleEncoder() {
         Wire.begin();
         return &Wire;
     }();
-    Globals G = GetGlobals();
+    Globals &G = GetGlobals();
     static Encoder encoder(primaryWire, &G.pole_x, &G.pole_v, 2.9406);
     return encoder;
 }
@@ -84,7 +84,7 @@ Encoder &GetMotorEncoder() {
         secondaryWire.begin(SECONDARY_ENCODER_SDA, SECONDARY_ENCODER_SCL);
         return secondaryWire;
     }();
-    Globals G = GetGlobals();
-    static Encoder encoder(&secondaryWire, &G.motor_x, &G.motor_v, 2.9406);
+    Globals &G = GetGlobals();
+    static Encoder encoder(&secondaryWire, &G.motor_x, &G.motor_v, 0.0);
     return encoder;
 }
