@@ -4,7 +4,7 @@ import serial
 import threading
 from typing import Union, Type
 
-from cart_pole.interface import Error, Config, State
+from interface import Error, Config, State  # FIXME
 
 
 LOGGER = logging.getLogger(__name__)

@@ -74,6 +74,7 @@ class CollectorProxy(CartPoleBase):
             state = self.cart_pole.get_state()
 
             for field in dc.fields(state):
+                if field.name == 'error_code': continue  # FIXME
                 key = f'state.{field.name}'
 
                 lock = self._locks[key]
