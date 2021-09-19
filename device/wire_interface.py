@@ -100,7 +100,6 @@ class DeviceVariableGroup:
         return cls(**data_dict)
 
 
-@dc.dataclass
 class DeviceConfig(DeviceVariableGroup, Config):
     GROUP_NAME = 'config'
     SERIALIZATION_MAP = {
