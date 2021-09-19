@@ -2,6 +2,7 @@
 #include <Wire.h>
 
 #include "encoder.h"
+#include "accelerometer.h"
 #include "protocol_processor.h"
 
 ProtocolProcessor &protocol = GetProtocolProcessor();

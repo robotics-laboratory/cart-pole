@@ -27,6 +27,8 @@ public:
 
     void ForceStop();
     float GetCurrentPosition();
+    float GetCurrentVelocity();
+    float GetCurrentAcceleration();
 
     void SetSpeed(float value);
     void SetAcceleration(float value);

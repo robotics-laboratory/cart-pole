@@ -230,6 +230,12 @@ void updateField<bool, FieldID::debug_led>(bool value) {
     digitalWrite(DEBUG_LED_PIN, value);
 }
 
+template <>
+void updateField<bool, FieldID::debug_led>(bool value) {
+    pinMode(DEBUG_LED_PIN, OUTPUT);
+    digitalWrite(DEBUG_LED_PIN, value);
+}
+
 template <typename T, FieldID F, bool readonly = false>
 class Field : public FieldBase {
     T &global_value;
@@ -346,6 +352,7 @@ FieldMap constructStateFieldMap() {
             field->Reset();
         }
     }
+    return it->second.get();
 }
 
 std::string Globals::Get(const std::string &group, const std::string &key) const {
