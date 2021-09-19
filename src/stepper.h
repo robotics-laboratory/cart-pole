@@ -6,7 +6,6 @@
 
 #include "globals.h"
 
-
 class Stepper {
     HardwareSerial tmc_serial_port;
     TMC2209Stepper tmc_driver;
@@ -16,11 +15,19 @@ class Stepper {
 public:
     Stepper();
 
+    void Poll();
+    void CheckStallGuard();
+    void CheckEndstops();
+    void CheckLimits();
+    void SetError(Error err, std::string what);
+
     void Enable();
     void Disable();
 
     void ForceStop();
     float GetCurrentPosition();
+    float GetCurrentVelocity();
+    float GetCurrentAcceleration();
 
     void SetSpeed(float value);
     void SetAcceleration(float value);

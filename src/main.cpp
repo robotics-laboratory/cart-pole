@@ -1,10 +1,16 @@
+#include <Arduino.h>
+
+#include "encoder.h"
+#include "accelerometer.h"
 #include "protocol_processor.h"
+#include "stepper.h"
 
-ProtocolProcessor &P = GetProtocolProcessor();
-
-void setup() {
-}
+void setup() {}
 
 void loop() {
-    P.Poll();
+    GetStepper().Poll();
+    GetPoleEncoder().Poll();
+    GetMotorEncoder().Poll();
+    GetAccelerometer().Poll();
+    GetProtocolProcessor().Poll();
 }
