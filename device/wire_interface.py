@@ -99,7 +99,6 @@ class DeviceVariableGroup:
         return cls(**data_dict)
 
 
-
 class DeviceConfig(DeviceVariableGroup, Config):
     GROUP_NAME = 'config'
     SERIALIZATION_MAP = {
@@ -112,7 +111,10 @@ class DeviceConfig(DeviceVariableGroup, Config):
         'clamp_position': 'clamp_x',
         'clamp_velocity': 'clamp_v',
         'clamp_acceleration': 'clamp_a',
+        'debug_led': 'debug_led'
     }
+
+    debug_led: bool = dc.field(default=None)
 
 
 class DeviceState(DeviceVariableGroup, State):
@@ -124,7 +126,14 @@ class DeviceState(DeviceVariableGroup, State):
         'pole_angle': 'pole_x',
         'pole_angular_velocity': 'pole_v',
         'error_code': 'errcode',
+        'accelerometer_value': 'imu_a',
+        'motor_angle': 'motor_x',
+        'motor_velocity': 'motor_v',
     }
+
+    accelerometer_value: float = dc.field(default=None)
+    motor_angle: float = dc.field(default=None)
+    motor_velocity: float = dc.field(default=None)
 
 
 @dc.dataclass

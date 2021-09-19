@@ -7,6 +7,8 @@
 #include "stepper.h"
 
 namespace {
+    const int DEBUG_LED_PIN = 2;
+
 std::ostream &operator<<(std::ostream &out, Error error) { return out << static_cast<int>(error); }
 
 std::istream &operator>>(std::istream &in, Error &error) {
@@ -35,6 +37,10 @@ enum class FieldID {
     pole_x,
     pole_v,
     errcode,
+    imu_a,
+    motor_x,
+    motor_v,
+    debug_led,
 };
 
 struct FieldBase {
@@ -202,6 +208,12 @@ void updateField<float, FieldID::trgt_a>(float value) {
     S.SetTargetAcceleration(value);
 }
 
+template <>
+void updateField<bool, FieldID::debug_led>(bool value) {
+    pinMode(DEBUG_LED_PIN, OUTPUT);
+    digitalWrite(DEBUG_LED_PIN, value);
+}
+
 template <typename T, FieldID F, bool readonly = false>
 class Field : public FieldBase {
     T &global_value;
@@ -248,24 +260,28 @@ FieldMap constructConfigFieldMap() {
     map["max_x"] = makeField<float, FieldID::max_x, false>(G.max_x);
     map["max_v"] = makeField<float, FieldID::max_v, false>(G.max_v);
     map["max_a"] = makeField<float, FieldID::max_a, false>(G.max_a);
-    map["hw_max_x"] = makeField<float, FieldID::hw_max_x, false>(G.hw_max_x);
-    map["hw_max_v"] = makeField<float, FieldID::hw_max_v, false>(G.hw_max_v);
-    map["hw_max_a"] = makeField<float, FieldID::hw_max_a, false>(G.hw_max_a);
+    map["hw_max_x"] = makeField<float, FieldID::hw_max_x, true>(G.hw_max_x);
+    map["hw_max_v"] = makeField<float, FieldID::hw_max_v, true>(G.hw_max_v);
+    map["hw_max_a"] = makeField<float, FieldID::hw_max_a, true>(G.hw_max_a);
     map["clamp_x"] = makeField<bool, FieldID::clamp_x, false>(G.clamp_x);
     map["clamp_v"] = makeField<bool, FieldID::clamp_v, false>(G.clamp_v);
     map["clamp_a"] = makeField<bool, FieldID::clamp_a, false>(G.clamp_a);
+    map["debug_led"] = makeField<bool, FieldID::debug_led, false>(G.clamp_a);
     return map;
 }
 
 FieldMap constructStateFieldMap() {
     Globals &G = GetGlobals();
     FieldMap map;
-    map["x"] = makeField<float, FieldID::curr_x, false>(G.curr_x);
-    map["v"] = makeField<float, FieldID::curr_v, false>(G.curr_v);
-    map["a"] = makeField<float, FieldID::curr_a, false>(G.curr_a);
-    map["pole_x"] = makeField<float, FieldID::pole_x, false>(G.pole_x);
-    map["pole_v"] = makeField<float, FieldID::pole_v, false>(G.pole_v);
-    map["errcode"] = makeField<Error, FieldID::errcode, false>(G.errcode);
+    map["x"] = makeField<float, FieldID::curr_x, true>(G.curr_x);
+    map["v"] = makeField<float, FieldID::curr_v, true>(G.curr_v);
+    map["a"] = makeField<float, FieldID::curr_a, true>(G.curr_a);
+    map["pole_x"] = makeField<float, FieldID::pole_x, true>(G.pole_x);
+    map["pole_v"] = makeField<float, FieldID::pole_v, true>(G.pole_v);
+    map["errcode"] = makeField<Error, FieldID::errcode, true>(G.errcode);
+    map["imu_a"] = makeField<float, FieldID::imu_a, true>(G.imu_a);
+    map["motor_x"] = makeField<float, FieldID::motor_x, true>(G.motor_x);
+    map["motor_v"] = makeField<float, FieldID::motor_v, true>(G.motor_v);
     return map;
 }
 
@@ -306,7 +322,7 @@ FieldBase *getField(const FieldMap &map, const std::string &key) {
         stream << "Unknown key: " << key;
         throw std::runtime_error{stream.str()};
     }
-    return it->second.get(); 
+    return it->second.get();
 }
 }  // namespace
 
@@ -342,6 +358,7 @@ void Globals::Reset() {
 
 Globals &GetGlobals() {
     static Globals globals{
+        /* CONFIG */
         0.0,                // [m] Absolute max cart position
         0.5,                // [m/s] Absolute max cart velocity
         1.0,                // [m/s^2] Absolute max cart acceleration
@@ -351,16 +368,23 @@ Globals &GetGlobals() {
         false,              // Clamp X to allowed range instead of raising error
         false,              // Clamp V to allowed range instead of raising error
         false,              // Clamp A to allowed range instead of raising error
+        false,
+        /* STATE */
         0.0,                // [m] Current cart position
-        0.0,                // [m] Target cart position
         0.0,                // [m/s] Current cart velocity
-        0.0,                // [m/s] Target cart velocity
         0.0,                // [m/s^2] Current cart acceleration
-        0.0,                // [m/s^2] Target cart acceleration
         0.0,                // [rad] Current pole angle
         0.0,                // [rad/s] Current pole angular velocity
         Error::NEED_RESET,  // Current error code
-        0.0,                // [m] Total Length as determined during homing
+        0.0,
+        0.0,
+        0.0,
+        /* TARGET */
+        0.0,                // [m] Target cart position
+        0.0,                // [m/s] Target cart velocity
+        0.0,                // [m/s^2] Target cart acceleration
+        /* MISC */
+        0.0,        // [m] Total Length as determined during homing
     };
     return globals;
 }
