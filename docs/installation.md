@@ -16,3 +16,17 @@ pre-commit install
 ```
 pytest
 ```
+
+## Dangerous hooks
+
+In order to run hooks that modify files (black & isort formatters):
+
+```
+pre-commit run --hook-stage manual --all-files
+```
+
+You can also run it for one file, or create a file watcher:
+
+```
+pre-commit run --hook-stage manual --files <file-to-check>
+```

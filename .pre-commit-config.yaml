@@ -1,4 +1,18 @@
 repos:
+  # Black formatter, disabled by default, changes files!
+  - repo: https://github.com/psf/black
+    rev: 21.9b0
+    hooks:
+      - id: black
+        stages: [ manual ]
+
+  # Isort formatter, disabled by default, changes files!
+  - repo: https://github.com/timothycrosley/isort
+    rev: 5.9.3
+    hooks:
+      - id: isort
+        stages: [ manual ]
+
   # Flake8 linter, enabled by default, doesn't change files
   - repo: https://gitlab.com/pycqa/flake8
     rev: 3.9.2
@@ -10,17 +24,3 @@ repos:
           - flake8-isort==4.0.0
           - flake8-docstrings==1.6.0
           - pyproject-flake8==0.0.1a2
-
-  # Black formatter, changes files!
-  - repo: https://github.com/psf/black
-    rev: 21.9b0
-    hooks:
-      - id: black
-        stages: [manual]
-
-  # Isort formatter, changes files!
-  - repo: https://github.com/timothycrosley/isort
-    rev: 5.9.3
-    hooks:
-      - id: isort
-        stages: [manual]
