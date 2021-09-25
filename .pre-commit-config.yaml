@@ -14,13 +14,13 @@ repos:
   # Black formatter, changes files!
   - repo: https://github.com/psf/black
     rev: 21.9b0
-    stages: [manual]
     hooks:
       - id: black
+        stages: [manual]
 
   # Isort formatter, changes files!
   - repo: https://github.com/timothycrosley/isort
     rev: 5.9.3
-    stages: [manual]
     hooks:
       - id: isort
+        stages: [manual]
