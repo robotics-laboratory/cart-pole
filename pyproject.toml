@@ -7,7 +7,13 @@ profile = "black"
 
 [tool.flake8]
 max-line-length = 88
+# https://github.com/PyCQA/flake8-docstrings
 docstring-convention = "google"
+# https://github.com/zheller/flake8-quotes
+avoid-escape = "false"
+inline-quotes = "'"
+multiline-quotes = "'''"
+docstring-quotes = "'''"
 # E203 - Allow extra spaces in slice operators, as black recommends:
 # https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html#flake8
 # D100 ... D107 - Don't require missing docstrings
