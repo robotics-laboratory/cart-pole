@@ -1,21 +1,21 @@
 import dataclasses as dc
 import logging
+from typing import Type, Union
+
 import serial
-from typing import Union, Type
 
-from common.interface import Error, Config, State
-
+from common.interface import Config, Error, State
 
 LOGGER = logging.getLogger(__name__)
 RAW_COMMANDS_LOGGER = logging.getLogger('raw_commands')
 
 
 class DeviceVariableGroup:
-    '''
-    Mixin intended to be used with @dataclass-decorated classes. Subclass should
-    represent a variable group in a controller protocol spec. Group name should be
-    set by overriding `GROUP_NAME` classvar. Mixin provides methods
-    for convertion to and from wire formats.
+    '''Mixin intended to be used with @dataclass-decorated classes.
+
+    Subclass should represent a variable group in a controller protocol spec.
+    Group name should be set by overriding `GROUP_NAME` classvar.
+    Mixin provides methods for convertion to and from wire formats.
     '''
 
     # Should be overridden in subclass
@@ -45,9 +45,7 @@ class DeviceVariableGroup:
 
     @classmethod
     def full(cls) -> 'DeviceVariableGroup':
-        '''
-        Constructs instance initialized with filler value
-        '''
+        '''Constructs instance initialized with filler value.'''
         return cls(**{field.name: True for field in dc.fields(cls)})
 
     @classmethod
@@ -58,38 +56,42 @@ class DeviceVariableGroup:
         raise ValueError(f'No matching item for type {type}')
 
     def to_dict_format(self) -> str:
-        '''
-        Serializes current dataclass instance to '<key>=<value>' format
-        as used in 'set' method of the protocol.
+        '''Serializes current dataclass instance to '<key>=<value>' format.
 
         Returns:
             Command string in dict wire format.
         '''
-        return ' '.join(
-            f'{self.SERIALIZATION_MAP[field.name]}={self._type_lookup(field.type, self._to_string_lookup)(getattr(self, field.name))}'
-            for field in dc.fields(self)
-            if getattr(self, field.name) is not None
-        )
+        tokens = []
+        for field in dc.fields(self):
+            if getattr(self, field.name) is not None:
+                key = self.SERIALIZATION_MAP[field.name]
+                to_string = self._type_lookup(field.type, self._to_string_lookup)
+                value = to_string(getattr(self, field.name))
+                tokens.append(f'{key}={value}')
+        return ' '.join(tokens)
 
     def to_list_format(self) -> str:
-        '''
-        Serializes current dataclass instance to '<key>' format
-        as used in 'get' method of the protocol.
+        '''Serializes current dataclass instance to '<key>' format.
 
         Returns:
             Command string in list wire format.
         '''
-        return ' '.join(self.SERIALIZATION_MAP[field.name] for field in dc.fields(self) if getattr(self, field.name) is not None)
+        return ' '.join(
+            self.SERIALIZATION_MAP[field.name]
+            for field in dc.fields(self)
+            if getattr(self, field.name) is not None
+        )
 
     @classmethod
     def from_dict_format(cls, text: str) -> 'DeviceVariableGroup':
-        '''
-        Parses input text into new class instance.
+        '''Parses input text into new class instance.
 
         Returns:
             Class instance, constructed from wire format representation.
         '''
-        field_lookup = {cls.SERIALIZATION_MAP[field.name]: field for field in dc.fields(cls)}
+        field_lookup = {
+            cls.SERIALIZATION_MAP[field.name]: field for field in dc.fields(cls)
+        }
         data_dict = {}
         for pair in text.split():
             wire_name, value = pair.split('=')
@@ -111,7 +113,7 @@ class DeviceConfig(DeviceVariableGroup, Config):
         'clamp_position': 'clamp_x',
         'clamp_velocity': 'clamp_v',
         'clamp_acceleration': 'clamp_a',
-        'debug_led': 'debug_led'
+        'debug_led': 'debug_led',
     }
 
     debug_led: bool = dc.field(default=None)
@@ -151,13 +153,20 @@ class DeviceTarget(DeviceVariableGroup):
 
 
 class WireInterface:
-    def __init__(self, 
-        port: str = '/dev/ttyS0', 
-        baud_rate: int = 115200, 
-        read_timeout: float = 0.2, 
+    def __init__(
+        self,
+        port: str = '/dev/ttyS0',
+        baud_rate: int = 115200,
+        read_timeout: float = 0.2,
         write_timeout: float = 0.2,
     ) -> None:
-        self.serial = serial.Serial(port=port, baudrate=baud_rate, timeout=read_timeout, write_timeout=write_timeout, exclusive=True)
+        self.serial = serial.Serial(
+            port=port,
+            baudrate=baud_rate,
+            timeout=read_timeout,
+            write_timeout=write_timeout,
+            exclusive=True,
+        )
         LOGGER.info(f'Opened serial connection to {self.serial.name}')
 
     def close(self):
@@ -175,7 +184,7 @@ class WireInterface:
             if received == '':
                 LOGGER.error(f'Serial read timeout during "{command}" request')
                 continue
-        
+
             RAW_COMMANDS_LOGGER.debug(received)
 
             if received.startswith('~'):
@@ -184,10 +193,14 @@ class WireInterface:
 
             stripped = received[1:].strip()
             if received.startswith('#'):
-                LOGGER.debug(f'Received log message during "{command}" request: {stripped}')
+                LOGGER.debug(
+                    f'Received log message during "{command}" request: {stripped}'
+                )
                 continue
             elif received.startswith('!'):
-                LOGGER.error(f'Received error response during "{command}" request: {stripped}')
+                LOGGER.error(
+                    f'Received error response during "{command}" request: {stripped}'
+                )
                 raise RuntimeError(f'Received error response: {stripped}')
             elif received.startswith('+'):
                 LOGGER.debug(f'Responding to request "{command}" with "{received}"')
@@ -202,7 +215,9 @@ class WireInterface:
         response = self._command('set', params.GROUP_NAME, params.to_dict_format())
         return params.from_dict_format(response)
 
-    def get(self, params: Union[DeviceConfig, DeviceState, DeviceTarget]) -> DeviceVariableGroup:
+    def get(
+        self, params: Union[DeviceConfig, DeviceState, DeviceTarget]
+    ) -> DeviceVariableGroup:
         response = self._command('get', params.GROUP_NAME, params.to_list_format())
         return params.from_dict_format(response)
 

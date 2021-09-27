@@ -1,10 +1,10 @@
-import mock
+from unittest import mock
 
-from common.interface import State, Config
-from device.device import CartPoleDevice
-
+from common.interface import Config, State
+from device.device import CartPoleDevice, DeviceTarget
 
 EPS = 1e-6
+
 
 class TestCartPoleDevice:
     @staticmethod
@@ -30,7 +30,7 @@ class TestCartPoleDevice:
 
         assert op.interface.get.called_once
         assert len(op.interface.get.call_args.args) == 1
-        assert isinstance(op.interface.get.call_args.args[0], Target)
+        assert isinstance(op.interface.get.call_args.args[0], DeviceTarget)
 
     def test_set_target(self):
         op = self.get_device()
@@ -40,5 +40,5 @@ class TestCartPoleDevice:
         assert op.interface.set.called_once
         assert len(op.interface.set.call_args.args) == 1
         arg = op.interface.set.call_args.args[0]
-        assert isinstance(arg, Target)
+        assert isinstance(arg, DeviceTarget)
         assert arg.position == target

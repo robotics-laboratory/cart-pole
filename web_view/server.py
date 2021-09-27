@@ -7,7 +7,6 @@ from aiohttp import web
 
 from web_view.collector import Collector
 
-
 LOGGER = logging.getLogger(__name__)
 
 
@@ -32,11 +31,11 @@ class Server:
                 raise web.HTTPUnprocessableEntity()
 
         if group is None:
-            LOGGER.error(f'No group in request parameters')
+            LOGGER.error('No group in request parameters')
             raise web.HTTPBadRequest()
 
         if field is None:
-            LOGGER.error(f'No field in request parameters')
+            LOGGER.error('No field in request parameters')
             raise web.HTTPBadRequest()
 
         ws = web.WebSocketResponse()
@@ -53,8 +52,9 @@ class Server:
                 await ws.send_json(session)
         finally:
             request.app['websockets'].discard(ws)
-            
+
         return ws
+
 
 def _run_server(collector: Collector):
     if collector is None:
@@ -62,16 +62,18 @@ def _run_server(collector: Collector):
         created_collector = True
     else:
         created_collector = False
-    
+
     server = Server(collector)
 
     app = web.Application()
     app['websockets'] = weakref.WeakSet()
-    app.add_routes([
-        web.get('/', server.index_handler),
-        web.static('/static', 'frontend'),
-        web.get('/ws', server.ws_handler),
-    ])
+    app.add_routes(
+        [
+            web.get('/', server.index_handler),
+            web.static('/static', 'frontend'),
+            web.get('/ws', server.ws_handler),
+        ]
+    )
 
     async def on_shutdown(app):
         for ws in set(app['websockets']):
@@ -81,18 +83,17 @@ def _run_server(collector: Collector):
 
     try:
         web.run_app(app)
-    except:
+    except Exception:
         if created_collector:
             collector.stop()
         raise
-        
 
 
 def run_server(collector: Collector = None):
     t = threading.Thread(target=_run_server, args=(collector,), daemon=True)
     LOGGER.info(f'Starting server on thread {t.ident}')
     t.start()
-    
+
 
 if __name__ == '__main__':
     _run_server(None)

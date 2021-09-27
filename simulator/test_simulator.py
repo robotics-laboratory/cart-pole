@@ -5,16 +5,17 @@ from simulator import CartPoleSimulator, PhysicalParams
 
 
 def eval_path_length(velocity, acceleration, step_n, delta_time):
-    '''
-    Evaluate path with uniform acceleration and discrete speed control.
+    '''Evaluate path with uniform acceleration and discrete speed control.
+
     Args:
-        * velocity - start velocity
-        * acceleration - constant acceleration
-        * step_n - number of discrete velocity changes
-        * delta_time - time delta between velocities changes
+        velocity: start velocity
+        acceleration: constant acceleration
+        step_n: number of discrete velocity changes
+        delta_time: time delta between velocities changes
     '''
     duration = step_n * delta_time
     return velocity * duration + (duration + delta_time) * duration / 2 * acceleration
+
 
 class TestCaseBase(unittest.TestCase):
     def setUp(self):
@@ -42,9 +43,7 @@ class TestCaseBase(unittest.TestCase):
 
         self.assert_equal_float(first.pole_angle, second.pole_angle, delta=delta)
         self.assert_equal_float(
-            first.pole_angular_velocity,
-            second.pole_angular_velocity,
-            delta=delta
+            first.pole_angular_velocity, second.pole_angular_velocity, delta=delta
         )
 
         self.assertEqual(first.error_code, second.error_code)
@@ -52,35 +51,34 @@ class TestCaseBase(unittest.TestCase):
 
 class ResetTest(TestCaseBase):
     def test_state(self):
-        '''
-        After reset pole is in thet rest state, cart at the x=0 and has no velocity.
-        '''
+        '''Test if reset() is working properly.
 
+        After reset pole is in the rest state, cart at the x=0 and has no velocity.
+        '''
         expected = State(
             position=0,
             velocity=0,
             acceleration=0,
             pole_angle=0,
             pole_angular_velocity=0,
-            error_code=Error.NO_ERROR
+            error_code=Error.NO_ERROR,
         )
 
         self.assert_equal_state(self.simulator.get_state(), expected)
 
     def test_target(self):
-        "Also cart has no acceleration target"
-
+        '''Also cart has no acceleration target.'''
         self.assert_equal_float(self.simulator.get_target(), 0.0)
 
 
 class AccelerationTest(TestCaseBase):
     def test_single_step_acc(self):
-        '''
+        '''Test if single simulation step is working properly.
+
         The simulation is run by small discrete steps.
         When we set the target acceleration, it changes instantly.
         The cart velocity changes discretely step by step.
         '''
-
         simulator = self.simulator
 
         before = simulator.get_state()
@@ -108,13 +106,12 @@ class AccelerationTest(TestCaseBase):
         self.assert_equal_float(state.velocity, before.velocity + delta_v)
         self.assert_equal_float(state.position, before.position + delta_x)
 
-
     def test_multiple_step_acc(self):
-        '''
+        '''Test if multiple simulation steps are working properly.
+
         The continuous simulation is run as numerical integration of base steps.
         The cart moves with the required acceleration (if restrictions allow).
         '''
-
         time_step = self.physical_params.time_step
         simulator = self.simulator
 
@@ -142,13 +139,12 @@ class AccelerationTest(TestCaseBase):
         self.assert_equal_float(state.position, before.position + delta_x)
 
     def test_complex_acc(self):
-        '''
-        A sequential series of accelerations.
+        '''A sequential series of accelerations.
+
         1. acceleration
         2. uniform velocity
         3. full braking
         '''
-
         time_step = self.physical_params.time_step
         simulator = self.simulator
 
@@ -195,12 +191,10 @@ class AccelerationTest(TestCaseBase):
         self.assert_equal_float(state.velocity, before.velocity + delta_v)
         self.assert_equal_float(state.position, before.position + delta_x)
 
+
 class AccelerationClampTest(unittest.TestCase):
     def test_clamp(self):
-        '''
-        Simulator limits acceleration with clipping.
-        '''
-
+        '''Simulator limits acceleration with clipping.'''
         simulator = CartPoleSimulator()
         simulator.reset_physical_params(PhysicalParams())
 
@@ -216,10 +210,7 @@ class AccelerationClampTest(unittest.TestCase):
         self.assertEqual(state.error_code, Error.NO_ERROR)
 
     def test_error(self):
-        '''
-        Simulator limits acceleration throwing out an error.
-        '''
-
+        '''Simulator limits acceleration throwing out an error.'''
         simulator = CartPoleSimulator()
         simulator.reset_physical_params(PhysicalParams())
 
@@ -232,12 +223,10 @@ class AccelerationClampTest(unittest.TestCase):
         state = simulator.get_state()
         self.assertEqual(state.error_code, Error.A_OVERFLOW)
 
+
 class VelocityClampTest(unittest.TestCase):
     def test_error(self):
-        '''
-        Simulator limits velocity throwing out an error.
-        '''
-
+        '''Simulator limits velocity throwing out an error.'''
         simulator = CartPoleSimulator()
         simulator.reset_physical_params(PhysicalParams())
 
@@ -252,12 +241,10 @@ class VelocityClampTest(unittest.TestCase):
         state = simulator.get_state()
         self.assertEqual(state.error_code, Error.V_OVERFLOW)
 
+
 class PositionClampTest(unittest.TestCase):
     def test_error(self):
-        '''
-        Simulator limits position throwing out an error.
-        '''
-
+        '''Simulator limits position throwing out an error.'''
         simulator = CartPoleSimulator()
         simulator.reset_physical_params(PhysicalParams())
 
