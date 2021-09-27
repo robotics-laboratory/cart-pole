@@ -3,7 +3,7 @@ import logging
 import serial
 from typing import Union, Type
 
-from cart_pole.interface import Error, Config, State
+from interface import Error, Config, State
 
 
 LOGGER = logging.getLogger(__name__)
@@ -99,6 +99,7 @@ class DeviceVariableGroup:
         return cls(**data_dict)
 
 
+@dc.dataclass()
 class DeviceConfig(DeviceVariableGroup, Config):
     GROUP_NAME = 'config'
     SERIALIZATION_MAP = {
@@ -117,6 +118,7 @@ class DeviceConfig(DeviceVariableGroup, Config):
     debug_led: bool = dc.field(default=None)
 
 
+@dc.dataclass()
 class DeviceState(DeviceVariableGroup, State):
     GROUP_NAME = 'state'
     SERIALIZATION_MAP = {

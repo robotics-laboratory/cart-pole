@@ -1,12 +1,12 @@
 import logging
 
-from cart_pole import util
-from cart_pole.interface import (
+import util
+from interface import (
     Config,
     State,
     CartPoleBase,
 )
-from cart_pole.device.wire_interface import (
+from device.wire_interface import (
     WireInterface,
     DeviceTarget,
     DeviceConfig,
@@ -18,8 +18,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 class CartPoleDevice(CartPoleBase):
-    def __init__(self, interface: WireInterface = None) -> None:
+    def __init__(self, interface: WireInterface = None, target_key='acceleration') -> None:
         self.interface = interface or WireInterface()
+        self.target_key = target_key
         self.step_count = 0
 
     def reset(self, config: Config) -> None:
@@ -35,10 +36,13 @@ class CartPoleDevice(CartPoleBase):
         return {util.STEP_COUNT: self.step_count}
 
     def get_target(self) -> float:
-        return self.interface.get(DeviceTarget(position=True)).position
+        request = DeviceTarget(**{self.target_key: True})
+        target = self.interface.get(request)
+        return getattr(target, self.target_key)
 
     def set_target(self, target: float) -> None:
-        _ = self.interface.set(DeviceTarget(position=target))
+        request = DeviceTarget(**{self.target_key: target})
+        self.interface.set(request)
 
     def close(self) -> None:
         self.interface.close()
