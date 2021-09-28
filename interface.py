@@ -88,6 +88,9 @@ class CartPoleBase:
         '''
         raise NotImplementedError
 
+    def make_step(self) -> None:
+        pass
+
     def close(self) -> None:
         '''
         Free all allocated resources.

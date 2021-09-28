@@ -176,17 +176,17 @@ def main():
     logging.basicConfig(level=logging.DEBUG, encoding='utf-8')
     logging.getLogger('cart_pole.operator.wire_interface').setLevel(logging.ERROR)
 
-    interface = WireInterface(port='COM4')
+    interface = WireInterface(port='COM5')
 
     test_homing(interface)
-    test_move_by_acceleration(interface)
+    # test_move_by_acceleration(interface)
     # test_command_logging(interface)
     # test_run_left_right(interface)
     # test_change_max_pos_and_run(interface)
     # test_change_speed_and_run(interface)
     # test_x_overflow(interface)
     # test_halt_on_error(interface)
-    # test_rapid_movement(interface)
+    test_rapid_movement(interface)
 
     interface.close()
 
