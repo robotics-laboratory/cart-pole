@@ -1,3 +1,4 @@
+import copy
 import dataclasses as dc
 import json
 import logging
@@ -125,34 +126,42 @@ class CollectorProxy(CartPoleBase):
         self.data: SessionData = None
 
         self._locks = defaultdict(threading.Lock)
-        
+        self._consumed_offset = defaultdict(int)
         self._started_flag = threading.Event()
-        self._available_data = []
-        self._consumer_flag = threading.Event()
-        self._is_finished = False
+        self._available_values = threading.Semaphore(0)
 
-        
     def save(self):
         with open(f'{self.data.meta.session_id}.json', 'w') as f:
             json.dump(self.data.to_dict(), f, indent=4)
 
     @contextmanager
     def time_trace(self, action=None):
-        action = action or inspect.stack()[2][3]
+        action = action or (inspect.stack()[2][3] if inspect.stack()[1][3] == '__enter__' else inspect.stack()[1][3])
         trace = SessionData.TimeTrace(action=action)
         yield trace
         trace.finish_timestamp = micros()
         trace.finish_perf_counter = perf_counter_micros()
         self.data.time_traces.append(trace)
 
-    def reset(self, config: Config) -> None:
-        with self.time_trace():
-            self.data = SessionData(meta=SessionData.SessionMeta(
-                device_config=config,
-                actor_class=self.actor_class.__name__,
-                actor_config=self.actor_config,
-            ))
+    def _add_value(self, key, x, y):
+        with self._locks[key]:
+            value = self.data.values[key]
+            value.x.append(x)
+            value.y.append(y)
 
+            if self._consumed_offset[key] == len(value.x) - 1:
+                self._available_values.release()
+
+    def reset(self, config: Config) -> None:
+        self.data = SessionData(meta=SessionData.SessionMeta(
+            device_class=self.cart_pole.__class__.__name__,
+            device_config=config,
+            actor_class=self.actor_class.__name__,
+            actor_config=self.actor_config,
+        ))
+        self._available_values = threading.Semaphore(0)
+
+        with self.time_trace():
             self.cart_pole.reset(config)
             self.data.meta.start_timestamp = micros()
             self._started_flag.set()
@@ -170,8 +179,7 @@ class CollectorProxy(CartPoleBase):
                 if value is None:
                     continue
 
-                self.data.values[key].x.append(trace.start_timestamp)
-                self.data.values[key].x.append(value)
+                self._add_value(key, trace.start_timestamp, value)
 
             return state
 
@@ -186,8 +194,7 @@ class CollectorProxy(CartPoleBase):
     def set_target(self, target: float) -> None:
         with self.time_trace() as trace:
             key = 'target.acceleration'
-            self.data.values[key].x.append(trace.start_timestamp)
-            self.data.values[key].y.append(target)
+            self._add_value(key, trace.start_timestamp, target)
             
             return self.cart_pole.set_target(target)
 
@@ -198,19 +205,29 @@ class CollectorProxy(CartPoleBase):
     def close(self) -> None:
         with self.time_trace():
             self.cart_pole.close()
-            self.data.meta.duration = micros() - self.data.meta.start_timestamp
-            self.save()
-            self._started_flag.clear()
-            self.data = None
-
+        
+        self.data.meta.duration = micros() - self.data.meta.start_timestamp
+        self.save()
+        self._started_flag.clear()
 
     def meta(self) -> dict:
         if not self._started_flag.is_set():
             raise RuntimeError('Session has not started yet')
         return self.data.to_dict()
 
-    def consume_value(self) -> SessionData.Value:
-        pass
+    def consume_value(self) -> dict:
+        self._available_values.acquire()
+        for key, value in self.data.values.items():
+            offset = self._consumed_offset[key]
+            if offset == len(value.x):
+                continue
+
+            with self._locks[key]:
+                vc = copy.deepcopy(value)
+                vc.x = vc.x[offset:]
+                vc.y = vc.y[offset:]
+                self._consumed_offset[key] = len(value.x)
+                return serialize(vc)
 
 
 if __name__ == '__main__':
@@ -227,8 +244,12 @@ if __name__ == '__main__':
         def close(self) -> None:
             pass
 
+    class FakeActor(Actor):
+        pass
+
     logging.getLogger().setLevel(logging.DEBUG)
-    c = CollectorProxy(FakeCartPole())
+    c = CollectorProxy(FakeCartPole(), FakeActor, {})
+    print()
     c.reset(Config())
     time.sleep(2)
     c.set_target(1)
@@ -236,10 +257,12 @@ if __name__ == '__main__':
     c.set_target(2)
     time.sleep(1)
     c.set_target(3)
+
+    print(c._available_values._value)
+    print(c.consume_value())
+    print(c._available_values._value)
+
     c.close()
-
-    # print(len(c.consume('state.position', 0)))  # FIXME
-
     c.reset(Config())
     time.sleep(5)
     c.close()
