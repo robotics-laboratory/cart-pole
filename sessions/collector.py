@@ -29,18 +29,6 @@ def micros() -> int:
 def perf_counter_micros() -> int:
     return time.perf_counter_ns() // 1000
 
-def serialize(v):
-    if dc.is_dataclass(v):
-        res = {}
-        for field in dc.fields(v):
-            res[field.name] = serialize(getattr(v, field.name))
-        return res
-    elif isinstance(v, list):
-        return [serialize(item) for item in v]
-    elif isinstance(v, dict):
-        return {key: serialize(value) for key, value in v.items()}
-    else:
-        return v
 
 class Units:
     METERS = 'm'
@@ -115,9 +103,6 @@ class SessionData:
             # todo
         ]
 
-    def to_dict(self) -> dict:
-        return serialize(self)
-
 
 class CollectorProxy(CartPoleBase):
     LOGGING_FORMAT = (
@@ -147,7 +132,7 @@ class CollectorProxy(CartPoleBase):
 
     def save(self):
         with open(f'{self.data.meta.session_id}.json', 'w') as f:
-            json.dump(self.data.to_dict(), f, indent=4)
+            json.dump(dc.asdict(self.data), f, indent=4)
 
     @contextmanager
     def time_trace(self, action=None):
@@ -183,13 +168,16 @@ class CollectorProxy(CartPoleBase):
         self._logging_handler.flush()
 
         log_lines = self._logging_stream.getvalue().splitlines(keepends=False)
+        timestamp = 0
         for line in log_lines:
             time, message = line.split(' ', 1)
             try:
                 timestamp = int(float(time) * 1000000)
+                self.data.logs.append(SessionData.Log(timestamp=timestamp, message=message))
             except ValueError:  # on float conversion
-                continue
-            self.data.logs.append(SessionData.Log(timestamp=timestamp, message=message))
+                if len(self.data.logs) > 0:
+                    self.data.logs[-1].message += '\n' + message
+
         self._logging_stream.close()
         LOGGER.debug("Collected %s log messages", len(log_lines))
 
@@ -261,7 +249,7 @@ class CollectorProxy(CartPoleBase):
     def meta(self) -> dict:
         if not self._started_flag.is_set():
             raise RuntimeError('Session has not started yet')
-        return self.data.to_dict()
+        return dc.asdict(self.data)
 
     def consume_value(self) -> dict:
         self._available_values.acquire()
@@ -275,7 +263,7 @@ class CollectorProxy(CartPoleBase):
                 vc.x = vc.x[offset:]
                 vc.y = vc.y[offset:]
                 self._consumed_offset[key] = len(value.x)
-                return serialize(vc)
+                return dc.asdict(vc)
 
 
 if __name__ == '__main__':
