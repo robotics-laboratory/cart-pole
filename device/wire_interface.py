@@ -1,9 +1,10 @@
 import dataclasses as dc
 import logging
 import serial
+import threading
 from typing import Union, Type
 
-from cart_pole.interface import Error, Config, State
+from interface import Error, Config, State  # FIXME
 
 
 LOGGER = logging.getLogger(__name__)
@@ -117,6 +118,7 @@ class DeviceConfig(DeviceVariableGroup, Config):
     debug_led: bool = dc.field(default=None)
 
 
+@dc.dataclass
 class DeviceState(DeviceVariableGroup, State):
     GROUP_NAME = 'state'
     SERIALIZATION_MAP = {
@@ -158,42 +160,44 @@ class WireInterface:
         write_timeout: float = 0.2,
     ) -> None:
         self.serial = serial.Serial(port=port, baudrate=baud_rate, timeout=read_timeout, write_timeout=write_timeout, exclusive=True)
+        self._lock = threading.Lock()
         LOGGER.info(f'Opened serial connection to {self.serial.name}')
 
     def close(self):
         self.serial.close()
 
     def request(self, command: str) -> str:
-        command = command.strip()
+        with self._lock:
+            command = command.strip()
 
-        LOGGER.debug(f'Request to serial connection "{command}"')
-        RAW_COMMANDS_LOGGER.debug(command)
-        self.serial.write((command + '\n').encode('utf-8'))
+            LOGGER.debug(f'Request to serial connection "{command}"')
+            RAW_COMMANDS_LOGGER.debug(command)
+            self.serial.write((command + '\n').encode('utf-8'))
 
-        while True:
-            received = self.serial.readline().decode('utf-8').strip()
-            if received == '':
-                LOGGER.error(f'Serial read timeout during "{command}" request')
-                continue
-        
-            RAW_COMMANDS_LOGGER.debug(received)
+            while True:
+                received = self.serial.readline().decode('utf-8').strip()
+                if received == '':
+                    LOGGER.error(f'Serial read timeout during "{command}" request')
+                    continue
+            
+                RAW_COMMANDS_LOGGER.debug(received)
 
-            if received.startswith('~'):
-                LOGGER.debug(f'Received processing message during "{command}" request')
-                continue
+                if received.startswith('~'):
+                    LOGGER.debug(f'Received processing message during "{command}" request')
+                    continue
 
-            stripped = received[1:].strip()
-            if received.startswith('#'):
-                LOGGER.debug(f'Received log message during "{command}" request: {stripped}')
-                continue
-            elif received.startswith('!'):
-                LOGGER.error(f'Received error response during "{command}" request: {stripped}')
-                raise RuntimeError(f'Received error response: {stripped}')
-            elif received.startswith('+'):
-                LOGGER.debug(f'Responding to request "{command}" with "{received}"')
-                return stripped
-            else:
-                LOGGER.debug(f'Received unknown response line: {received}')
+                stripped = received[1:].strip()
+                if received.startswith('#'):
+                    LOGGER.debug(f'Received log message during "{command}" request: {stripped}')
+                    continue
+                elif received.startswith('!'):
+                    LOGGER.error(f'Received error response during "{command}" request: {stripped}')
+                    raise RuntimeError(f'Received error response: {stripped}')
+                elif received.startswith('+'):
+                    LOGGER.debug(f'Responding to request "{command}" with "{received}"')
+                    return stripped
+                else:
+                    LOGGER.debug(f'Received unknown response line: {received}')
 
     def _command(self, command: str, group: str = '', args: str = '') -> str:
         return self.request(f'{command} {group} {args}')
