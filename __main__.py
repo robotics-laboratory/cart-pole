@@ -15,6 +15,8 @@ def main():
         'max_position': 0.1
     })
 
+    runner.start_server()
+
     runner.run(1000)
 
 if __name__ == '__main__':

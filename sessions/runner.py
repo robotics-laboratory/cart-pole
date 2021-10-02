@@ -3,6 +3,7 @@ import logging
 from typing import Type
 from sessions.actor import Actor
 from sessions.collector import CollectorProxy
+from web_view import server
 
 
 LOGGER = logging.getLogger(__name__)
@@ -30,6 +31,9 @@ class Runner:
         finally:
             self.proxy.close()
             LOGGER.info('Run finished')
+
+    def start_server(self) -> None:
+        server.run_server(self.proxy)
 
     def _loop(self, max_iterations: int) -> None:
         actor = self.actor_class(**self.actor_config)
