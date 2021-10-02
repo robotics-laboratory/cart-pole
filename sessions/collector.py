@@ -9,7 +9,8 @@ import threading
 import time
 from contextlib import contextmanager
 from collections import defaultdict
-from typing import List, Dict, Type
+from io import StringIO
+from typing import Callable, List, Dict, Type
 
 from interface import CartPoleBase, Config, State
 from sessions.actor import Actor
@@ -119,11 +120,25 @@ class SessionData:
 
 
 class CollectorProxy(CartPoleBase):
-    def __init__(self, cart_pole: CartPoleBase, actor_class: Type[Actor], actor_config: dict) -> None:
+    LOGGING_FORMAT = (
+        '%(created)f [%(levelname)s] %(name)s (%(filename)s:%(lineno)d) :: %(message)s'
+    )
+    HUMAN_LOGGING_FORMAT = '%(asctime)s [%(levelname)s] %(name)s :: %(message)s'
+
+    def __init__(
+        self,
+        cart_pole: CartPoleBase,
+        actor_class: Type[Actor],
+        actor_config: dict,
+        reset_callbacks: List[Callable] = None,
+        close_callbacks: List[Callable] = None,
+    ) -> None:
         self.cart_pole = cart_pole
         self.actor_class = actor_class
         self.actor_config = actor_config
         self.data: SessionData = None
+        self.reset_callbacks = reset_callbacks or []
+        self.close_callbacks = close_callbacks or []
 
         self._locks = defaultdict(threading.Lock)
         self._consumed_offset = defaultdict(int)
@@ -152,6 +167,32 @@ class CollectorProxy(CartPoleBase):
             if self._consumed_offset[key] == len(value.x) - 1:
                 self._available_values.release()
 
+    def _init_logging(self):
+        self._logging_stream = StringIO()
+        self._logging_handler = logging.StreamHandler()
+        self._logging_handler.setStream(self._logging_stream)
+        self._logging_handler.setLevel(logging.DEBUG)
+        self._logging_handler.setFormatter(logging.Formatter(self.LOGGING_FORMAT))
+        if len(logging.getLogger().handlers) == 0:
+            # Logging hasn't been initialized yet
+            logging.basicConfig(format=self.HUMAN_LOGGING_FORMAT, level=logging.DEBUG)
+        logging.getLogger().addHandler(self._logging_handler)
+
+    def _cleanup_logging(self):
+        logging.getLogger().removeHandler(self._logging_handler)
+        self._logging_handler.flush()
+
+        log_lines = self._logging_stream.getvalue().splitlines(keepends=False)
+        for line in log_lines:
+            time, message = line.split(' ', 1)
+            try:
+                timestamp = int(float(time) * 1000000)
+            except ValueError:  # on float conversion
+                continue
+            self.data.logs.append(SessionData.Log(timestamp=timestamp, message=message))
+        self._logging_stream.close()
+        LOGGER.debug("Collected %s log messages", len(log_lines))
+
     def reset(self, config: Config) -> None:
         self.data = SessionData(meta=SessionData.SessionMeta(
             device_class=self.cart_pole.__class__.__name__,
@@ -160,10 +201,14 @@ class CollectorProxy(CartPoleBase):
             actor_config=self.actor_config,
         ))
         self._available_values = threading.Semaphore(0)
+        self._init_logging()
 
         with self.time_trace():
             self.cart_pole.reset(config)
             self.data.meta.start_timestamp = micros()
+            for callback in self.reset_callbacks:
+                callback()
+
             self._started_flag.set()
 
     def get_state(self) -> State:
@@ -205,7 +250,10 @@ class CollectorProxy(CartPoleBase):
     def close(self) -> None:
         with self.time_trace():
             self.cart_pole.close()
-        
+            for callback in self.close_callbacks:
+                callback()
+
+        self._cleanup_logging()
         self.data.meta.duration = micros() - self.data.meta.start_timestamp
         self.save()
         self._started_flag.clear()
