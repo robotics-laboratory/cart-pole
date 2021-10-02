@@ -10,7 +10,7 @@ import time
 from contextlib import contextmanager
 from collections import defaultdict
 from io import StringIO
-from typing import Callable, List, Dict, Type
+from typing import Callable, List, Dict, Type, Tuple
 
 from interface import CartPoleBase, Config, State
 from sessions.actor import Actor
@@ -251,8 +251,12 @@ class CollectorProxy(CartPoleBase):
             raise RuntimeError('Session has not started yet')
         return dc.asdict(self.data)
 
-    def consume_value(self) -> dict:
-        self._available_values.acquire()
+    def consume_value(self) -> Tuple[dict, bool]:
+        while True:
+            if not self._started_flag.is_set():
+                raise ValueError('Session has finished')
+            if self._available_values.acquire(timeout=1.0):
+                break
         for key, value in self.data.values.items():
             offset = self._consumed_offset[key]
             if offset == len(value.x):
