@@ -1,6 +1,8 @@
 import logging
+import socket
 import math
 import os
+from contextlib import closing
 
 from common.interface import State
 
@@ -29,5 +31,12 @@ def init_logging():
 
     format = os.environ.get('LOGGING_FORMAT', DEFAULT_FORMAT)
     level = getattr(logging, os.environ.get('LOGGING_LEVEL', 'INFO').upper())
-    logging.basicConfig(format=format, level=level)
+    logging.basicConfig(format=format, level=level, force=True)
     setattr(init_logging, '__initialized', True)
+
+
+def find_free_port():
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return s.getsockname()[1]

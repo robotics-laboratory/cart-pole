@@ -23,9 +23,10 @@ class CartPoleDevice(CartPoleBase):
         self.step_count = 0
         self.target_key = target_key
 
-    def reset(self, config: Config) -> None:
-        config.__class__ = DeviceConfig
+    def reset(self, config: Config = None) -> None:
         self.interface.reset()
+        config = config or Config.default()
+        config.__class__ = DeviceConfig
         self.interface.set(config)
         self.step_count = 0
 

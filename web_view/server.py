@@ -7,6 +7,7 @@ import asyncio
 from aiohttp import web
 
 from sessions.collector import CollectorProxy
+from common.util import init_logging
 
 
 LOGGER = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ class Server:
     async def ws_handler(self, request: web.Request) -> web.Response:
         session_id = request.query.get('session_id')
 
-        if session_id is None:
+        if session_id is not None:
             try:
                 with open(f'{session_id}') as file:
                     session = json.load(file)
@@ -75,11 +76,8 @@ def _run_server(collector: CollectorProxy):
     web.run_app(app)
 
 
-def run_server(collector: CollectorProxy):
+def run_server(collector: CollectorProxy = None):
+    init_logging()
     t = threading.Thread(target=_run_server, args=(collector,), daemon=True)
-    LOGGER.info(f'Starting server on thread {t.ident}')
     t.start()
-    
-
-if __name__ == '__main__':
-    _run_server(None)
+    LOGGER.info(f'Starting server on thread {t.ident}')

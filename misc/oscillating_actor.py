@@ -1,12 +1,12 @@
-from interface import State
-from misc.session_helpers import Actor
+from common.interface import State
+from sessions.actor import Actor
 
 
 class OscillatingActor(Actor):
     '''Sample actor that's trying to oscillate in given X range'''
 
     def __init__(self, device_config, acceleration, max_position, **_):
-        super().__init__(device_config)
+        super().__init__()
         self.direction = True  # Right
         self.a = acceleration
         self.max_x = max_position
