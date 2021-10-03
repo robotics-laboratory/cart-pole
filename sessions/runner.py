@@ -1,4 +1,4 @@
-from interface import CartPoleBase
+from common.interface import CartPoleBase
 import logging
 from typing import Type
 from sessions.actor import Actor

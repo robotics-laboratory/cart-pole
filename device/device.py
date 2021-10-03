@@ -1,7 +1,7 @@
 import logging
 
-import util
-from interface import (
+from common import util
+from common.interface import (
     Config,
     State,
     CartPoleBase,

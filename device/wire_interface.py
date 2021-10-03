@@ -4,7 +4,7 @@ import serial
 import threading
 from typing import Union, Type
 
-from interface import Error, Config, State
+from common.interface import Error, Config, State
 
 
 LOGGER = logging.getLogger(__name__)
