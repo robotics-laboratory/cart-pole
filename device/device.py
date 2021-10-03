@@ -1,7 +1,7 @@
 import logging
 
-import util  # FIXME
-from interface import (  # FIXME
+from common import util
+from common.interface import (  # FIXME
     Config,
     State,
     CartPoleBase,

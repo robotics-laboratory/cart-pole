@@ -12,7 +12,7 @@ from collections import defaultdict
 from io import StringIO
 from typing import Callable, List, Dict, Type, Tuple
 
-from interface import CartPoleBase, Config, State
+from common.interface import CartPoleBase, Config, State
 from sessions.actor import Actor
 
 
