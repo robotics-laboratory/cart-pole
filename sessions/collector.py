@@ -13,6 +13,7 @@ from io import StringIO
 from typing import Callable, List, Dict, Type, Tuple
 
 from common.interface import CartPoleBase, Config, State
+from common.util import init_logging
 from sessions.actor import Actor
 
 
@@ -153,14 +154,12 @@ class CollectorProxy(CartPoleBase):
                 self._available_values.release()
 
     def _init_logging(self):
+        init_logging()
         self._logging_stream = StringIO()
         self._logging_handler = logging.StreamHandler()
         self._logging_handler.setStream(self._logging_stream)
         self._logging_handler.setLevel(logging.DEBUG)
         self._logging_handler.setFormatter(logging.Formatter(self.LOGGING_FORMAT))
-        if len(logging.getLogger().handlers) == 0:
-            # Logging hasn't been initialized yet
-            logging.basicConfig(format=self.HUMAN_LOGGING_FORMAT, level=logging.DEBUG)
         logging.getLogger().addHandler(self._logging_handler)
 
     def _cleanup_logging(self):
