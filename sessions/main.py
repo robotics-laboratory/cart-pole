@@ -7,7 +7,7 @@ import logging
 
 
 def main():
-    device = CartPoleDevice(WireInterface('COM5'))
+    device = CartPoleDevice()
     config = DeviceConfig(max_velocity=0.25, max_acceleration=1)
     runner = Runner(device, config, OscillatingActor, {
         'device_config': config,

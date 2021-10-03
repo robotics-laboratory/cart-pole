@@ -5,6 +5,7 @@ import threading
 from typing import Union, Type
 
 from common.interface import Error, Config, State
+import os
 
 
 LOGGER = logging.getLogger(__name__)
@@ -155,11 +156,13 @@ class DeviceTarget(DeviceVariableGroup):
 
 class WireInterface:
     def __init__(self, 
-        port: str = '/dev/ttyS0', 
+        port: str = None,
         baud_rate: int = 115200, 
         read_timeout: float = 0.2, 
         write_timeout: float = 0.2,
     ) -> None:
+        port = port or os.environ.get('SERIAL_PORT')
+        assert port is not None, 'Please set "port" argument or "SERIAL_PORT" env var'
         self.serial = serial.Serial(port=port, baudrate=baud_rate, timeout=read_timeout, write_timeout=write_timeout, exclusive=True)
         self._lock = threading.Lock()
         LOGGER.info(f'Opened serial connection to {self.serial.name}')
