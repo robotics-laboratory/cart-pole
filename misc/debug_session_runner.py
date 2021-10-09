@@ -5,8 +5,11 @@ from sessions.collector import CollectorProxy
 from common.interface import Config, CartPoleBase
 from common.util import init_logging
 from misc.analyzer._saleae import SaleaeAnalyzer
-from misc.oscillating_actor import OscillatingActor
 import logging
+# Actor imports
+from misc.oscillating_actor import OscillatingActor
+from misc.lqr_actor import LinearBalanceControl
+from misc.const_actor import ConstantActor
 
 LOGGER = logging.getLogger('debug-session-runner')
 
@@ -22,16 +25,26 @@ def control_loop(device: CartPoleBase, actor: Actor, max_iterations=-1):
 
 
 if __name__ == '__main__':
-    SESSION_ID = 'v1'
+    SESSION_ID = 'v3_lqr'
     OUTPUT_PATH = Path(f'data/sessions/{SESSION_ID}')
+    # DEVICE_CONFIG = Config(max_position=0.25, max_velocity=2.0, max_acceleration=10.0)
+    MAX_ITERATIONS = 300
+    ### Oscillating actor session
+    # ACTOR_CLASS = OscillatingActor
+    # ACTOR_CONFIG = {'acceleration': 1.0, 'max_position': 0.05}
+    ### LQR session
+    ACTOR_CLASS = LinearBalanceControl
+    ACTOR_CONFIG = {'gravity': 9.8, 'pole_length': 0.3, 'eps': 0.2, 'countdown': 2}
     DEVICE_CONFIG = Config(
         max_position=0.25,
-        max_velocity=0.4,
-        max_acceleration=10.0,
+        max_velocity=1.0,
+        max_acceleration=5.0,
+        clamp_velocity=True,
+        clamp_acceleration=True,
     )
-    ACTOR_CLASS = OscillatingActor
-    ACTOR_CONFIG = {'acceleration': 1.0, 'max_position': 0.05}
-    MAX_ITERATIONS = 500
+    ### Const session
+    # ACTOR_CLASS = ConstantActor
+    # ACTOR_CONFIG = {}
 
     init_logging()
     device = CartPoleDevice()

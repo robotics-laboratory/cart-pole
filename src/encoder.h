@@ -9,9 +9,11 @@ class Encoder {
     TwoWire *wire;
     float *x_ref;
     float *v_ref;
+    float zero_angle;
     float prevAngle;
     unsigned long prevTime;
-    float zero_angle;
+    float prevVelocity;
+    std::deque<std::pair<unsigned long, float>> history;
 
 public:
     Encoder(TwoWire *wire, float *x_ref, float *v_ref, float zero_angle);

@@ -5,8 +5,8 @@ from math import cos, pi, sin
 import numpy as np
 import scipy.linalg as linalg
 
-from interface import State
-from misc.session_helpers import Actor
+from common.interface import State
+from sessions.actor import Actor
 
 
 class LQR:
@@ -67,7 +67,7 @@ class LinearBalanceControl(Actor):
         Q[3, 3] = 0
 
         R = np.zeros((1, 1))
-        R[0, 0] = 1
+        R[0, 0] = 100
 
         self.lqr = LQR(A, B, Q, R)
         self.eps = eps

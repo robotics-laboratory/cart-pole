@@ -244,7 +244,7 @@ void Stepper::SetTargetPosition(float value) {
 
 void Stepper::SetTargetAcceleration(float value) {
     Globals &G = GetGlobals();
-//    SetSpeed(G.max_v);  // TODO: ???
+    SetSpeed(G.max_v);
 
     int32_t steps_per_ss = static_cast<int32_t>(value * METERS_TO_STEPS_MULTIPLIER);
     fas_stepper->moveByAcceleration(steps_per_ss, true);

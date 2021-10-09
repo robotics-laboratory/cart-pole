@@ -66,7 +66,10 @@ void ProtocolProcessor::Success(const std::string &text) {
     serial_port.printf("+ %s\n", text.c_str());
 }
 
-void ProtocolProcessor::Log(const std::string &text) { serial_port.printf("# %s\n", text.c_str()); }
+void ProtocolProcessor::Log(const std::string &text) {
+    // TODO: Compilation flag?
+//     serial_port.printf("# %s\n", text.c_str());
+}
 
 void ProtocolProcessor::Error(const std::string &text) {
     serial_port.printf("! %s\n", text.c_str());
