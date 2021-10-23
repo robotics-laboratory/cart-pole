@@ -6,7 +6,7 @@
 
 #include "stepper.h"
 
-namespace {
+// namespace {
     const int DEBUG_LED_PIN = 2;
 
 std::ostream &operator<<(std::ostream &out, Error error) { return out << static_cast<int>(error); }
@@ -17,31 +17,6 @@ std::istream &operator>>(std::istream &in, Error &error) {
     error = static_cast<Error>(err);
     return in;
 }
-
-enum class FieldID {
-    max_x,
-    max_v,
-    max_a,
-    hw_max_x,
-    hw_max_v,
-    hw_max_a,
-    clamp_x,
-    clamp_v,
-    clamp_a,
-    curr_x,
-    trgt_x,
-    curr_v,
-    trgt_v,
-    curr_a,
-    trgt_a,
-    pole_x,
-    pole_v,
-    errcode,
-    imu_a,
-    motor_x,
-    motor_v,
-    debug_led,
-};
 
 struct FieldBase {
     virtual ~FieldBase() = default;
@@ -273,9 +248,9 @@ FieldMap constructConfigFieldMap() {
 FieldMap constructStateFieldMap() {
     Globals &G = GetGlobals();
     FieldMap map;
-    map["x"] = makeField<float, FieldID::curr_x, true>(G.curr_x);
-    map["v"] = makeField<float, FieldID::curr_v, true>(G.curr_v);
-    map["a"] = makeField<float, FieldID::curr_a, true>(G.curr_a);
+    map["curr_x"] = makeField<float, FieldID::curr_x, true>(G.curr_x);
+    map["curr_v"] = makeField<float, FieldID::curr_v, true>(G.curr_v);
+    map["curr_a"] = makeField<float, FieldID::curr_a, true>(G.curr_a);
     map["pole_x"] = makeField<float, FieldID::pole_x, true>(G.pole_x);
     map["pole_v"] = makeField<float, FieldID::pole_v, true>(G.pole_v);
     map["errcode"] = makeField<Error, FieldID::errcode, true>(G.errcode);
@@ -288,9 +263,9 @@ FieldMap constructStateFieldMap() {
 FieldMap constructTargetFieldMap() {
     Globals &G = GetGlobals();
     FieldMap map;
-    map["x"] = makeField<float, FieldID::trgt_x, false>(G.trgt_x);
-    map["v"] = makeField<float, FieldID::trgt_v, false>(G.trgt_v);
-    map["a"] = makeField<float, FieldID::trgt_a, false>(G.trgt_a);
+    map["trgt_x"] = makeField<float, FieldID::trgt_x, false>(G.trgt_x);
+    map["trgt_v"] = makeField<float, FieldID::trgt_v, false>(G.trgt_v);
+    map["trgt_a"] = makeField<float, FieldID::trgt_a, false>(G.trgt_a);
     return map;
 }
 
@@ -324,7 +299,7 @@ FieldBase *getField(const FieldMap &map, const std::string &key) {
     }
     return it->second.get();
 }
-}  // namespace
+// }  // namespace
 
 std::string Globals::Get(const std::string &group, const std::string &key) const {
     const FieldMap &map = lookupFieldMap(group);
@@ -341,8 +316,8 @@ std::vector<std::pair<std::string, std::string>> Globals::Get(const std::string 
 }
 
 void Globals::Prepare(const std::string &group, const std::string &key, const std::string &value) {
-    FieldMap &map = lookupFieldMap(group);
-    getField(map, key)->Prepare(value);
+    // FieldMap &map = lookupFieldMap(group);
+    // getField(map, key)->Prepare(value);
 }
 
 void Globals::Commit(const std::string &group, const std::string &key) {

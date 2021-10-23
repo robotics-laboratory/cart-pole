@@ -103,7 +103,7 @@ void Encoder::Poll() {
 
 Encoder &GetPoleEncoder() {
     static TwoWire *primaryWire = []() {
-        Wire.begin();
+        Wire.begin(-1, -1, 1000000);
         return &Wire;
     }();
     Globals &G = GetGlobals();

@@ -1,1 +1,1 @@
-from device.device import *
+from device._device import *

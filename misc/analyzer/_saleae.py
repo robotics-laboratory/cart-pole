@@ -70,6 +70,8 @@ class SaleaeAnalyzer:
 
     def __init__(self):
         self.api = launch_logic()
+        sample_rate = float(os.environ.get('SALEAE_SAMPLE_RATE', 1e6))
+        self.api.set_sample_rate_by_minimum(digital_minimum=sample_rate)
 
     def start(self):
         self.api.capture_start()

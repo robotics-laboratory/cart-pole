@@ -4,6 +4,30 @@
 #include <string>
 #include <vector>
 
+enum class FieldID {
+    max_x,
+    max_v,
+    max_a,
+    hw_max_x,
+    hw_max_v,
+    hw_max_a,
+    clamp_x,
+    clamp_v,
+    clamp_a,
+    curr_x,
+    trgt_x,
+    curr_v,
+    trgt_v,
+    curr_a,
+    trgt_a,
+    pole_x,
+    pole_v,
+    errcode,
+    imu_a,
+    motor_x,
+    motor_v,
+    debug_led,
+};
 
 enum class Error {
     NO_ERROR = 0,       // This is fine
@@ -52,3 +76,9 @@ struct Globals {
 };
 
 Globals &GetGlobals();
+
+template <typename T, FieldID F>
+T validateField(T value);
+
+template <typename T, FieldID F>
+void updateField(T value);

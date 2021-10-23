@@ -24,10 +24,18 @@ void loop() {
     debug_pulse();
     GetPoleEncoder().Poll();
     debug_pulse();
-    GetMotorEncoder().Poll();
-    debug_pulse();
-//    GetAccelerometer().Poll();
-//    debug_pulse();
+    // GetMotorEncoder().Poll();
+    // debug_pulse();
+    // GetAccelerometer().Poll();
+    // debug_pulse();
     GetProtocolProcessor().Poll();
     debug_pulse();
+
+    // delayMicroseconds(20);
+    // if (Serial.available()) {
+    //     char in = Serial.read();
+    //     Serial.write(in);
+    //     Serial.flush();
+    // }
+    // delayMicroseconds(10);
 }

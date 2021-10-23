@@ -220,15 +220,16 @@ class CollectorProxy(CartPoleBase):
         with self.time_trace() as trace:
             state = self.cart_pole.get_state()
 
-            for field in dc.fields(state):
-                key = f'state.{field.name}'
-                value = getattr(state, field.name)
-                if value is None:
-                    continue
+        for field in dc.fields(state):
+            key = f'state.{field.name}'
+            value = getattr(state, field.name)
+            if value is None:
+                continue
 
-                self._add_value(key, trace.start_timestamp, value)
+            self._add_value(key, trace.start_timestamp, value)
 
-            return state
+        LOGGER.info(f"Get state: {state}")
+        return state
 
     def get_info(self) -> dict:
         with self.time_trace():
@@ -242,7 +243,7 @@ class CollectorProxy(CartPoleBase):
         with self.time_trace() as trace:
             key = 'target.acceleration'
             self._add_value(key, trace.start_timestamp, target)
-            
+            LOGGER.info(f"Set target: {target}")
             return self.cart_pole.set_target(target)
 
     def make_step(self) -> None:
