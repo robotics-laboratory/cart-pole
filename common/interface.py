@@ -2,7 +2,7 @@ import dataclasses as dc
 import enum
 
 
-class Error(enum.Enum):
+class Error(enum.IntEnum):
     NO_ERROR = 0
     NEED_RESET = 1
     X_OVERFLOW = 2
@@ -35,7 +35,7 @@ class Config:
     @staticmethod
     def default():
         return Config(
-            max_position=0.19,
+            max_position=0.25,
             max_velocity=10.0,
             max_acceleration=10.0,
             clamp_position=False,

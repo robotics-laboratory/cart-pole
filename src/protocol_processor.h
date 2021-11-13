@@ -3,16 +3,16 @@
 
 #include <sstream>
 #include <string>
+#include "controller.pb.h"
 
-class ProtocolProcessor {
-    HardwareSerial serial_port;
+struct ProtocolProcessor {
+    // HardwareSerial serial_port;
 
-public:
     ProtocolProcessor();
 
     void Poll();
 
-    void Success(const std::string &text);
+    // void Success(const std::string &text);
     void Log(const std::string &text);
     void Error(const std::string &text);
     void KeepAlive();
@@ -20,9 +20,19 @@ public:
 private:
     void handleCommand(const std::string &line);
 
-    std::string get(const std::string &group, std::stringstream &stream);
-    std::string set(const std::string &group, std::stringstream &stream);
-    std::string reset();
+    // std::string get(const std::string &group, std::stringstream &stream);
+    // std::string set(const std::string &group, std::stringstream &stream);
+    // std::string reset();
+
+    Response dispatch(Request &request);
+    Response handleGetState(Request &request);
+    Response handleSetTarget(Request &request);
+    Response handleSetConfig(Request &request);
+    Response handleGetTarget(Request &request);
+    Response handleGetConfig(Request &request);
+    Response handleReset(Request &request);
+    void sendResponse(Response &response);
+    void sendTextResponse(const std::string &text, ResponseStatus status);
 };
 
 ProtocolProcessor &GetProtocolProcessor();

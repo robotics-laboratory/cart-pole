@@ -1,13 +1,14 @@
 import logging
 
 from common import util
-from common.interface import (  # FIXME
+from common.interface import (
     Config,
     State,
     CartPoleBase,
 )
-from device.wire_interface import (  # FIXME
+from device.wire_interface import (
     WireInterface,
+    ProtobufWireInterface,
     DeviceTarget,
     DeviceConfig,
     DeviceState,
@@ -19,13 +20,14 @@ LOGGER = logging.getLogger(__name__)
 
 class CartPoleDevice(CartPoleBase):
     def __init__(self, interface: WireInterface = None, target_key='acceleration') -> None:
-        self.interface = interface or WireInterface()
+        self.interface = interface or ProtobufWireInterface()
         self.step_count = 0
-        self.target_key = target_key  # FIXME
+        self.target_key = target_key
 
-    def reset(self, config: Config) -> None:
-        config.__class__ = DeviceConfig
+    def reset(self, config: Config = None) -> None:
         self.interface.reset()
+        config = config or Config.default()
+        config.__class__ = DeviceConfig
         self.interface.set(config)
         self.step_count = 0
 
@@ -36,11 +38,13 @@ class CartPoleDevice(CartPoleBase):
         return {util.STEP_COUNT: self.step_count}
 
     def get_target(self) -> float:
-        res = self.interface.get(DeviceTarget(**{self.target_key: True}))
-        return getattr(res, self.target_key)
+        request = DeviceTarget(**{self.target_key: True})
+        target = self.interface.get(request)
+        return getattr(target, self.target_key)
 
     def set_target(self, target: float) -> None:
-        _ = self.interface.set(DeviceTarget(**{self.target_key: target}))
+        request = DeviceTarget(**{self.target_key: target})
+        self.interface.set(request)
 
     def close(self) -> None:
         self.interface.close()

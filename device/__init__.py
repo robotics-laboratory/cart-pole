@@ -1,1 +1,1 @@
-from device.device import *  # FIXME
+from device._device import *

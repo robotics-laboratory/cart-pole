@@ -1,11 +1,16 @@
 import dataclasses as dc
 import logging
+import time
+
+import google.protobuf.message
 import serial
+import varint
 import threading
-from typing import Union, Type
+from typing import Union, Type, Any
 
-from common.interface import Error, Config, State  # FIXME
-
+import device.controller_pb2 as proto
+from common.interface import Error, Config, State
+import os
 
 LOGGER = logging.getLogger(__name__)
 RAW_COMMANDS_LOGGER = logging.getLogger('raw_commands')
@@ -80,7 +85,9 @@ class DeviceVariableGroup:
         Returns:
             Command string in list wire format.
         '''
-        return ' '.join(self.SERIALIZATION_MAP[field.name] for field in dc.fields(self) if getattr(self, field.name) is not None)
+        return ' '.join(
+            self.SERIALIZATION_MAP[field.name] for field in dc.fields(self) if
+            getattr(self, field.name) is not None)
 
     @classmethod
     def from_dict_format(cls, text: str) -> 'DeviceVariableGroup':
@@ -90,7 +97,8 @@ class DeviceVariableGroup:
         Returns:
             Class instance, constructed from wire format representation.
         '''
-        field_lookup = {cls.SERIALIZATION_MAP[field.name]: field for field in dc.fields(cls)}
+        field_lookup = {cls.SERIALIZATION_MAP[field.name]: field for field in
+                        dc.fields(cls)}
         data_dict = {}
         for pair in text.split():
             wire_name, value = pair.split('=')
@@ -100,6 +108,7 @@ class DeviceVariableGroup:
         return cls(**data_dict)
 
 
+@dc.dataclass
 class DeviceConfig(DeviceVariableGroup, Config):
     GROUP_NAME = 'config'
     SERIALIZATION_MAP = {
@@ -122,9 +131,9 @@ class DeviceConfig(DeviceVariableGroup, Config):
 class DeviceState(DeviceVariableGroup, State):
     GROUP_NAME = 'state'
     SERIALIZATION_MAP = {
-        'position': 'x',
-        'velocity': 'v',
-        'acceleration': 'a',
+        'position': 'curr_x',
+        'velocity': 'curr_v',
+        'acceleration': 'curr_a',
         'pole_angle': 'pole_x',
         'pole_angular_velocity': 'pole_v',
         'error_code': 'errcode',
@@ -142,9 +151,9 @@ class DeviceState(DeviceVariableGroup, State):
 class DeviceTarget(DeviceVariableGroup):
     GROUP_NAME = 'target'
     SERIALIZATION_MAP = {
-        'position': 'x',
-        'velocity': 'v',
-        'acceleration': 'a',
+        'position': 'trgt_x',
+        'velocity': 'trgt_v',
+        'acceleration': 'trgt_a',
     }
 
     position: float = dc.field(default=None)
@@ -153,13 +162,17 @@ class DeviceTarget(DeviceVariableGroup):
 
 
 class WireInterface:
-    def __init__(self, 
-        port: str = '/dev/ttyS0', 
-        baud_rate: int = 115200, 
-        read_timeout: float = 0.2, 
-        write_timeout: float = 0.2,
-    ) -> None:
-        self.serial = serial.Serial(port=port, baudrate=baud_rate, timeout=read_timeout, write_timeout=write_timeout, exclusive=True)
+    def __init__(self,
+                 port: str = None,
+                 baud_rate: int = None,
+                 read_timeout: float = 0.5,
+                 write_timeout: float = 0.5,
+                 ) -> None:
+        port = port or os.environ.get('SERIAL_PORT')
+        assert port is not None, 'Please set "port" argument or "SERIAL_PORT" env var'
+        baud_rate = baud_rate or int(os.environ.get('SERIAL_SPEED', '460800'))
+        self.serial = serial.Serial(port=port, baudrate=baud_rate, timeout=read_timeout,
+                                    write_timeout=write_timeout, exclusive=True)
         self._lock = threading.Lock()
         LOGGER.info(f'Opened serial connection to {self.serial.name}')
 
@@ -179,19 +192,22 @@ class WireInterface:
                 if received == '':
                     LOGGER.error(f'Serial read timeout during "{command}" request')
                     continue
-            
+
                 RAW_COMMANDS_LOGGER.debug(received)
 
                 if received.startswith('~'):
-                    LOGGER.debug(f'Received processing message during "{command}" request')
+                    LOGGER.debug(
+                        f'Received processing message during "{command}" request')
                     continue
 
                 stripped = received[1:].strip()
                 if received.startswith('#'):
-                    LOGGER.debug(f'Received log message during "{command}" request: {stripped}')
+                    LOGGER.debug(
+                        f'Received log message during "{command}" request: {stripped}')
                     continue
                 elif received.startswith('!'):
-                    LOGGER.error(f'Received error response during "{command}" request: {stripped}')
+                    LOGGER.error(
+                        f'Received error response during "{command}" request: {stripped}')
                     raise RuntimeError(f'Received error response: {stripped}')
                 elif received.startswith('+'):
                     LOGGER.debug(f'Responding to request "{command}" with "{received}"')
@@ -206,9 +222,104 @@ class WireInterface:
         response = self._command('set', params.GROUP_NAME, params.to_dict_format())
         return params.from_dict_format(response)
 
-    def get(self, params: Union[DeviceConfig, DeviceState, DeviceTarget]) -> DeviceVariableGroup:
+    def get(self, params: Union[
+        DeviceConfig, DeviceState, DeviceTarget]) -> DeviceVariableGroup:
         response = self._command('get', params.GROUP_NAME, params.to_list_format())
         return params.from_dict_format(response)
 
     def reset(self) -> None:
         _ = self._command('reset')
+
+
+class ProtobufWireInterface(WireInterface):
+    def set(self, params: Union[DeviceConfig, DeviceTarget]) -> DeviceVariableGroup:
+        if isinstance(params, DeviceConfig):
+            config = self._dataclass_to_protobuf(params, proto.Config())
+            res = self._request(proto.RequestType.SET_CONFIG, config=config)
+            return self._protobuf_to_dataclass(DeviceConfig(), res.config)
+        if isinstance(params, DeviceTarget):
+            target = self._dataclass_to_protobuf(params, proto.Target())
+            res = self._request(proto.RequestType.SET_TARGET, target=target)
+            return self._protobuf_to_dataclass(DeviceTarget(), res.target)
+        raise NotImplementedError
+
+    def get(self, params: Union[DeviceConfig, DeviceState, DeviceTarget]) -> DeviceVariableGroup:
+        if isinstance(params, DeviceConfig):
+            res = self._request(proto.RequestType.GET_CONFIG)
+            return self._protobuf_to_dataclass(DeviceConfig(), res.config)
+        if isinstance(params, DeviceState):
+            res = self._request(proto.RequestType.GET_STATE)
+            return self._protobuf_to_dataclass(DeviceState(), res.state)
+        if isinstance(params, DeviceTarget):
+            res = self._request(proto.RequestType.GET_TARGET)
+            return self._protobuf_to_dataclass(DeviceTarget(), res.target)
+        raise NotImplementedError
+
+    def reset(self) -> None:
+        self._request(proto.RequestType.RESET)
+
+    def _protobuf_to_dataclass(self, dataclass, proto_obj):
+        assert proto_obj is not None
+        for field in dc.fields(dataclass):
+            wire_name = dataclass.SERIALIZATION_MAP.get(field.name, field.name)
+            value = getattr(proto_obj, wire_name, None)
+            if value is not None:
+                setattr(dataclass, field.name, value)
+        return dataclass
+
+    def _dataclass_to_protobuf(self, dataclass, proto_obj):
+        for field in dc.fields(dataclass):
+            wire_name = dataclass.SERIALIZATION_MAP.get(field.name, field.name)
+            value = getattr(dataclass, field.name, None)
+            if value is not None:
+                setattr(proto_obj, wire_name, value)
+        return proto_obj
+
+    def _error(self, message):
+        LOGGER.error(message)
+        raise RuntimeError(message)
+
+    def _request(
+            self, type: proto.RequestType, config=None, state=None, target=None
+    ) -> proto.Response:
+        with self._lock:
+            request = proto.Request()
+            request.type = type
+            if config is not None:
+                request.config.CopyFrom(config)
+            if state is not None:
+                request.state.CopyFrom(state)
+            if target is not None:
+                request.target.CopyFrom(target)
+            payload = request.SerializeToString()
+            LOGGER.debug(f'Serial TX payload size: {len(payload)}')
+            data = varint.encode(len(payload)) + payload
+            LOGGER.debug(f'Serial TX data: {data!r}')
+            self.serial.write(data)
+            return self._read_loop()
+
+    def _read_loop(self):
+        while True:
+            try:
+                size = varint.decode_stream(self.serial)
+            except TypeError:
+                self._error('Varint decode failed ')
+            LOGGER.debug(f'Serial RX payload size: {size}')
+            data = self.serial.read(size)
+            LOGGER.debug(f'Serial RX data: {data!r}')
+            if len(data) < size:
+                self._error('Serial read timeout')
+            try:
+                response = proto.Response()
+                response.ParseFromString(data)
+            except google.protobuf.message.DecodeError:
+                self._error(f'Protobuf parse error (data: {data!r})')
+            if response.status == proto.ResponseStatus.PROCESSING:
+                LOGGER.info('Received processing message...')
+                continue
+            if response.status == proto.ResponseStatus.DEBUG:
+                LOGGER.info(f'Received debug message: {response.message}')
+                continue
+            if response.status == proto.ResponseStatus.ERROR:
+                self._error(f'Received error message: {response.message}')
+            return response

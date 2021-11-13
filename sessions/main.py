@@ -1,25 +1,45 @@
+import json
+
 from device.wire_interface import WireInterface, DeviceConfig
+from sessions.collector import CollectorProxy
 from sessions.runner import Runner
-from sessions.actor import OscillatingActor
+from sessions.actor import OscillatingActor, Actor
 from device import CartPoleDevice
+from common.util import init_logging
+from misc.analyzer._saleae import SaleaeAnalyzer
 
 import logging
 
 
+class NoActor(Actor):
+    def __call__(self, *args, **kwargs):
+        return 0
+
+
 def main():
-    device = CartPoleDevice(WireInterface('COM5'))
-    config = DeviceConfig(max_velocity=0.25, max_acceleration=1)
-    runner = Runner(device, config, OscillatingActor, {
-        'device_config': config,
-        'acceleration': 0.5, 
+
+    device = CartPoleDevice(WireInterface('COM4'))
+    device_config = DeviceConfig(max_velocity=0.25, max_acceleration=1)
+    actor_config = {
+        'device_config': device_config,
+        'acceleration': 0.5,
         'max_position': 0.1
-    })
+    }
+    runner = Runner(device, device_config, OscillatingActor, actor_config)
+    analyzer = SaleaeAnalyzer()
+    runner.proxy.reset_callbacks.append(analyzer.start)
+    runner.proxy.close_callbacks.append(analyzer.stop)
 
-    runner.start_server()
+    # runner.start_server()
+    runner.run(100)
+    session_id = 'v3'
+    runner.proxy.save(f'data/sessions/{session_id}.json')
+    analyzer.export_analyzers()
+    with open(f'data/sessions/{session_id}-analyzer.json', 'w') as file:
+        json.dump(analyzer.data, file)
 
-    runner.run(1000)
+
 
 if __name__ == '__main__':
-    logging.basicConfig()
-    logging.getLogger().setLevel(logging.DEBUG)
+    init_logging()
     main()

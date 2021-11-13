@@ -2,6 +2,8 @@ import copy
 import dataclasses as dc
 import json
 import logging
+from pathlib import Path
+
 import numpy as np
 import inspect
 import string
@@ -10,9 +12,11 @@ import time
 from contextlib import contextmanager
 from collections import defaultdict
 from io import StringIO
-from typing import Callable, List, Dict, Type, Tuple
+from typing import Callable, List, Dict, Type, Tuple, Union
+import dacite
 
 from common.interface import CartPoleBase, Config, State
+from common.util import init_logging
 from sessions.actor import Actor
 
 
@@ -23,12 +27,6 @@ HEX_DIGITS = list(string.digits + string.ascii_lowercase[:6])
 def generate_id(size: int = 6):
     return ''.join(np.random.choice(HEX_DIGITS, size=size, replace=True))
 
-def micros() -> int:
-    return time.time_ns() // 1000
-
-def perf_counter_micros() -> int:
-    return time.perf_counter_ns() // 1000
-
 
 class Units:
     METERS = 'm'
@@ -36,6 +34,7 @@ class Units:
     METERS_PER_SECOND_SQUARED = 'm/s^2'
     RADIANS = 'rad'
     RADIANS_PER_SECOND = 'rad/s'
+    UNKNOWN = '?'
 
 
 @dc.dataclass
@@ -77,10 +76,8 @@ class SessionData:
     @dc.dataclass
     class TimeTrace:
         action: str
-        start_timestamp: int = dc.field(default_factory=micros)
-        start_perf_counter: int = dc.field(default_factory=perf_counter_micros)
-        finish_timestamp: int = None
-        finish_perf_counter: int = None
+        start_timestamp: int
+        end_timestamp: int = None
 
     meta: SessionMeta = dc.field(default_factory=SessionMeta)
     values: Dict[str, Value] = dc.field(default_factory=dict)
@@ -88,20 +85,27 @@ class SessionData:
     logs: List[Log] = dc.field(default_factory=list)
     time_traces: List[TimeTrace] = dc.field(default_factory=list)
 
-    def __post_init__(self) -> None:
-        V = SessionData.Value
-        values = [
-            V(id='state.position', name='position', unit=Units.METERS),
-            V(id='state.velocity', name='velocity', unit=Units.METERS_PER_SECOND),
-            V(id='state.acceleration', name='acceleration', unit=Units.METERS_PER_SECOND_SQUARED),
-            V(id='state.pole_angle', name='angle', unit=Units.RADIANS),
-            V(id='state.pole_velocity', name='angle', unit=Units.RADIANS_PER_SECOND),
-            V(id='target.acceleration', name='acceleration', unit=Units.RADIANS_PER_SECOND),
-        ]
-        self.values = {v.id: v for v in values}
-        self.groups = [
-            # todo
-        ]
+    # def __post_init__(self) -> None:
+    #     V = SessionData.Value
+    #     values = [
+    #         V(id='state.position', name='position', unit=Units.METERS),
+    #         V(id='state.velocity', name='velocity', unit=Units.METERS_PER_SECOND),
+    #         V(id='state.acceleration', name='acceleration', unit=Units.METERS_PER_SECOND_SQUARED),
+    #         V(id='state.pole_angle', name='angle', unit=Units.RADIANS),
+    #         V(id='state.pole_velocity', name='angle', unit=Units.RADIANS_PER_SECOND),
+    #         V(id='target.acceleration', name='acceleration', unit=Units.RADIANS_PER_SECOND),
+    #     ]
+    #     self.values = {v.id: v for v in values}
+    #     self.groups = [
+    #         # todo
+    #     ]
+
+    @classmethod
+    def load(cls, path: Union[str, Path]) -> 'SessionData':
+        with open(path) as file:
+            raw_data = json.load(file)
+            parse_config = dacite.Config(check_types=False)
+            return dacite.from_dict(SessionData, raw_data, parse_config)
 
 
 class CollectorProxy(CartPoleBase):
@@ -109,6 +113,7 @@ class CollectorProxy(CartPoleBase):
         '%(created)f [%(levelname)s] %(name)s (%(filename)s:%(lineno)d) :: %(message)s'
     )
     HUMAN_LOGGING_FORMAT = '%(asctime)s [%(levelname)s] %(name)s :: %(message)s'
+    DEFAULT_SAVE_PATH = 'data/sessions'
 
     def __init__(
         self,
@@ -129,22 +134,37 @@ class CollectorProxy(CartPoleBase):
         self._consumed_offset = defaultdict(int)
         self._started_flag = threading.Event()
         self._available_values = threading.Semaphore(0)
+        self._start_perf_timestamp = None
 
-    def save(self):
-        with open(f'{self.data.meta.session_id}.json', 'w') as f:
-            json.dump(dc.asdict(self.data), f, indent=4)
+    def _timestamp(self):
+        return time.perf_counter_ns() // 1000 - self._start_perf_timestamp
+
+    def save(self, path=None) -> Path:
+        if path is None:
+            path = Path(self.DEFAULT_SAVE_PATH) / f'{self.data.meta.session_id}.json'
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, 'w') as f:
+            json.dump(dc.asdict(self.data), f)
+        LOGGER.info('Saved session %s to %s', self.data.meta.session_id, path)
+        return path
 
     @contextmanager
     def time_trace(self, action=None):
-        action = action or (inspect.stack()[2][3] if inspect.stack()[1][3] == '__enter__' else inspect.stack()[1][3])
-        trace = SessionData.TimeTrace(action=action)
+        if action is None:
+            stack =  inspect.stack()
+            action = stack[1][3] if stack[1][3] != '__enter__' else stack[2][3]
+        trace = SessionData.TimeTrace(action=action, start_timestamp=self._timestamp())
         yield trace
-        trace.finish_timestamp = micros()
-        trace.finish_perf_counter = perf_counter_micros()
+        trace.finish_timestamp = self._timestamp()
         self.data.time_traces.append(trace)
 
     def _add_value(self, key, x, y):
         with self._locks[key]:
+            if key not in self.data.values:
+                self.data.values[key] = SessionData.Value(
+                    id=key, name=key, unit=Units.UNKNOWN
+                )
             value = self.data.values[key]
             value.x.append(x)
             value.y.append(y)
@@ -153,14 +173,12 @@ class CollectorProxy(CartPoleBase):
                 self._available_values.release()
 
     def _init_logging(self):
+        init_logging()
         self._logging_stream = StringIO()
         self._logging_handler = logging.StreamHandler()
         self._logging_handler.setStream(self._logging_stream)
         self._logging_handler.setLevel(logging.DEBUG)
         self._logging_handler.setFormatter(logging.Formatter(self.LOGGING_FORMAT))
-        if len(logging.getLogger().handlers) == 0:
-            # Logging hasn't been initialized yet
-            logging.basicConfig(format=self.HUMAN_LOGGING_FORMAT, level=logging.DEBUG)
         logging.getLogger().addHandler(self._logging_handler)
 
     def _cleanup_logging(self):
@@ -191,30 +209,27 @@ class CollectorProxy(CartPoleBase):
         self._available_values = threading.Semaphore(0)
         self._init_logging()
 
-        with self.time_trace():
-            self.cart_pole.reset(config)
-            self.data.meta.start_timestamp = micros()
-            for callback in self.reset_callbacks:
-                callback()
-
-            self._started_flag.set()
+        self.cart_pole.reset(config)
+        for callback in self.reset_callbacks:
+            callback()
+        self.data.meta.start_timestamp = time.time()
+        self._start_perf_timestamp = time.perf_counter_ns() // 1000
+        self._started_flag.set()
 
     def get_state(self) -> State:
         with self.time_trace() as trace:
             state = self.cart_pole.get_state()
 
-            for field in dc.fields(state):
-                key = f'state.{field.name}'
-                if key not in self.data.values:
-                    continue  # TODO?: maybe raise error
-                
-                value = getattr(state, field.name)
-                if value is None:
-                    continue
+        for field in dc.fields(state):
+            key = f'state.{field.name}'
+            value = getattr(state, field.name)
+            if value is None:
+                continue
 
-                self._add_value(key, trace.start_timestamp, value)
+            self._add_value(key, trace.start_timestamp, value)
 
-            return state
+        LOGGER.info(f"Get state: {state}")
+        return state
 
     def get_info(self) -> dict:
         with self.time_trace():
@@ -228,7 +243,7 @@ class CollectorProxy(CartPoleBase):
         with self.time_trace() as trace:
             key = 'target.acceleration'
             self._add_value(key, trace.start_timestamp, target)
-            
+            LOGGER.info(f"Set target: {target}")
             return self.cart_pole.set_target(target)
 
     def make_step(self) -> None:
@@ -238,12 +253,11 @@ class CollectorProxy(CartPoleBase):
     def close(self) -> None:
         with self.time_trace():
             self.cart_pole.close()
-            for callback in self.close_callbacks:
-                callback()
-
+        self.data.meta.duration = self._timestamp()
+        for callback in self.close_callbacks:
+            callback()
         self._cleanup_logging()
-        self.data.meta.duration = micros() - self.data.meta.start_timestamp
-        self.save()
+        # self.save()
         self._started_flag.clear()
 
     def meta(self) -> dict:
@@ -277,7 +291,7 @@ if __name__ == '__main__':
 
         def get_state(self) -> State:
             return State(position=1)
-        
+
         def set_target(self, target: float) -> None:
             pass
 

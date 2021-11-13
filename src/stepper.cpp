@@ -122,6 +122,7 @@ void Stepper::Enable() {
 }
 
 void Stepper::Disable() {
+    ForceStop();
     ProtocolProcessor &P = GetProtocolProcessor();
     tmc_driver.toff(0);
     P.Log("Stepper disabled");
@@ -187,14 +188,14 @@ void Stepper::Homing() {
 
     G.errcode = Error::NO_ERROR;
 
-    std::stringstream stream;
-    stream << std::fixed << std::setprecision(5) << "Full length: " << delta_steps << " steps"
-           << G.full_length_meters << " meters";
-    P.Log(stream.str());
-    stream = std::stringstream{};
-    stream << std::fixed << std::setprecision(5) << "Valid X range: " << -G.hw_max_x << " ... "
-           << G.hw_max_x;
-    P.Log(stream.str());
+    // std::stringstream stream;
+    // stream << std::fixed << std::setprecision(5) << "Full length: " << delta_steps << " steps"
+    //        << G.full_length_meters << " meters";
+    // P.Log(stream.str());
+    // stream = std::stringstream{};
+    // stream << std::fixed << std::setprecision(5) << "Valid X range: " << -G.hw_max_x << " ... "
+    //        << G.hw_max_x;
+    // P.Log(stream.str());
 }
 
 void Stepper::AsyncHoming() {
@@ -217,22 +218,22 @@ void Stepper::SetSpeed(float value) {
     uint32_t speed_hz = static_cast<uint32_t>(value * METERS_TO_STEPS_MULTIPLIER);
     fas_stepper->setSpeedInHz(speed_hz);
 
-    ProtocolProcessor &P = GetProtocolProcessor();
-    std::stringstream stream;
-    stream << std::fixed << std::setprecision(5) << "Set stepper speed: "
-           << value << " m/s, " << speed_hz << " steps/s";
-    P.Log(stream.str());
+    // ProtocolProcessor &P = GetProtocolProcessor();
+    // std::stringstream stream;
+    // stream << std::fixed << std::setprecision(5) << "Set stepper speed: "
+    //        << value << " m/s, " << speed_hz << " steps/s";
+    // P.Log(stream.str());
 }
 
 void Stepper::SetAcceleration(float value) {
     uint32_t steps_per_ss = static_cast<uint32_t>(value * METERS_TO_STEPS_MULTIPLIER);
     fas_stepper->setAcceleration(steps_per_ss);
 
-    ProtocolProcessor &P = GetProtocolProcessor();
-    std::stringstream stream;
-    stream << std::fixed << std::setprecision(5) << "Set stepper acceleration: "
-           << value << " m/s^2, " << steps_per_ss << " steps/s^2";
-    P.Log(stream.str());
+    // ProtocolProcessor &P = GetProtocolProcessor();
+    // std::stringstream stream;
+    // stream << std::fixed << std::setprecision(5) << "Set stepper acceleration: "
+    //        << value << " m/s^2, " << steps_per_ss << " steps/s^2";
+    // P.Log(stream.str());
 }
 
 void Stepper::SetTargetPosition(float value) {
@@ -240,20 +241,23 @@ void Stepper::SetTargetPosition(float value) {
     int pos_steps =
         static_cast<int>((value + G.full_length_meters / 2) * METERS_TO_STEPS_MULTIPLIER);
     fas_stepper->moveTo(pos_steps);
+
+    // ProtocolProcessor &P = GetProtocolProcessor();
+    // P.Log("Set target position");
 }
 
 void Stepper::SetTargetAcceleration(float value) {
-    ProtocolProcessor &P = GetProtocolProcessor();
     Globals &G = GetGlobals();
     SetSpeed(G.max_v);
 
     int32_t steps_per_ss = static_cast<int32_t>(value * METERS_TO_STEPS_MULTIPLIER);
     fas_stepper->moveByAcceleration(steps_per_ss, true);
 
-    std::stringstream stream;
-    stream << std::fixed << std::setprecision(5) << "Moving stepper by acceleration: " << value
-           << " m/s^2, " << steps_per_ss << " steps/s^2";
-    P.Log(stream.str());
+    // ProtocolProcessor &P = GetProtocolProcessor();
+    // std::stringstream stream;
+    // stream << std::fixed << std::setprecision(5) << "Moving stepper by acceleration: "
+    //        << value << " m/s^2, " << steps_per_ss << " steps/s^2";
+    // P.Log(stream.str());
 }
 
 Stepper &GetStepper() {
