@@ -26,14 +26,14 @@ def control_loop(device: CartPoleBase, actor: Actor, max_iterations=-1):
 
 
 if __name__ == '__main__':
-    SESSION_ID = 'pb_const_v6'
+    SESSION_ID = 'test'
     OUTPUT_PATH = Path(f'data/sessions/{SESSION_ID}')
     MAX_ITERATIONS = 500
 
     ### Oscillating actor session
     # ACTOR_CLASS = OscillatingActor
     # ACTOR_CONFIG = {'acceleration': 1.0, 'max_position': 0.05}
-    # DEVICE_CONFIG = Config(max_position=0.25, max_velocity=2.0, max_acceleration=10.0)
+    # DEVICE_CONFIG = Config(max_position=0.15, max_velocity=2.0, max_acceleration=10.0)
 
     ### LQR session
     # ACTOR_CLASS = LinearBalanceControl
@@ -53,21 +53,21 @@ if __name__ == '__main__':
 
     init_logging()
     device = CartPoleDevice()
-    # analyzer = SaleaeAnalyzer()
+    analyzer = SaleaeAnalyzer()
     actor = ACTOR_CLASS(device_config=DEVICE_CONFIG, **ACTOR_CONFIG)
     proxy = CollectorProxy(
         cart_pole=device,
         actor_class=ACTOR_CLASS,
         actor_config=ACTOR_CONFIG,
-        # reset_callbacks=[analyzer.start],
-        # close_callbacks=[analyzer.stop],
+        reset_callbacks=[analyzer.start],
+        close_callbacks=[analyzer.stop],
     )
 
     try:
         proxy.reset(DEVICE_CONFIG)
-        LOGGER.info(">>>")
-        device.interface.set(DeviceTarget(position=0.05))
-        LOGGER.info("<<<")
+        # LOGGER.info(">>>")
+        # device.interface.set(DeviceTarget(position=0.05))
+        # LOGGER.info("<<<")
         control_loop(proxy, actor, max_iterations=MAX_ITERATIONS)
     except Exception:
         LOGGER.exception('Aborting run due to error')
@@ -76,4 +76,4 @@ if __name__ == '__main__':
         LOGGER.info('Run finished')
 
     proxy.save(OUTPUT_PATH / 'session.json')
-    # analyzer.save(OUTPUT_PATH)
+    analyzer.save(OUTPUT_PATH)
