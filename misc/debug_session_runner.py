@@ -19,7 +19,7 @@ def control_loop(device: CartPoleBase, actor: Actor, max_duration: float):
     start = time.perf_counter()
     while time.perf_counter() - start < max_duration:
         state = device.get_state()
-        target = actor(state)
+        target = actor(state, stamp=time.perf_counter() - start)
         device.set_target(target)
         device.advance()
 
