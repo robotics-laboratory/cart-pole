@@ -7,5 +7,5 @@ class ConstantActor(Actor):
         super().__init__(**kwargs)
         self.target_const = target_const
 
-    def __call__(self, state: State) -> float:
+    def __call__(self, state: State, stamp=None) -> float:
         return self.target_const
