@@ -12,7 +12,7 @@ class OscillatingActor(Actor):
         self.max_x = max_position
         self.max_v = device_config.max_velocity
 
-    def __call__(self, state: State):
+    def __call__(self, state: State, stamp=None):
         if self.direction:
             if state.position < self.max_x:
                 return self.a if state.velocity < self.max_v else 0

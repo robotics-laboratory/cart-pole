@@ -27,7 +27,7 @@ def generate_pyplot_animation(
     ax.grid(linestyle='--')
 
     pole, = ax.plot([], [], 'o-', lw=2, c='red')
-    pole_expected, = ax.plot([], [], 'o-', lw=2, c='gray', alpha=0.3)
+    pole_expected, = ax.plot([], [], 'o-', lw=4, c='gray', alpha=0.3)
     timestamp_text = ax.text(0.05, 0.9, '', transform=ax.transAxes, fontsize=16)
 
     def generate_pole(state):
@@ -44,7 +44,7 @@ def generate_pyplot_animation(
 
         if trajectory_expected:
             pole_x, pole_y = generate_pole(trajectory_expected[i])
-            line.set_data(thisx, thisy)
+            pole_expected.set_data(pole_x, pole_y)
     
         if timestamps is not None:
             timestamp_text.set_text(f't={timestamps[i]:.3f}s')

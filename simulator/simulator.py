@@ -1,5 +1,6 @@
-from common import CartPoleBase, CartPoleSystem, Error, State
 from pydrake.systems.analysis import Simulator
+
+from common import CartPoleBase, CartPoleSystem, Error, State
 
 import logging
 import numpy
@@ -45,22 +46,11 @@ class CartPoleSimulator(CartPoleBase):
         
     def reset_to(self, config, state):
         self.config = config
-        
-        params = self.context.get_mutable_numeric_parameter(
-            self.system.parameter_index
-        )
-        
-        params.SetFromVector(
-            numpy.array([config.gravity, config.pole_length])
-        )
-        
         self.context.SetContinuousState(state.as_array())
-        self.context.SetTime(0)
+
         self.error = Error.NO_ERROR
-        self.system.get_input_port().FixValue(
-            self.context,
-            numpy.array([self.target_acceleration])
-        )
+        self.target_acceleration = 0
+        self.system.get_input_port().FixValue(self.context, numpy.array([0]))
 
     def reset(self, config):
         self.reset_to(config, State.home())
@@ -83,7 +73,9 @@ class CartPoleSimulator(CartPoleBase):
             return
 
         config = self.get_config()
-        self.target_acceleration, clamped = clamp(target, config.max_acceleration)
+
+        self.target_acceleration, clamped = clamp(target, config.hard_max_acceleration)
+        self.system.get_input_port().FixValue(self.context, numpy.array([target]))
 
         if clamped:
             self.error = Error.A_OVERFLOW
@@ -95,11 +87,11 @@ class CartPoleSimulator(CartPoleBase):
         state = self.get_state()
         config = self.get_config()
 
-        if abs(state.cart_position) > config.max_position:
+        if abs(state.cart_position) > config.hard_max_position:
             self.error = Error.X_OVERFLOW
             return False
 
-        if abs(state.cart_velocity) > config.max_velocity:
+        if abs(state.cart_velocity) > config.hard_max_velocity:
             self.error = Error.V_OVERFLOW
             return False
 
@@ -114,6 +106,9 @@ class CartPoleSimulator(CartPoleBase):
 
         if not self.validate():
             return
+
+    def timestamp(self):
+        return self.context.get_time()
 
     def get_info(self):
         return {
