@@ -3,7 +3,7 @@ import pydrake
 from pydrake.solvers.mathematicalprogram import Solve
 from pydrake.systems.trajectory_optimization import DirectCollocation
 
-from common import CartPoleSystem
+from simulator.system import CartPoleSystem
 
 import math
 import numpy
