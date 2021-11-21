@@ -1,4 +1,5 @@
 import logging
+import time
 
 from common import util
 from common.interface import (
@@ -45,6 +46,9 @@ class CartPoleDevice(CartPoleBase):
     def set_target(self, target: float) -> None:
         request = DeviceTarget(**{self.target_key: target})
         self.interface.set(request)
+
+    def timestamp(self):
+        return time.time()
 
     def close(self) -> None:
         self.interface.close()

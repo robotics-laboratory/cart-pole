@@ -2,6 +2,8 @@ from pydrake.math import cos, sin
 from pydrake.systems.framework import BasicVector_, LeafSystem_
 from pydrake.systems.scalar_conversion import TemplateSystem
 
+import numpy
+
 @TemplateSystem.define("CartPoleSystem")
 def CartPoleSystem_(T):
     """
@@ -53,18 +55,18 @@ def CartPoleSystem_(T):
             d.SetAtIndex(2, u)
             d.SetAtIndex(3, -1.5/l*(u*cos(a) + g*sin(a)))
 
-        def GenerateContext(self, config, state):
+        def CreateContext(self, config, q):
             context = self.CreateDefaultContext()
+            context.SetTime(0)
 
-            params = context.get_mutable_numeric_parameter()
+            params = context.get_mutable_numeric_parameter(self.parameter_index)
             params.SetFromVector(
-                np.array([
-                    config.gravity,
-                    config.pole_length])
+                numpy.array([config.gravity, config.pole_length])
             )
 
-            q = context.get_mutable_continuous_state_vector()
-            q.SetFromVector(state.to_array())
+            context.SetContinuousState(q)
+
+            return context
 
     return Impl
 

@@ -22,22 +22,20 @@ class Config:
             max_acceleration=3.5, # m/s^2
             # hardware limits
             hard_max_position=0.27,    # m
-            hard_max_velocity=3.0,     # m/s
-            hard_max_acceleration=4.0, # m/s^2
+            hard_max_velocity=2.5,     # m/s
+            hard_max_acceleration=5.0, # m/s^2
             # physical params
             pole_length=0.3, # m
             pole_mass=0.118, # kg
-            gravity=9.8,     # m/s^2
-            # control
-            time_step=1/240): # s
+            gravity=9.8):    # m/s^2
         
         self.max_position = max_position
         self.max_velocity = max_velocity
         self.max_acceleration = max_acceleration
 
-        self.hard_max_position = max_position
-        self.hard_max_velocity = max_velocity
-        self.hard_max_acceleration = max_acceleration
+        self.hard_max_position = hard_max_position
+        self.hard_max_velocity = hard_max_velocity
+        self.hard_max_acceleration = hard_max_acceleration
 
         self.pole_length = pole_length
         self.gravity = gravity
@@ -84,7 +82,7 @@ class State:
         return np.array(self.as_tuple())
 
     def as_array_4x1(self):
-        return self.to_array().reshape(4, 1)
+        return self.as_array().reshape(4, 1)
 
     def __repr__(self):
         return '(x={x:+.2f}, v={v:+.2f}, a={a:+.2f}, w={w:+.2f}, err={err})'.format(
@@ -146,6 +144,12 @@ class CartPoleBase:
         Advance the dynamic system by delta seconds.
         '''
         pass
+
+    def timestamp(self):
+        '''
+        Current time.
+        '''
+        raise NotImplementedError
 
     def close(self) -> None:
         '''
