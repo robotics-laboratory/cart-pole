@@ -115,9 +115,9 @@ class DeviceConfig(DeviceVariableGroup, Config):
         'max_position': 'max_x',
         'max_velocity': 'max_v',
         'max_acceleration': 'max_a',
-        'hardware_max_position': 'hw_max_x',
-        'hardware_max_velocity': 'hw_max_v',
-        'hardware_max_acceleration': 'hw_max_a',
+        'hard_max_position': 'hw_max_x',
+        'hard_max_velocity': 'hw_max_v',
+        'hard_max_acceleration': 'hw_max_a',
         'clamp_position': 'clamp_x',
         'clamp_velocity': 'clamp_v',
         'clamp_acceleration': 'clamp_a',
@@ -131,9 +131,9 @@ class DeviceConfig(DeviceVariableGroup, Config):
 class DeviceState(DeviceVariableGroup, State):
     GROUP_NAME = 'state'
     SERIALIZATION_MAP = {
-        'position': 'curr_x',
-        'velocity': 'curr_v',
-        'acceleration': 'curr_a',
+        'cart_position': 'curr_x',
+        'cart_velocity': 'curr_v',
+        'cart_acceleration': 'curr_a',
         'pole_angle': 'pole_x',
         'pole_angular_velocity': 'pole_v',
         'error_code': 'errcode',
@@ -269,9 +269,9 @@ class ProtobufWireInterface(WireInterface):
 
     def _dataclass_to_protobuf(self, dataclass, proto_obj):
         for field in dc.fields(dataclass):
-            wire_name = dataclass.SERIALIZATION_MAP.get(field.name, field.name)
+            wire_name = dataclass.SERIALIZATION_MAP.get(field.name)
             value = getattr(dataclass, field.name, None)
-            if value is not None:
+            if wire_name is not None and value is not None:
                 setattr(proto_obj, wire_name, value)
         return proto_obj
 

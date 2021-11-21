@@ -9,26 +9,25 @@ from misc.analyzer._saleae import SaleaeAnalyzer
 import logging
 # Actor imports
 from misc.oscillating_actor import OscillatingActor
-from misc.lqr_actor import LinearBalanceControl
+# from misc.lqr_actor import LinearBalanceControl
 from misc.const_actor import ConstantActor
 
 LOGGER = logging.getLogger('debug-session-runner')
 
 
-def control_loop(device: CartPoleBase, actor: Actor, max_iterations=-1):
-    current_iteration = 0
-    while current_iteration != max_iterations:
+def control_loop(device: CartPoleBase, actor: Actor, max_duration: float):
+    start = time.perf_counter()
+    while time.perf_counter() - start < max_duration:
         state = device.get_state()
         target = actor(state)
         device.set_target(target)
-        device.make_step()
-        current_iteration += 1
+        device.advance()
 
 
 if __name__ == '__main__':
     SESSION_ID = 'test'
+    SESSION_MAX_DURATION = 5.0
     OUTPUT_PATH = Path(f'data/sessions/{SESSION_ID}')
-    MAX_ITERATIONS = 500
 
     ### Oscillating actor session
     # ACTOR_CLASS = OscillatingActor
@@ -68,7 +67,7 @@ if __name__ == '__main__':
         # LOGGER.info(">>>")
         # device.interface.set(DeviceTarget(position=0.05))
         # LOGGER.info("<<<")
-        control_loop(proxy, actor, max_iterations=MAX_ITERATIONS)
+        control_loop(proxy, actor, max_duration=SESSION_MAX_DURATION)
     except Exception:
         LOGGER.exception('Aborting run due to error')
     finally:

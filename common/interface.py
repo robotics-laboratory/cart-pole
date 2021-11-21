@@ -1,6 +1,8 @@
 import enum
+import dataclasses as dc
 
 import numpy as np
+
 
 class Error(enum.IntEnum):
     NO_ERROR = 0
@@ -14,57 +16,41 @@ class Error(enum.IntEnum):
     def __bool__(self) -> bool:
         return self != Error.NO_ERROR
 
+
+@dc.dataclass
 class Config:
-    def __init__(self,
-            # software cart limits
-            max_position=0.25,    # m
-            max_velocity=2.0,     # m/s
-            max_acceleration=3.5, # m/s^2
-            # hardware limits
-            hard_max_position=0.27,    # m
-            hard_max_velocity=2.5,     # m/s
-            hard_max_acceleration=5.0, # m/s^2
-            # physical params
-            pole_length=0.3, # m
-            pole_mass=0.118, # kg
-            gravity=9.8):    # m/s^2
-        
-        self.max_position = max_position
-        self.max_velocity = max_velocity
-        self.max_acceleration = max_acceleration
+    # software cart limits
+    max_position: float = 0.25  # m
+    max_velocity: float = 2.0  # m/s
+    max_acceleration: float = 3.5  # m/s^2
+    # hardware limits
+    hard_max_position: float = 0.27  # m
+    hard_max_velocity: float = 2.5  # m/s
+    hard_max_acceleration: float = 5.0  # m/s^2
+    # hardware flags
+    clamp_position: bool = False
+    clamp_velocity: bool = False
+    clamp_acceleration: bool = False
+    # physical params
+    pole_length: float = 0.3  # m
+    gravity: float = 0.118  # kg
 
-        self.hard_max_position = hard_max_position
-        self.hard_max_velocity = hard_max_velocity
-        self.hard_max_acceleration = hard_max_acceleration
 
-        self.pole_length = pole_length
-        self.gravity = gravity
-
-    def __repr__(self):
-        return str(vars(self))
-
+@dc.dataclass
 class State:
-    def __init__(self,
-            cart_position,
-            cart_velocity,
-            pole_angle,
-            pole_angular_velocity,
-            error=Error.NO_ERROR):
-        self.cart_position = cart_position
-        self.cart_velocity = cart_velocity
-        self.pole_angle = pole_angle
-        self.pole_angular_velocity = pole_angular_velocity
-        self.error = error
-    
+    cart_position: float = 0
+    cart_velocity: float = 0
+    cart_acceleration: float = 0
+    pole_angle: float = 0
+    pole_angular_velocity: float = 0
+    error: Error = Error.NO_ERROR
+
     @staticmethod
     def from_array(a):
         '''
         q = (x, a, v, w)
         '''
         return State(a[0], a[2], a[1], a[3])
-
-    def bool(self):
-        return not self.error_code
 
     @staticmethod
     def home():
@@ -92,6 +78,7 @@ class State:
             w = self.pole_angular_velocity,
             err=self.error,
         )
+
 
 class CartPoleBase:
     '''
@@ -139,7 +126,7 @@ class CartPoleBase:
         '''
         raise NotImplementedError
 
-    def advance(self, delta) -> None:
+    def advance(self, delta: float = None) -> None:
         '''
         Advance the dynamic system by delta seconds.
         '''

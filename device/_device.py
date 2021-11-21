@@ -50,5 +50,8 @@ class CartPoleDevice(CartPoleBase):
     def timestamp(self):
         return time.time()
 
+    def advance(self, delta) -> None:
+        pass  # TODO: ???
+
     def close(self) -> None:
         self.interface.close()
