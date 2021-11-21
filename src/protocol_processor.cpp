@@ -84,9 +84,9 @@ void ProtocolProcessor::Poll() {
             bool status = pb_decode_varint(&stream, &payloadSize);
             if (!status) continue;
 
-            std::ostringstream tmp;
-            tmp << "PSIZE: " << payloadSize << "BUFF: " << buffer;
-            Log(tmp.str());
+//            std::ostringstream tmp;
+//            tmp << "PSIZE: " << payloadSize << "BUFF: " << buffer;
+//            Log(tmp.str());
             
             waitingForHeader = false;
             buffer.clear();
