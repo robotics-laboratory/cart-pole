@@ -68,7 +68,7 @@ def _run_server(collector: CollectorProxy):
         for ws in set(app['websockets']):
             await ws.close(code=web.WSCloseCode.GOING_AWAY, message='Server shutdown')
 
-    app.on_shutdown.append(on_shutdown)
+    # app.on_shutdown.append(on_shutdown)
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)

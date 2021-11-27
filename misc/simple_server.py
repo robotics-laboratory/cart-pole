@@ -30,28 +30,39 @@ class SimpleServer:
         return ws
 
     def run(self):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        # loop = asyncio.get_event_loop()
+        # if loop is None:
+        #     loop = asyncio.new_event_loop()
+        #     asyncio.set_event_loop(loop)
         app = web.Application()
         app.add_routes([
             web.get('/', self.index),
             web.get('/ws', self.ws_handler),
             web.static('/static', str(self.FRONTEND_PATH)),
         ])
+        runner = web.AppRunner(app)
+        bg_thread = Thread(target=self._bg_thread, args=(runner,))
+        bg_thread.start()
 
-        web.run_app(app, host='0.0.0.0', port=self.port, access_log=None, print=False)
+        # web.run_app(app, host='0.0.0.0', port=self.port, access_log=None, print=False)
+
+    def _bg_thread(self, runner):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(runner.setup())
+        site = web.TCPSite(runner, '0.0.0.0', self.port)
+        loop.run_until_complete(site.start())
+        loop.run_forever()
 
 
 def session_widget(session_data: SessionData, height=None):
     server = getattr(session_widget, '__server_instance', None)
     if server is None:
         server = SimpleServer(session_data, port=find_free_port())
-        thread = Thread(target=server.run)
-        thread.start()
         setattr(session_widget, '__server_instance', server)
-    server.data = session_data
+        server.run()
     src = f'http://localhost:{server.port}/?id=_'
-    print('IFrame URL:', src)
+    server.data = session_data
     if height is None:
         height = len(session_data.groups) * 300 + 100
     return ipd.IFrame(src=src, width='', height=height, extras=['style="width: 100%"'])

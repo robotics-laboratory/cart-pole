@@ -55,7 +55,7 @@ function make_traces() {
 
 function make_layout() {
     return {
-        height: data.groups.length * 300,
+        height: data.groups.length * 500,
         autosize: true,
         grid: {
             rows: data.groups.length,

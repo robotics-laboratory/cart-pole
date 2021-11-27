@@ -165,15 +165,17 @@ class WireInterface:
     def __init__(self,
                  port: str = None,
                  baud_rate: int = None,
-                 read_timeout: float = 0.5,
-                 write_timeout: float = 0.5,
+                 read_timeout: float = 3,
+                 write_timeout: float = 3,
                  ) -> None:
         port = port or os.environ.get('SERIAL_PORT')
         assert port is not None, 'Please set "port" argument or "SERIAL_PORT" env var'
-        baud_rate = baud_rate or int(os.environ.get('SERIAL_SPEED', '460800'))
+        baud_rate = baud_rate or int(os.environ.get('SERIAL_SPEED'))
         self.serial = serial.Serial(port=port, baudrate=baud_rate, timeout=read_timeout,
                                     write_timeout=write_timeout, exclusive=True)
         self._lock = threading.Lock()
+        self.serial.flushInput()
+        self.serial.flushOutput()
         LOGGER.info(f'Opened serial connection to {self.serial.name}')
 
     def close(self):

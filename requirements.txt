@@ -1,7 +1,11 @@
-matplotlib==3.4
-numpy==1.21
-pybullet==3.0.8
-scipy==1.7
-serial==0.0.97
+drake
+protobuf
+jupyter
+pyserial
+varint
+dacite
+psutil
+saleae
+aiohttp
+pandas
 
-dacite==1.6.0

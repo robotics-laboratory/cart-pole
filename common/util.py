@@ -3,6 +3,7 @@ import socket
 import math
 import os
 from contextlib import closing
+import sys
 
 from common.interface import State
 
@@ -31,7 +32,17 @@ def init_logging():
 
     format = os.environ.get('LOGGING_FORMAT', DEFAULT_FORMAT)
     level = getattr(logging, os.environ.get('LOGGING_LEVEL', 'INFO').upper())
-    logging.basicConfig(format=format, level=level, force=True)
+    kwargs = dict(format=format, level=level)
+
+    # if sys.version_info < (3, 8):
+    #     # https://stackoverflow.com/questions/20240464/python-logging-file-is-not-working-when-using-logging-basicconfig
+    #     from importlib import reload
+    #     reload(logging)
+    #
+    # else:
+    #     kwargs['force'] = True
+
+    logging.basicConfig(**kwargs)
     setattr(init_logging, '__initialized', True)
 
 

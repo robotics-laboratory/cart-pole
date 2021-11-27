@@ -1,4 +1,5 @@
 import logging
+import math
 import time
 
 from common import util
@@ -24,6 +25,8 @@ class CartPoleDevice(CartPoleBase):
         self.interface = interface or ProtobufWireInterface()
         self.step_count = 0
         self.target_key = target_key
+        self.prev_angle = 0
+        self.rotations = 0
 
     def reset(self, config: Config = None) -> None:
         self.interface.reset()
@@ -33,7 +36,23 @@ class CartPoleDevice(CartPoleBase):
         self.step_count = 0
 
     def get_state(self) -> State:
-        return self.interface.get(DeviceState.full())
+        new_state: State = self.interface.get(DeviceState.full())
+        curr = new_state.pole_angle
+        prev = self.prev_angle
+        max_delta = math.pi
+
+        delta = curr - prev
+        if delta > max_delta:
+            self.rotations -= 1
+        elif delta < -max_delta:
+            self.rotations += 1
+        abs_angle = 2 * math.pi * self.rotations + curr
+        # abs_pole_angles.append(abs_angle)
+        # rotations_arr.append(2 * math.pi * rotations)
+        self.prev_angle = curr
+
+        new_state.pole_angle = abs_angle
+        return new_state
 
     def get_info(self) -> dict:
         return {util.STEP_COUNT: self.step_count}

@@ -33,17 +33,18 @@ class Config:
     clamp_acceleration: bool = False
     # physical params
     pole_length: float = 0.3  # m
-    gravity: float = 0.118  # kg
+    pole_mass: float = 0.118  # kg
+    gravity: float = 9.8  # m/s^2
 
 
 @dc.dataclass
 class State:
     cart_position: float = 0
     cart_velocity: float = 0
-    cart_acceleration: float = 0
     pole_angle: float = 0
     pole_angular_velocity: float = 0
     error: Error = Error.NO_ERROR
+    cart_acceleration: float = 0
 
     @staticmethod
     def from_array(a):

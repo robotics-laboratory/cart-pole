@@ -188,8 +188,8 @@ class CollectorProxy(CartPoleBase):
         log_lines = self._logging_stream.getvalue().splitlines(keepends=False)
         timestamp = 0
         for line in log_lines:
-            time, message = line.split(' ', 1)
             try:
+                time, message = line.split(' ', 1)
                 timestamp = int(float(time) * 1000000)
                 self.data.logs.append(SessionData.Log(timestamp=timestamp, message=message))
             except ValueError:  # on float conversion
