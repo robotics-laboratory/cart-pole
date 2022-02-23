@@ -8,11 +8,12 @@
 
 namespace {
 const int TMC_EN = 25;
-const int TMC_STEP = 26;
-const int TMC_DIR = 27;
-const int TMC_STALLGUARD = 33;
-const int ENDSTOP_LEFT = 18;
-const int ENDSTOP_RIGHT = 19;
+const int TMC_STEP = 33;
+const int TMC_DIR = 32;
+const int TMC_STALLGUARD = 39;
+const int ENDSTOP_LEFT = 34;
+const int ENDSTOP_RIGHT = 35;
+const bool INVERSE_ENDSTOPS = true;
 
 const HardwareSerial STEPPER_SERIAL_PORT = Serial2;
 const float STEPPER_CURRENT = 2.0;
@@ -38,7 +39,8 @@ void homingTask(void *) {
 
     IS_DONE_HOMING = true;
     vTaskDelete(HOMING_TASK_HANDLE);
-    while (true);
+    while (true)
+        ;
 }
 }  // namespace
 
@@ -85,7 +87,8 @@ void Stepper::CheckStallGuard() {
 }
 
 void Stepper::CheckEndstops() {
-    if (digitalRead(ENDSTOP_LEFT) || digitalRead(ENDSTOP_RIGHT)) {
+    if (INVERSE_ENDSTOPS ^ digitalRead(ENDSTOP_LEFT) ||
+        INVERSE_ENDSTOPS ^ digitalRead(ENDSTOP_RIGHT)) {
         SetError(Error::ENDSTOP_HIT, "Endstop hit detected");
     }
 }
@@ -161,7 +164,7 @@ void Stepper::Homing() {
 
     // RUN LEFT
     fas_stepper->runBackward();
-    while (!digitalRead(ENDSTOP_LEFT)) {
+    while (!(INVERSE_ENDSTOPS ^ digitalRead(ENDSTOP_LEFT))) {
     }
 
     ForceStop();
@@ -170,7 +173,7 @@ void Stepper::Homing() {
 
     // RUN RIGHT
     fas_stepper->runForward();
-    while (!digitalRead(ENDSTOP_RIGHT)) {
+    while (!(INVERSE_ENDSTOPS ^ digitalRead(ENDSTOP_RIGHT))) {
     }
 
     ForceStop();
