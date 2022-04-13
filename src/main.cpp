@@ -25,8 +25,6 @@ const int SERIAL_RX_PIN = 3;
 const int SERIAL_SPEED = 115200;
 const int SERIAL_BUFFER_SIZE = 256;
 
-
-
 void processDataGetStateSetTarget();
 void encodeGetStateSetTargetResponse(GetStateSetTargetResponse message, uint8_t buffer[]);
 void decodeGetStateSetTargetReponse(GetStateSetTargetResponse message, uint8_t buffer[]);
@@ -132,7 +130,6 @@ TF_Result queryListener2(TinyFrame *tf, TF_Msg *msg)
     delay(1000);
     return TF_STAY;
 }
-
  
 void encodeGetStateSetTargetResponse(GetStateSetTargetResponse message, uint8_t buffer[])
 {
@@ -153,6 +150,7 @@ void encodeResetResponse(ResetResponse message, uint8_t buffer[])
     pb_encode(&stream, ResetResponse_fields, &message);
 
 } 
+
 void decodeResetResponse(ResetResponse message, uint8_t buffer[])
 {
     pb_istream_t stream = pb_istream_from_buffer(buffer, BUFFER_LENGTH);
@@ -184,7 +182,6 @@ void setup()
     TF_AddTypeListener(slave_tf, 1, queryListener1);
     TF_AddTypeListener(slave_tf,2,queryListener2);
 }
-
 
 void loop()
 {
