@@ -4,10 +4,10 @@ import sys
 
 Import("env")
 
-NANOPB_ROOT = Path("firmware2/.pio/libdeps/esp32dev/Nanopb")
-PROTO_FILE = Path("firmware2/lib/nanopb/brain_controller.proto")
-C_OUTPUT_DIR = "firmware2/src"
-PY_OUTPUT_DIR = "device"
+NANOPB_ROOT = Path(".pio/libdeps/esp32dev/Nanopb")
+PROTO_FILE = Path("brain_controller.proto")
+C_OUTPUT_DIR = "src"
+PY_OUTPUT_DIR = "cartpole/device"
 
 print("KEK" * 20)
 subprocess.check_call([

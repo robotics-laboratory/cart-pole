@@ -6,3 +6,6 @@
 **/__pycache__
 **/.pytest_cache
 venv
+__pycache__/
+*.py[cod]
+*$py.class
