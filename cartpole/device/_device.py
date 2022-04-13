@@ -2,8 +2,8 @@ import logging
 import math
 import time
 
-from common import util
-from common.interface import (
+from cartpole.common import util
+from cartpole.common.interface import (
     Config,
     State,
     CartPoleBase,

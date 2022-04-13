@@ -1,6 +1,6 @@
-from common.interface import State
-from sessions.actor import Actor
-from control import BalanceLQRControl, TrajectoryLQRControl, Trajectory
+from cartpole.common.interface import State
+from cartpole.sessions.actor import Actor
+from cartpole.control import BalanceLQRControl, TrajectoryLQRControl, Trajectory
 from logging import getLogger
 
 logger = getLogger(__file__)

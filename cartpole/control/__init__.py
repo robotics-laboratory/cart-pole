@@ -1,3 +1,3 @@
-from control.lqr import BalanceLQRControl, TrajectoryLQRControl
-from control.trajectory import Trajectory
+from cartpole.control.lqr import BalanceLQRControl, TrajectoryLQRControl
+from cartpole.control.trajectory import Trajectory
 

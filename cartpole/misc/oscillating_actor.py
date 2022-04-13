@@ -1,5 +1,5 @@
-from common.interface import State
-from sessions.actor import Actor
+from cartpole.common.interface import State
+from cartpole.sessions.actor import Actor
 
 
 class OscillatingActor(Actor):

@@ -3,8 +3,8 @@ from pydrake.systems.controllers import FiniteHorizonLinearQuadraticRegulator
 from pydrake.systems.controllers import FiniteHorizonLinearQuadraticRegulatorOptions
 from pydrake.systems.primitives import Linearize
 
-from common import Config, Error, State
-from simulator.system import CartPoleSystem
+from cartpole.common import Config, Error, State
+from cartpole.simulator.system import CartPoleSystem
 
 import math
 import numpy

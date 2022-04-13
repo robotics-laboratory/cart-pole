@@ -1,17 +1,17 @@
 import time
 from pathlib import Path
 from device import CartPoleDevice, DeviceTarget
-from sessions.actor import Actor
-from sessions.collector import CollectorProxy
-from common.interface import Config, CartPoleBase
-from common.util import init_logging
-from misc.analyzer._saleae import SaleaeAnalyzer
+from cartpole.sessions.actor import Actor
+from cartpole.sessions.collector import CollectorProxy
+from cartpole.common.interface import Config, CartPoleBase
+from cartpole.common.util import init_logging
+from cartpole.misc.analyzer._saleae import SaleaeAnalyzer
 import logging
 # Actor imports
-from misc.oscillating_actor import OscillatingActor
+from cartpole.misc.oscillating_actor import OscillatingActor
 # from misc.lqr_actor import LinearBalanceControl
-from misc.demo_actor import DemoActor
-from misc.const_actor import ConstantActor
+from cartpole.misc.demo_actor import DemoActor
+from cartpole.misc.const_actor import ConstantActor
 
 LOGGER = logging.getLogger('debug-session-runner')
 

@@ -5,7 +5,7 @@ from math import pi
 import numpy as np
 import scipy.linalg as linalg
 
-from common.interface import State
+from cartpole.common.interface import State
 
 
 class Actor:
