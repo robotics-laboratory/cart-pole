@@ -58,6 +58,7 @@ def build_trajectory(config, initial_state, sample_n=100, max_duration=5):
     program.AddFinalCost(x**2)
 
     result = Solve(program)
+    print(result)
     assert result.is_success(), 'Impossible find trajectory'
     
     targets = program.ReconstructInputTrajectory(result)

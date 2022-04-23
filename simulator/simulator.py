@@ -47,8 +47,8 @@ class CartPoleSimulator(CartPoleBase):
         
     def reset_to(self, config, state):
         self.config = config
-        self.context.SetContinuousState(state.as_array())
-
+        self.context = self.system.CreateContext(config, state.as_array())
+        
         self.error = Error.NO_ERROR
         self.target_acceleration = 0
         self.system.get_input_port().FixValue(self.context, numpy.array([0]))

@@ -49,9 +49,11 @@ class TrajectoryLQRControl:
         options.x0 = trajectory.states
         options.u0 = trajectory.targets
         options.Qf = Q
-
+        
+        self.q0 = state.as_array()
+        
         system = CartPoleSystem()
-        context = system.CreateDefaultContext()
+        context = system.CreateContext(config, )
         
         self.trajectory = trajectory
         self.regulator = FiniteHorizonLinearQuadraticRegulator(
