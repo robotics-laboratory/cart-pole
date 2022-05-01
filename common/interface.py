@@ -19,8 +19,9 @@ class Error(enum.IntEnum):
 
 @dc.dataclass
 class Config:
+    # software cart limits
     max_position: float = 0.25  # m
-    max_velocity: float = 20  # m/s
+    max_velocity: float = 2.0  # m/s
     max_acceleration: float = 3.5  # m/s^2
     # hardware limits
     hard_max_position: float = 0.27  # m
@@ -31,7 +32,7 @@ class Config:
     clamp_velocity: bool = False
     clamp_acceleration: bool = False
     # physical params
-    pole_length: float = 0.1  # m
+    pole_length: float = 0.3  # m
     pole_mass: float = 0.118  # kg
     gravity: float = 9.8  # m/s^2
 
