@@ -8,7 +8,9 @@ extern "C" {
 #include <pb_decode.h>
 #include "driver/gpio.h"
 #include "driver/uart.h"
+#include "driver/i2c.h"
 #include "brain_controller.pb.h"
+
 //#include "utils.h"
 TinyFrame * master_tf;
 TinyFrame * slave_tf;
@@ -18,22 +20,50 @@ ResetResponse resetResponseMessage;
 #define BUFFER_LENGTH 256
 #define led 2
 uint8_t buffer[BUFFER_LENGTH];
-
+uint8_t dataHigh;
+uint8_t dataLow;
 const auto SERIAL_PORT_NUM = UART_NUM_0;
 const int SERIAL_TX_PIN = 1;
 const int SERIAL_RX_PIN = 3;
 const int SERIAL_SPEED = 115200;
+// TODO: clean up defines & buf sizes
 const int SERIAL_BUFFER_SIZE = 256;
+
+int i2c_master_port = 0;
+static gpio_num_t I2C_MASTER_SCL = GPIO_NUM_22;
+static gpio_num_t I2C_MASTER_SDA= GPIO_NUM_21;
+#define I2C_MASTER_FREQ_HZ 1000000
+//Master does not require a buffer!
+#define I2C_MASTER_TX_BUF_DISABLE 0
+#define I2C_MASTER_RX_BUF_DISABLE 0
+#define ACK_CHECK_ENABLE 0x1
+#define ACK_CHECK_DISABLE 0x0
+#define ENCODER_ADDR 0x36
 
 void processDataGetStateSetTarget();
 void encodeGetStateSetTargetResponse(GetStateSetTargetResponse message, uint8_t buffer[]);
 void decodeGetStateSetTargetReponse(GetStateSetTargetResponse message, uint8_t buffer[]);
 void encodeResetResponse(ResetResponse message, uint8_t buffer[]);
 void decodeResetResponse(ResetResponse message, uint8_t buffer[]);
+
 void idf_uart_init();
 bool idf_uart_available();
 uint8_t idf_uart_read_byte();
 void idf_uart_write_bytes(const uint8_t *src, size_t length);
+void idf_i2c_init();
+
+void idf_i2c_init() {
+    i2c_config_t i2c_config = {
+        .mode = I2C_MODE_MASTER,
+        .sda_io_num = I2C_MASTER_SDA,         // select GPIO specific to your project
+        .sda_pullup_en = GPIO_PULLUP_ENABLE,
+        .scl_io_num = I2C_MASTER_SCL,         // select GPIO specific to your project
+        .scl_pullup_en = GPIO_PULLUP_ENABLE,
+        //.master.clk_speed = I2C_MASTER_FREQ_HZ, // select frequency specific to your project
+        // .clk_flags = 0,   *!< Optional, you can use I2C_SCLK_SRC_FLAG_* flags to choose i2c source clock here. */
+    };
+    i2c_param_config(I2C_NUM_0, &i2c_config);
+}
 
 void idf_uart_init() {
     uart_config_t uart_config = {
@@ -162,6 +192,10 @@ void setup()
     pinMode(led, OUTPUT);
     //Serial.begin(115200);
     idf_uart_init();
+    idf_i2c_init();
+    i2c_driver_install(I2C_NUM_0, I2C_MODE_MASTER,I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0);
+
+
     //pb
     getStateSetTargetResponseMessage.currCartX = 1337;
     getStateSetTargetResponseMessage.currCartA = 1488;
@@ -185,12 +219,18 @@ void setup()
 
 void loop()
 {
-   // if(Serial.available() > 0)
-   // {
-   //     int b = Serial.read();
 
-   //     TF_AcceptChar(slave_tf, b);
-   // }
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    i2c_master_cmd_begin(I2C_NUM_0, cmd, 30 / portTICK_PERIOD_MS);
+    //READ data from sensor
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd, (ENCODER_ADDR << 1) | I2C_MASTER_READ, I2C_MASTER_ACK);
+    i2c_master_read_byte(cmd, &dataHigh, I2C_MASTER_ACK);
+    i2c_master_read_byte(cmd, &dataLow, I2C_MASTER_ACK);
+    i2c_master_stop(cmd);
+    //May or may not require a timeout
+    i2c_master_cmd_begin(I2C_NUM_0, cmd, 30 / portTICK_PERIOD_MS);
+
     while(idf_uart_available())
     {
         
