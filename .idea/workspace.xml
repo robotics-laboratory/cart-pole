@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="f8d3429b-f72b-49b7-a584-10bf99c71886" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/common/interface.py" beforeDir="false" afterPath="$PROJECT_DIR$/common/interface.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/control/trajectory.py" beforeDir="false" afterPath="$PROJECT_DIR$/control/trajectory.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/simulator/simulator.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulator/simulator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/simulator/system.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulator/system.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/trajectory_demo.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/trajectory_demo.ipynb" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="28bW1lNauQWQyo8ia5pzmOOes88" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="f8d3429b-f72b-49b7-a584-10bf99c71886" name="Changes" comment="" />
+      <created>1651485553391</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1651485553391</updated>
+      <workItem from="1651485556249" duration="280000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
