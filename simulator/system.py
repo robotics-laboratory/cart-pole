@@ -53,7 +53,7 @@ def CartPoleSystem_(T):
             d.SetAtIndex(0, v)
             d.SetAtIndex(1, w)
             d.SetAtIndex(2, u)
-            d.SetAtIndex(3, -1.5/l*(u*cos(a) + g*sin(a)))
+            d.SetAtIndex(3, -(u*cos(a) + g*sin(a))/l)
 
         def CreateContext(self, config, q):
             context = self.CreateDefaultContext()
