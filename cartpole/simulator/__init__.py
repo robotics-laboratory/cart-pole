@@ -1,1 +1,1 @@
-from simulator.simulator import CartPoleSimulator
+from cartpole.simulator.simulator import CartPoleSimulator

@@ -3,7 +3,6 @@
 .pio
 .vscode
 .DS_Store
-**/__pycache__
 **/.pytest_cache
 venv
 *.py[cod]

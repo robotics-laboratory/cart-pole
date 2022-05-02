@@ -8,7 +8,7 @@ from cartpole.common.interface import (
     State,
     CartPoleBase,
 )
-from device.wire_interface import (
+from cartpole.device.wire_interface import (
     WireInterface,
     ProtobufWireInterface,
     DeviceTarget,

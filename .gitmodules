@@ -1,3 +1,0 @@
-[submodule "firmware/lib/TinyFrame"]
-	path = firmware/lib/TinyFrame
-	url = https://github.com/MightyPork/TinyFrame

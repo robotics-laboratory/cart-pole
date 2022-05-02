@@ -1,7 +1,7 @@
 from unittest import mock
 
-from common.interface import State, Config
-from device import CartPoleDevice
+from cartpole.common.interface import State, Config
+from cartpole.device import CartPoleDevice
 
 
 EPS = 1e-6
