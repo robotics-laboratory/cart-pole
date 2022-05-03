@@ -22,17 +22,17 @@ class Config:
     # software cart limits
     max_position: float = 0.25  # m
     max_velocity: float = 25.0  # m/s
-    max_acceleration: float = 100  # m/s^2
+    max_acceleration: float = 7  # m/s^2
     # hardware limits
-    hard_max_position: float = 0.5  # m
+    hard_max_position: float = 4  # m
     hard_max_velocity: float = 25  # m/s
-    hard_max_acceleration: float = 100  # m/s^2
+    hard_max_acceleration: float = 8  # m/s^2
     # hardware flags
     clamp_position: bool = False
     clamp_velocity: bool = False
     clamp_acceleration: bool = False
     # physical params
-    pole_length: float = 0.05  # m
+    pole_length: float = 0.2  # m
     pole_mass: float = 0.118  # kg
     gravity: float = 9.8  # m/s^2
 
