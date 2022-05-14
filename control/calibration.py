@@ -1,6 +1,7 @@
 from common import Config, State
 from simulator import CartPoleSimulator
 import numpy as np
+import random
 from math import sin, cos
 
 
@@ -16,60 +17,46 @@ def acc_change_duration(a0, l0, moves_num):
     return change_timestamps
 
 
-def calibration_utraj(config, moves_num):
-    timestamps = []
-    targets = []
-    
-    a = a0 = config.max_acceleration / ((moves_num + 1) * 1.1)
+def collect_data(config, cart_pole, moves_num):
+    a0 = a = config.max_acceleration / ((moves_num + 1) * 1.1)
     l0 = config.max_position * 0.9
-    time = 0
+    change_timestamps = acc_change_duration(a0, l0, moves_num)
     
-    acc_duration = acc_change_duration(a0, l0, moves_num)
+    data = []
+    cart_pole.reset(config)
+    start_time = cart_pole.timestamp()
     
-    for i in range(moves_num + 1):
-        for j in range(int(acc_duration[i] / config.time_step)):
-            timestamps.append(time)
-            time += config.time_step
-            targets.append(a)
+    while change_timestamps:
+        time = cart_pole.timestamp() - start_time
+        state = cart_pole.get_state()
+        data.append({"state": state, "time": time, "target": a})
+        
+        if time > change_timestamps[0]:
+            a = -a
+            change_timestamps.pop(0)
             
-        a = -a
+        cart_pole.set_target(a)
+        timestepp = round(random.uniform(0.008, 0.012), 10)
+        cart_pole.advance(timestepp)
+        print(time, timestepp, time + timestepp)
         
-        for j in range(int(acc_duration[i] / config.time_step)):
-            timestamps.append(time)
-            time += config.time_step
-            targets.append(a)
-        
-        a *= ((i+2)/(i+1))
-        
-    return timestamps, targets
+    return data
+     
 
-
-def collect_data(config, targets):
-    simulator = CartPoleSimulator()
-    simulator.reset(config)
-    states = []
-    
-    for target in targets:
-        simulator.set_target(target)
-        state = simulator.get_state()
-        states.append(state)
-        simulator.advance(config.time_step)
-        
-    return states  
-
-
-def execute_parameters(states, targets, config):
-    N = len(states)
+def execute_parameters(data, config):
+    N = len(data)
 
     epsilon = []
     expression = []  #expression: -((x¨)cos(θ) + g*sin(θ))
     
     for i in range(1, N):
-        curr_state = states[i].as_tuple()
-        prev_state = states[i - 1].as_tuple()
+        curr_target = data[i]["target"]
+        curr_state = data[i]["state"].as_tuple()
+        prev_state = data[i - 1]["state"].as_tuple()
+        time_step = data[i]["time"] - data[i - 1]["time"]
         
-        expression.append(-((targets[i] * cos(curr_state[1])) + (config.gravity * sin(curr_state[1]))))
-        epsilon.append((curr_state[3] - prev_state[3]) / config.time_step)
+        expression.append(-((curr_target * cos(curr_state[1])) + (config.gravity * sin(curr_state[1]))))
+        epsilon.append((curr_state[3] - prev_state[3]) / time_step)
         
     expression = np.array(expression)
     epsilon = np.vstack([epsilon, np.zeros(len(epsilon))]).T
@@ -78,8 +65,9 @@ def execute_parameters(states, targets, config):
     return pole_length
 
 
-def calibrate(config, moves_num = 18):
-    timestamps, targets = calibration_utraj(config, moves_num)    
-    states = collect_data(config, targets)
+def calibrate(config, cart_pole, moves_num = 18):
+    data = collect_data(config, cart_pole, moves_num)
+    config.pole_length = execute_parameters(data, config)
+    cart_pole.reset(config)
     
-    return execute_parameters(states, targets, config)
+    return config, cart_pole
