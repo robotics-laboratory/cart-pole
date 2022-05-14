@@ -1,47 +1,85 @@
-from common import Config, State, generate_pyplot_animation
-from control import BalanceLQRControl, Trajectory, TrajectoryLQRControl
+from common import Config, State
 from simulator import CartPoleSimulator
-
-import matplotlib.pyplot as plt
 import numpy as np
+from math import sin, cos
 
-from IPython.display import HTML
 
-"""
-Calibration steps!
-
-1. TRACK'S LENGTH *update*
-    1. Move max to the right
-    2. Move max to the left
-    3. *update* hard_max_position = covered distance
-    4. *update* max_position = 0.9 * hard_max_position
-    5. *update* zero_point (in State?)
-
-2. HOMING
-
-3. POLE'S MASS AND LENGTH *update*
-    1. Some sin-looking accelerated trajectory 
-    2. *update* pole_mass
-    3. *update* pole_length
+def acc_change_duration(a0, l0, moves_num):
+    t0 = (l0 / a0) ** 0.5
     
-4. HOMING
-"""
+    change_timestamps = [t0]
+    
+    for i in range(moves_num):
+        timestamp = t0 * ((2 / (i + 2)) ** 0.5)
+        change_timestamps.append(timestamp) 
+    
+    return change_timestamps
 
 
-class Calibration:
+def calibration_utraj(config, moves_num):
+    timestamps = []
+    targets = []
     
-    max_position_calibr: float = 0  # m
-    hard_max_position_calibr: float = 0  # m
+    a = a0 = config.max_acceleration / ((moves_num + 1) * 1.1)
+    l0 = config.max_position * 0.9
+    time = 0
+    
+    acc_duration = acc_change_duration(a0, l0, moves_num)
+    
+    for i in range(moves_num + 1):
+        for j in range(int(acc_duration[i] / config.time_step)):
+            timestamps.append(time)
+            time += config.time_step
+            targets.append(a)
+            
+        a = -a
         
-    pole_length_calibr: float = 0  # m
-    pole_mass_calibr: float = 0  # kg
+        for j in range(int(acc_duration[i] / config.time_step)):
+            timestamps.append(time)
+            time += config.time_step
+            targets.append(a)
+        
+        a *= ((i+2)/(i+1))
+        
+    return timestamps, targets
 
+
+def collect_data(config, targets):
+    simulator = CartPoleSimulator()
+    simulator.reset(config)
+    states = []
     
-    def __init__(self, config):
+    for target in targets:
+        simulator.set_target(target)
+        state = simulator.get_state()
+        states.append(state)
+        simulator.advance(config.time_step)
         
-        
-        
-    def __call__(self, state):
-        
-        return 
+    return states  
+
+
+def execute_parameters(states, targets, config):
+    N = len(states)
+
+    epsilon = []
+    expression = []  #expression: -((x¨)cos(θ) + g*sin(θ))
     
+    for i in range(1, N):
+        curr_state = states[i].as_tuple()
+        prev_state = states[i - 1].as_tuple()
+        
+        expression.append(-((targets[i] * cos(curr_state[1])) + (config.gravity * sin(curr_state[1]))))
+        epsilon.append((curr_state[3] - prev_state[3]) / config.time_step)
+        
+    expression = np.array(expression)
+    epsilon = np.vstack([epsilon, np.zeros(len(epsilon))]).T
+    pole_length = np.linalg.lstsq(epsilon, expression)[0][0]
+
+    return pole_length
+
+
+def calibrate(config, moves_num = 18):
+    timestamps, targets = calibration_utraj(config, moves_num)    
+    states = collect_data(config, targets)
+    
+    return execute_parameters(states, targets, config)

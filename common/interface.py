@@ -35,6 +35,8 @@ class Config:
     pole_length: float = 0.2  # m
     pole_mass: float = 0.118  # kg
     gravity: float = 9.8  # m/s^2
+    
+    time_step = 0.01 # s
 
 
 @dc.dataclass
