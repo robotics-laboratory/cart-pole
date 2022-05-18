@@ -27,14 +27,14 @@ def build_trajectory(config, initial_state, sample_n=100, max_duration=5):
     program.AddEqualTimeIntervalsConstraints()
     program.AddDurationBounds(0, max_duration)
 
-    program.prog().AddBoundingBoxConstraint(
+    program.AddBoundingBoxConstraint(
         initial_state.as_array(),
         initial_state.as_array(),
         program.initial_state())
 
     target_x_max = config.max_position * 0.75
 
-    program.prog().AddBoundingBoxConstraint(
+    program.AddBoundingBoxConstraint(
         [-target_x_max, math.pi, 0.0, 0.0],
         [+target_x_max, math.pi, 0.0, 0.0],
         program.final_state())
@@ -57,7 +57,7 @@ def build_trajectory(config, initial_state, sample_n=100, max_duration=5):
     # program.AddFinalCost(u**2)
     program.AddFinalCost(x**2)
 
-    result = Solve(program.prog())
+    result = Solve(program)
     assert result.is_success(), 'Impossible find trajectory'
     
     targets = program.ReconstructInputTrajectory(result)
