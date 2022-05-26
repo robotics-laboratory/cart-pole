@@ -4,6 +4,7 @@ from pydrake.systems.scalar_conversion import TemplateSystem
 
 import numpy
 
+
 @TemplateSystem.define("CartPoleSystem")
 def CartPoleSystem_(T):
     """
@@ -20,23 +21,23 @@ def CartPoleSystem_(T):
       v - cart velocity
       w - pole angular velocity
     """
-    
+
     class Impl(LeafSystem_[T]):
         def _construct(self, converter=None):
             LeafSystem_[T].__init__(self, converter=converter)
-    
+
             parameter_default = BasicVector_[T]([9.8, 0.3])
             self.parameter_index = self.DeclareNumericParameter(parameter_default)
-    
+
             self.state_index = self.DeclareContinuousState(4)
             self.DeclareStateOutputPort('q', self.state_index)
-        
+
             self.input_index = self.DeclareVectorInputPort('u', 1)
 
         def _construct_copy(self, other, converter=None):
             Impl._construct(self, converter=converter)
-            
-        def DoCalcTimeDerivatives(self, context, derivatives):                
+
+        def DoCalcTimeDerivatives(self, context, derivatives):
             parameter = context.get_numeric_parameter(self.parameter_index)
             g = parameter[0]
             l = parameter[1]
@@ -53,7 +54,7 @@ def CartPoleSystem_(T):
             d.SetAtIndex(0, v)
             d.SetAtIndex(1, w)
             d.SetAtIndex(2, u)
-            d.SetAtIndex(3, -(u*cos(a) + g*sin(a))/l)
+            d.SetAtIndex(3, -(u * cos(a) + g * sin(a)) / l)
 
         def CreateContext(self, config, q):
             context = self.CreateDefaultContext()
@@ -69,5 +70,6 @@ def CartPoleSystem_(T):
             return context
 
     return Impl
+
 
 CartPoleSystem = CartPoleSystem_[float]
