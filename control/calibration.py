@@ -1,10 +1,9 @@
 import time
-from common import Config, State, generate_pyplot_animation
-from simulator import CartPoleSimulator
+from common import Config, State
 import matplotlib.pyplot as plt
 import numpy as np
 from math import sin, cos
-from IPython.display import HTML
+from scipy import interpolate, integrate
 
 
 class Calibrator:
@@ -23,7 +22,7 @@ class Calibrator:
         self.data = []
 
     def __braking_distance(self):
-        dist = -0.02 * self.data[-1]["state"].cart_velocity
+        dist = -0.018 * self.data[-1]["state"].cart_velocity
         return dist
 
     def __pos_turned_positive(self):
@@ -42,15 +41,17 @@ class Calibrator:
 
         self.length = self.config.max_position * 0.75
         self.acceleration = (min(self.config.max_acceleration, (self.config.max_velocity ** 2) / (2 * self.length))
-                             / (self.moves_num + 1)) * 0.4
+                             / (self.moves_num + 1)) * 0.5
         self.first_acc_duration = (self.length / self.acceleration) ** 0.5
         self.zero_angle = self.cart_pole.get_state().pole_angle
-        self.start_timestamp = self.cart_pole.timestamp()
 
     def __collect_data(self):
         target = self.acceleration
-        timestamp = self.cart_pole.timestamp() - self.start_timestamp
-        self.last_acc_change_timestamp = timestamp - self.start_timestamp
+        self.start_timestamp = self.cart_pole.timestamp()
+        timestamp = self.start_timestamp - self.start_timestamp
+        state = self.cart_pole.get_state()
+        self.data.append({"state": state, "timestamp": timestamp, "target": 0})
+        self.last_acc_change_timestamp = timestamp
 
         while timestamp < self.first_acc_duration:
             self.cart_pole.set_target(target)
@@ -79,22 +80,43 @@ class Calibrator:
 
     def __update_params(self):
         n = len(self.data)
-
-        epsilon = []
         expression = []  # expression: -((x¨)cos(θ) + g*sin(θ))
+        timestamps = []
+        thetas = []
+        psi_thetas = []
+        psi_omegas = []
 
-        for i in range(1, n):
-            curr_target = self.data[i]["target"]
-            curr_state = self.data[i]["state"].as_tuple()
-            prev_state = self.data[i - 1]["state"].as_tuple()
-            time_step = self.data[i]["timestamp"] - self.data[i - 1]["timestamp"]
+        for i in range(n):
+            expression.append(-((self.data[i]["target"] * cos(self.data[i]["state"].pole_angle))
+                                + (self.config.gravity * sin(self.data[i]["state"].pole_angle))))
+            timestamps.append(self.data[i]["timestamp"])
+            thetas.append(self.data[i]["state"].pole_angle)
 
-            expression.append(-((curr_target * cos(curr_state[1])) + (self.config.gravity * sin(curr_state[1]))))
-            epsilon.append((curr_state[3] - prev_state[3]) / time_step)
+        psi_epsilon_func = interpolate.interp1d(np.array(timestamps), np.array(expression))#, kind="cubic")
+
+
+        for i in range(n):
+            timestamp = timestamps[i]
+            psi_omegas.append(integrate.quad(lambda t: psi_epsilon_func(t), 0, timestamp)[0])
+
+        psi_omega_func = interpolate.interp1d(np.array(timestamps), np.array(psi_omegas))#, kind="cubic")
+
+
+        for i in range(n):
+            timestamp = timestamps[i]
+            psi_thetas.append(integrate.quad(lambda t: psi_omega_func(t), 0, timestamp)[0])
+
+
 
         expression = np.array(expression)
-        epsilon = np.vstack([epsilon, np.zeros(len(epsilon))]).T
-        self.config.pole_length = np.linalg.lstsq(epsilon, expression)[0][0]
+        thetasx = thetas
+        thetas = np.vstack([thetas, np.zeros(len(thetas))]).T
+        self.config.pole_length = np.linalg.lstsq(thetas, psi_thetas)[0][0]
+        print(self.config.pole_length)
+        plt.figure(figsize=(60, 40))
+
+        plt.plot(timestamps, psi_thetas, '.', timestamps, thetasx, 'ys')
+        plt.show()
 
     def calibrate(self, moves_num=10):
         self.moves_num = moves_num
@@ -103,8 +125,5 @@ class Calibrator:
         self.__collect_data()
         self.cart_pole.reset(self.config)
         self.__update_params()
-        self.config.pole_length *= 1.18
-        print(self.config.pole_length)
-
 
         return self.config
