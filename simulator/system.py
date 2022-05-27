@@ -26,7 +26,7 @@ def CartPoleSystem_(T):
         def _construct(self, converter=None):
             LeafSystem_[T].__init__(self, converter=converter)
 
-            parameter_default = BasicVector_[T]([9.8, 0.3])
+            parameter_default = BasicVector_[T]([9.8, 0.3, 0])
             self.parameter_index = self.DeclareNumericParameter(parameter_default)
 
             self.state_index = self.DeclareContinuousState(4)
@@ -41,6 +41,7 @@ def CartPoleSystem_(T):
             parameter = context.get_numeric_parameter(self.parameter_index)
             g = parameter[0]
             l = parameter[1]
+            friction_coefficient = parameter[2]
 
             q = context.get_continuous_state_vector()
             x = q[0]
@@ -54,7 +55,7 @@ def CartPoleSystem_(T):
             d.SetAtIndex(0, v)
             d.SetAtIndex(1, w)
             d.SetAtIndex(2, u)
-            d.SetAtIndex(3, -(u * cos(a) + g * sin(a)) / l)
+            d.SetAtIndex(3, -(u * cos(a) + g * sin(a) - friction_coefficient * w) / l)
 
         def CreateContext(self, config, q):
             context = self.CreateDefaultContext()
@@ -62,7 +63,7 @@ def CartPoleSystem_(T):
 
             params = context.get_mutable_numeric_parameter(self.parameter_index)
             params.SetFromVector(
-                numpy.array([config.gravity, config.pole_length])
+                numpy.array([config.gravity, config.pole_length, config.friction_coefficient])
             )
 
             context.SetContinuousState(q)

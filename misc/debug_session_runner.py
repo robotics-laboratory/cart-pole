@@ -62,8 +62,6 @@ if __name__ == '__main__':
     )
 
     try:
-        # proxy.reset(DEVICE_CONFIG)
-        # time.sleep(3.0)
         calibrator = Calibrator(DEVICE_CONFIG, proxy)
         new_config = calibrator.calibrate()
         device.rotations = 0
@@ -92,7 +90,7 @@ if __name__ == '__main__':
         # LOGGER.info(">>>")
         # device.interface.set(DeviceTarget(position=0.05))
         # LOGGER.info("<<<")
-        control_loop(proxy, actor, max_duration=SESSION_MAX_DURATION)
+        #control_loop(proxy, actor, max_duration=SESSION_MAX_DURATION)
         # print(length)
     except Exception:
         LOGGER.exception('Aborting run due to error')
