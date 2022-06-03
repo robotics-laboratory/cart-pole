@@ -90,7 +90,7 @@ if __name__ == '__main__':
         # LOGGER.info(">>>")
         # device.interface.set(DeviceTarget(position=0.05))
         # LOGGER.info("<<<")
-        #control_loop(proxy, actor, max_duration=SESSION_MAX_DURATION)
+        control_loop(proxy, actor, max_duration=SESSION_MAX_DURATION)
         # print(length)
     except Exception:
         LOGGER.exception('Aborting run due to error')

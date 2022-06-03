@@ -12,7 +12,7 @@ import math
 import numpy
 
 
-def build_trajectory(config, initial_state, sample_n=100, max_duration=10):
+def build_trajectory(config, initial_state, sample_n=100, max_duration=15):
     system = CartPoleSystem()
     context = system.CreateContext(config, initial_state.as_array())
 
