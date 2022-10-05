@@ -13,15 +13,6 @@ differences:
 
     It supports evaluating best inputs for a given set of states and also
     evaluating new states (after inputs are applied).
-Returns
--------
-_type_
-    _description_
-
-Raises
-------
-ValueError
-    _description_
 """
 
 

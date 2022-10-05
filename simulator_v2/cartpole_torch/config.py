@@ -71,6 +71,9 @@ class SystemParameters:
 
     `pole_mass` : float
         Mass of the pole in kg.
+    
+    `cart_mass` : float
+        Mass of the cart in kg.
 
     `gravity` : float
         Gravitational constant, shows the gravitational pull.

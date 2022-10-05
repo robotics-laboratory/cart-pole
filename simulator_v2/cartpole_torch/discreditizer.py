@@ -110,7 +110,6 @@ class Discreditizer:
         -------
         DoubleTensor
             1xN Tensor with pole angles.
-
         """
         return self.__all_states[1]  # type: ignore
 
@@ -121,7 +120,6 @@ class Discreditizer:
         -------
         DoubleTensor
             1xN Tensor with cart velocities.
-
         """
         return self.__all_states[2]  # type: ignore
 
@@ -132,7 +130,6 @@ class Discreditizer:
         -------
         DoubleTensor
             1xN Tensor with pole angular velocities.
-
         """
         return self.__all_states[3]  # type: ignore
 

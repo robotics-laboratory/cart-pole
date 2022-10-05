@@ -206,6 +206,10 @@ class MultiSystemState:
         Returns
         -------
         DoubleTensor
-            _description_
+            4xN tensor, where N is the number of systems
+            - `__state_space[0]` is a 1xN DoubleTensor containing cart positions
+            - `__state_space[1]` is a 1xN DoubleTensor containing pole angles
+            - `__state_space[2]` is a 1xN DoubleTensor containing cart velocities
+            - `__state_space[3]` is a 1xN DoubleTensor containing angular velocities
         """
         return self._state_space
