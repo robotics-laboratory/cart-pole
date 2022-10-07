@@ -25,7 +25,7 @@ class Discreditizer:
     config: SystemConfiguration
 
     cart_accelerations: DoubleTensor = None  # type: ignore
-    __all_states: DoubleTensor = None  # type: ignore
+    _all_states: DoubleTensor = None  # type: ignore
 
     def __post_init__(self) -> None:
         """
@@ -73,7 +73,7 @@ class Discreditizer:
             indexing="ij",
         )
 
-        self.__all_states = torch.vstack(  # type: ignore
+        self._all_states = torch.vstack(  # type: ignore
             [
                 positions.flatten(),
                 angles.flatten(),
@@ -91,7 +91,7 @@ class Discreditizer:
         -------
         int
         """
-        return self.__all_states.shape[1]
+        return self._all_states.shape[1]
 
     @property
     def cart_positions(self) -> DoubleTensor:
@@ -101,7 +101,7 @@ class Discreditizer:
         DoubleTensor
             1xN Tensor with cart positions.
         """
-        return self.__all_states[0]  # type: ignore
+        return self._all_states[0]  # type: ignore
 
     @property
     def pole_angles(self) -> DoubleTensor:
@@ -111,7 +111,7 @@ class Discreditizer:
         DoubleTensor
             1xN Tensor with pole angles.
         """
-        return self.__all_states[1]  # type: ignore
+        return self._all_states[1]  # type: ignore
 
     @property
     def cart_velocities(self) -> DoubleTensor:
@@ -121,7 +121,7 @@ class Discreditizer:
         DoubleTensor
             1xN Tensor with cart velocities.
         """
-        return self.__all_states[2]  # type: ignore
+        return self._all_states[2]  # type: ignore
 
     @property
     def pole_angular_velocities(self) -> DoubleTensor:
@@ -131,7 +131,7 @@ class Discreditizer:
         DoubleTensor
             1xN Tensor with pole angular velocities.
         """
-        return self.__all_states[3]  # type: ignore
+        return self._all_states[3]  # type: ignore
 
     @property
     def all_states(self) -> DoubleTensor:
@@ -142,4 +142,4 @@ class Discreditizer:
             4xN Tensor storing cart positions, pole angles, cart velocities
             and pole angular velocities.
         """
-        return self.__all_states
+        return self._all_states

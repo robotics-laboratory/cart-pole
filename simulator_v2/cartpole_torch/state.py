@@ -135,10 +135,10 @@ class MultiSystemState:
     _state_space: DoubleTensor
     """
     4xN tensor, where N is the number of systems
-    - `__state_space[0]` is a 1xN DoubleTensor containing cart positions
-    - `__state_space[1]` is a 1xN DoubleTensor containing pole angles
-    - `__state_space[2]` is a 1xN DoubleTensor containing cart velocities
-    - `__state_space[3]` is a 1xN DoubleTensor containing angular velocities
+    - `_state_space[0]` is a 1xN DoubleTensor containing cart positions
+    - `_state_space[1]` is a 1xN DoubleTensor containing pole angles
+    - `_state_space[2]` is a 1xN DoubleTensor containing cart velocities
+    - `_state_space[3]` is a 1xN DoubleTensor containing angular velocities
     """
 
     @staticmethod
@@ -207,9 +207,9 @@ class MultiSystemState:
         -------
         DoubleTensor
             4xN tensor, where N is the number of systems
-            - `__state_space[0]` is a 1xN DoubleTensor containing cart positions
-            - `__state_space[1]` is a 1xN DoubleTensor containing pole angles
-            - `__state_space[2]` is a 1xN DoubleTensor containing cart velocities
-            - `__state_space[3]` is a 1xN DoubleTensor containing angular velocities
+            - `state_space[0]` is a 1xN DoubleTensor containing cart positions
+            - `state_space[1]` is a 1xN DoubleTensor containing pole angles
+            - `state_space[2]` is a 1xN DoubleTensor containing cart velocities
+            - `state_space[3]` is a 1xN DoubleTensor containing angular velocities
         """
         return self._state_space

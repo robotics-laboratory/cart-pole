@@ -129,7 +129,7 @@ class SystemHistory:
     """
 
     _history: DoubleTensor = field(default_factory=DoubleTensor)
-    __iter_index = -1
+    _iter_index = -1
 
     def add_entry(
         self,
@@ -272,16 +272,16 @@ class SystemHistory:
         return kin_cart + kin_pole + pot_pole
 
     def __iter__(self) -> "SystemHistory":
-        self.__iter_index = -1
+        self._iter_index = -1
         return self
 
     def __next__(self) -> HistoryEntry:
-        self.__iter_index += 1
+        self._iter_index += 1
 
-        if self.__iter_index == self.size:
+        if self._iter_index == self.size:
             raise StopIteration
 
-        data = self._history[self.__iter_index]
+        data = self._history[self._iter_index]
         return HistoryEntry.from_tensor(data)  # type: ignore
 
     def get_entries(self) -> list[HistoryEntry]:

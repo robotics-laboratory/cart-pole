@@ -62,12 +62,12 @@ class CartPoleSystem:
     history: SystemHistory = SystemHistory()
     # Pre-allocated tensors which are often used
     # ds1 and ds2 are used for derivative computation
-    __ds1: DoubleTensor = None  # type: ignore # delta state 1
-    __ds2: DoubleTensor = None  # type: ignore # delta state 2
+    _ds1: DoubleTensor = None  # type: ignore # delta state 1
+    _ds2: DoubleTensor = None  # type: ignore # delta state 2
 
     def __post_init__(self) -> None:
-        self.__ds1 = DoubleTensor([0, 0, 0, 0])
-        self.__ds2 = DoubleTensor([0, 0, 0, 0])
+        self._ds1 = DoubleTensor([0, 0, 0, 0])
+        self._ds2 = DoubleTensor([0, 0, 0, 0])
 
     def advance_to(self, target_time: float, best_input: float) -> None:
         """
@@ -123,13 +123,13 @@ class CartPoleSystem:
             # Evaluate derivatives
             __compute_derivative(
                 state=cur_st,
-                delta_state=self.__ds1,
+                delta_state=self._ds1,
             )
             __compute_derivative(
-                state=cur_st + self.__ds1 * d_time,  # type: ignore
-                delta_state=self.__ds2,
+                state=cur_st + self._ds1 * d_time,  # type: ignore
+                delta_state=self._ds2,
             )
-            cur_st += (self.__ds1 + self.__ds2) / 2 * d_time  # type: ignore
+            cur_st += (self._ds1 + self._ds2) / 2 * d_time  # type: ignore
 
         self.history.add_entry(
             timestamp=self.simulation_time,
