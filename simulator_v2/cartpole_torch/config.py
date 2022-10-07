@@ -43,12 +43,12 @@ class DiscretizationParameters:
     This class contains the parameters used for discretization
     of state space and time.
 
-    Each field except `input_time` defines the number of samples
+    Each field except `input_frequency` defines the number of samples
     for each dimension.
     `cart_position = 50` would mean that we take 50 equidistant points
     from `[-max_abs_position, max_abs_position]`.
 
-    `input_time` stores the discretization of input times.
+    `input_frequency` stores the discretization of input times.
     Value of `100` would mean that we can change out input 100 times a second.
     """
 
@@ -58,7 +58,7 @@ class DiscretizationParameters:
     pole_angular_velocity: int = 126
     cart_acceleration: int = 35
 
-    input_time: int = 100
+    input_frequency: int = 100
 
 
 @dataclass
