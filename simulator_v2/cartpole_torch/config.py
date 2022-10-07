@@ -22,6 +22,10 @@ class SystemLimits:
         Maximum absolute velocity of the cart.
         Measured in m/s (meters per second).
 
+    `max_abs_angular_velocity` : float
+        Maximum angular velocity of a pole.
+        Measured in rad/s (radians per second).
+
     `max_abs_acceleration` : float
         Maximum absolute acceleration of the cart.
         Measured in m/s^2 (meters per second squared).
@@ -46,8 +50,6 @@ class DiscretizationParameters:
 
     `input_time` stores the discretization of input times.
     Value of `100` would mean that we can change out input 100 times a second.
-
-    `dynamics_per_time_step` is the number
     """
 
     cart_position: int = 50
@@ -71,7 +73,7 @@ class SystemParameters:
 
     `pole_mass` : float
         Mass of the pole in kg.
-    
+
     `cart_mass` : float
         Mass of the cart in kg.
 
