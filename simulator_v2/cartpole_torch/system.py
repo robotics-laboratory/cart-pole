@@ -96,7 +96,7 @@ class CartPoleSystem:
         """
         # Current state
         cur_st: DoubleTensor = self.current_state.as_tensor()
-        steps: int = self.config.dynamics_steps_per_input
+        steps: int = self.config.discretization.dynamics_steps_per_input
         # Delta time
         d_time: float = 1 / (steps * self.config.discretization.input_frequency)
 
@@ -168,7 +168,7 @@ class CartPoleMultiSystem:
         # Current state
         cur_st = context.batch_state.states
         cur_st: DoubleTensor = torch.clone(cur_st)  # type: ignore
-        steps: int = context.config.dynamics_steps_per_input
+        steps: int = context.config.discretization.dynamics_steps_per_input
         # dynamics delta time
         d_time: float = 1 / (steps * context.config.discretization.input_frequency)
 

@@ -43,13 +43,20 @@ class DiscretizationParameters:
     This class contains the parameters used for discretization
     of state space and time.
 
-    Each field except `input_frequency` defines the number of samples
-    for each dimension.
+    Each field except `input_frequency` and `dynamics_steps_per_input
+    defines the number of samples for each dimension.
     `cart_position = 50` would mean that we take 50 equidistant points
     from `[-max_abs_position, max_abs_position]`.
 
     `input_frequency` stores the discretization of input times.
     Value of `100` would mean that we can change out input 100 times a second.
+
+    `dynamics_steps_per_input` : int
+        Shows how many times we calculate dynamics of the system during
+        one timestep.
+        We assume the input is the same during the timestep.
+        Value of 10 would mean that we update the state of the system
+        10 times before adjusting the input.
     """
 
     cart_position: int = 50
@@ -59,6 +66,7 @@ class DiscretizationParameters:
     cart_acceleration: int = 35
 
     input_frequency: int = 100
+    dynamics_steps_per_input: int = 10
 
 
 @dataclass
@@ -105,16 +113,8 @@ class SystemConfiguration:
         Parameters of the system which are used for discretization of
         continuos space and time.
         Basically contains the number of pieces we split each dimension in.
-
-    `dynamics_steps_per_input` : int
-        Shows how many times we calculate dynamics of the system during
-        one timestep.
-        We assume the input is the same during the timestep.
-        Value of 10 would mean that we update the state of the system
-        10 times before adjusting the input.
     """
 
     parameters: SystemParameters = SystemParameters()
     limits: SystemLimits = SystemLimits()
     discretization: DiscretizationParameters = DiscretizationParameters()
-    dynamics_steps_per_input: int = 10
