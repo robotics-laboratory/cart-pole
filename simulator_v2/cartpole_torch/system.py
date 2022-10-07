@@ -180,7 +180,7 @@ class CartPoleMultiSystem:
         grav: float = context.config.parameters.gravity
         pole_len: float = context.config.parameters.pole_length
 
-        def __compute_derivative(state: DoubleTensor):
+        def compute_derivative(state: DoubleTensor):
             # FIXME : Use 2 pre-allocated arrays instead of creating new ones
             ang = state[1]
             return torch.vstack(
@@ -194,8 +194,8 @@ class CartPoleMultiSystem:
 
         for _ in range(steps):
             # Evaluate derivatives
-            ds1 = __compute_derivative(cur_st)
-            ds2 = __compute_derivative(cur_st + ds1 * d_time)  # type: ignore
+            ds1 = compute_derivative(cur_st)
+            ds2 = compute_derivative(cur_st + ds1 * d_time)  # type: ignore
             cur_st += (ds1 + ds2) / 2 * d_time  # type: ignore
 
         return cur_st
