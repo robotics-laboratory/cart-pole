@@ -82,7 +82,7 @@ class SystemParameters:
         Measured in m/s^2 (meters per second squared).
     """
 
-    pole_length: float = 0.2
+    pole_length: float = 0.3
     pole_mass: float = 0.118
     cart_mass: float = 0
     gravity: float = 9.807
