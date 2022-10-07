@@ -24,8 +24,8 @@ class Discreditizer:
 
     config: SystemConfiguration
 
-    cart_accelerations: DoubleTensor = DoubleTensor()
-    __all_states: DoubleTensor = DoubleTensor()
+    cart_accelerations: DoubleTensor = None  # type: ignore
+    __all_states: DoubleTensor = None  # type: ignore
 
     def __post_init__(self) -> None:
         """

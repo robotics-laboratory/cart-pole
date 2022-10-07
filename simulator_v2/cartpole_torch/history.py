@@ -9,7 +9,7 @@ This module contains 3 classes related to keeping record of systems states:
 """
 
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import IntEnum, auto
 
 import torch
@@ -128,7 +128,7 @@ class SystemHistory:
     when adding new entries.
     """
 
-    _history: DoubleTensor = DoubleTensor()
+    _history: DoubleTensor = field(default_factory=DoubleTensor)
     __iter_index = -1
 
     def add_entry(
