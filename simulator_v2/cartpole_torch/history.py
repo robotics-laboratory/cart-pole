@@ -11,6 +11,7 @@ This module contains 3 classes related to keeping record of systems states:
 
 from dataclasses import dataclass, field
 from enum import IntEnum, auto
+from typing import Generator
 
 import torch
 from torch import DoubleTensor, Tensor, cos
@@ -271,18 +272,12 @@ class SystemHistory:
         # does not travel vertically
         return kin_cart + kin_pole + pot_pole
 
-    def __iter__(self) -> "SystemHistory":
-        self._iter_index = -1
-        return self
-
-    def __next__(self) -> HistoryEntry:
-        self._iter_index += 1
-
-        if self._iter_index == self.size:
-            raise StopIteration
-
-        data = self._history[self._iter_index]
-        return HistoryEntry.from_tensor(data)  # type: ignore
+    def __iter__(self) -> Generator[HistoryEntry, None, None]:
+        entries = map(
+            lambda tens: HistoryEntry.from_tensor(tens),  # type: ignore
+            self._history,
+        )
+        yield from entries
 
     def get_entries(self) -> list[HistoryEntry]:
         """
