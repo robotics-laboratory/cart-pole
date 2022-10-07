@@ -16,8 +16,8 @@ from typing import Generator
 import torch
 from torch import DoubleTensor, Tensor, cos
 
-from cartpole_torch.config import SystemParameters
-from cartpole_torch.state import State
+from .config import SystemParameters
+from .state import State
 
 
 class HistoryTensorFields(IntEnum):

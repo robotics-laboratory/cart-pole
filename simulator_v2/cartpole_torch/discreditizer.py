@@ -10,7 +10,7 @@ from dataclasses import dataclass
 import torch
 from torch import DoubleTensor
 
-from cartpole_torch.config import SystemConfiguration
+from .config import SystemConfiguration
 
 
 @dataclass

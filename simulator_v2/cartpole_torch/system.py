@@ -21,10 +21,10 @@ from dataclasses import dataclass
 import torch
 from torch import DoubleTensor, cos, sin
 
-from cartpole_torch.config import SystemConfiguration
-from cartpole_torch.history import SystemHistory
-from cartpole_torch.learning_context import MultiSystemLearningContext
-from cartpole_torch.state import State
+from .config import SystemConfiguration
+from .history import SystemHistory
+from .learning_context import MultiSystemLearningContext
+from .state import State
 
 # FIXME: CartPoleSystem and CartPoleMultiSystem are not interchangable.
 # Think of a way to create some kind of a base class
