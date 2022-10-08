@@ -130,7 +130,6 @@ class SystemHistory:
     """
 
     _history: DoubleTensor = field(default_factory=DoubleTensor)
-    _iter_index = -1
 
     def add_entry(
         self,
@@ -273,9 +272,9 @@ class SystemHistory:
         return kin_cart + kin_pole + pot_pole
 
     def __iter__(self) -> Generator[HistoryEntry, None, None]:
-        entries = map(
-            lambda tens: HistoryEntry.from_tensor(tens),  # type: ignore
-            self._history,
+        entries: map[HistoryEntry] = map(
+            HistoryEntry.from_tensor,
+            self._history,  # type: ignore
         )
         yield from entries
 
