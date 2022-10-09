@@ -8,8 +8,6 @@ authors = ["Nikolay Chechulin <nchechulin@protonmail.com>"]
 python = "^3.10"
 jupyter = "^1.0.0"
 torch = "^1.12.1"
-torchvision = "^0.13.1"
-torchaudio = "^0.12.1"
 matplotlib = "^3.5.3"
 
 [tool.poetry.dev-dependencies]
