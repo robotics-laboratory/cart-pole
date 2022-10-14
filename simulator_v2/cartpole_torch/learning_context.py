@@ -53,7 +53,7 @@ class MultiSystemLearningContext:
         batch: LongTensor = torch.randint(
             low=0,
             high=total_states,
-            size=batch_size,  # type: ignore
+            size=(batch_size,),  # type: ignore
         )  # type: ignore
 
         self.batch_state = MultiSystemState.create_from_batch(
