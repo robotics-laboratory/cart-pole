@@ -48,9 +48,9 @@ class CartPoleMultiSystem:
         # Current state
         cur_st = context.batch_state.states
         cur_st: DoubleTensor = torch.clone(cur_st)  # type: ignore
-        steps: int = context.config.discretization.dynamics_steps_per_input
+        steps: int = context.config.discretization.integration_step_n
         # dynamics delta time
-        d_time: float = 1 / (steps * context.config.discretization.input_frequency)
+        d_time: float = 1 / (steps * context.config.discretization.simulation_step_n)
 
         # Gravitational constant
         grav: float = context.config.parameters.gravity
