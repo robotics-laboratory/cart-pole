@@ -50,11 +50,11 @@ class MultiSystemLearningContext:
         if not 0 < batch_size <= total_states:
             raise ValueError("Invalid batch size")
 
-        # Generate 1xK tensor with values from [0, 1)
-        rand = torch.rand(batch_size)  # type: ignore
-
-        # Multiply the numbers so they are integers from [0, total_states)
-        batch: LongTensor = (rand * total_states).long()  # type: ignore
+        batch: LongTensor = torch.randint(
+            low=0,
+            high=total_states,
+            size=batch_size,  # type: ignore
+        )  # type: ignore
 
         self.batch_state = MultiSystemState.from_batch(
             self.discreditizer.all_states,
