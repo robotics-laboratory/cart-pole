@@ -47,7 +47,7 @@ class MultiSystemLearningContext:
         """
         total_states = self.discreditizer.space_size
 
-        if not 0 < batch_size <= total_states:
+        if not (0 < batch_size <= total_states):
             raise ValueError("Invalid batch size")
 
         batch: LongTensor = torch.randint(
@@ -56,7 +56,7 @@ class MultiSystemLearningContext:
             size=batch_size,  # type: ignore
         )  # type: ignore
 
-        self.batch_state = MultiSystemState.from_batch(
+        self.batch_state = MultiSystemState.create_from_batch(
             self.discreditizer.all_states,
             batch,
         )

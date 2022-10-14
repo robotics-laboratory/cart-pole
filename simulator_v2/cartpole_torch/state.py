@@ -164,7 +164,7 @@ class MultiSystemState:
         return MultiSystemState(_state_space=data)  # type: ignore
 
     @staticmethod
-    def from_batch(
+    def create_from_batch(
         all_states: DoubleTensor,
         batch: LongTensor,
     ) -> "MultiSystemState":
@@ -183,8 +183,8 @@ class MultiSystemState:
         -------
         MultiSystemState
         """
-        data = all_states[:, batch]
-        return MultiSystemState(_state_space=data)  # type: ignore
+        state_space = all_states[:, batch]
+        return MultiSystemState(_state_space=state_space)  # type: ignore
 
     @property
     def size(self) -> int:
