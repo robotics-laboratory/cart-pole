@@ -13,6 +13,9 @@ evaluating new states (after inputs are applied).
 import torch
 from torch import DoubleTensor, cos, sin
 
+from ...common import CartPoleBase
+from .config import SystemConfiguration
+from .state import State
 from .learning_context import MultiSystemLearningContext
 
 
@@ -154,3 +157,68 @@ class CartPoleMultiSystem:
             best_inputs[better_mask] = acc
 
         return best_inputs
+
+
+class CartPoleSystem(CartPoleBase):
+    """
+    Description:
+        Сlass implements a physical simulation of the cart-pole device.
+        A pole is attached by an joint to a cart, which moves along guide axis.
+        The pendulum is initially at rest state. The goal is to maintain it in
+        upright pose by increasing and reducing the cart's velocity.
+    Source:
+        This environment is some variation of the cart-pole problem
+        described by Barto, Sutton, and Anderson
+    Initial state:
+        A pole is at starting position 0 with no velocity and acceleration.
+    """
+
+    def reset(self, config: SystemConfiguration) -> None:
+        """
+        Resets the device to the initial state.
+        The pole is at rest position and cart is centered.
+        It must be called at the beginning of any session.
+        """
+        raise NotImplementedError
+
+    def get_state(self) -> State:
+        """
+        Returns current device state.
+        """
+        raise NotImplementedError
+
+    def get_info(self) -> dict:
+        """
+        Returns usefull debug information.
+        """
+        raise NotImplementedError
+
+    def get_target(self) -> float:
+        """
+        Returns current target acceleration.
+        """
+        raise NotImplementedError
+
+    def set_target(self, target: float) -> None:
+        """
+        Set desired target acceleration.
+        """
+        raise NotImplementedError
+
+    def advance(self, delta: float) -> None:
+        """
+        Advance the dynamic system by delta seconds.
+        """
+        pass
+
+    def timestamp(self) -> float:
+        """
+        Current time.
+        """
+        raise NotImplementedError
+
+    def close(self) -> None:
+        """
+        Free all allocated resources.
+        """
+        raise NotImplementedError
