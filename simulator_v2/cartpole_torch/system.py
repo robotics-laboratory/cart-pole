@@ -10,13 +10,18 @@ evaluating new states (after inputs are applied).
 """
 
 
+from dataclasses import dataclass
+from typing import Callable, Optional
+
 import torch
 from torch import DoubleTensor, cos, sin
 
-from ...common import CartPoleBase
+from common import CartPoleBase
+
 from .config import SystemConfiguration
-from .state import State
+from .discreditizer import Discreditizer
 from .learning_context import MultiSystemLearningContext
+from .state import MultiSystemState, State
 
 
 class CartPoleMultiSystem:
@@ -159,6 +164,7 @@ class CartPoleMultiSystem:
         return best_inputs
 
 
+@dataclass(init=False)
 class CartPoleSystem(CartPoleBase):
     """
     Description:
@@ -173,19 +179,56 @@ class CartPoleSystem(CartPoleBase):
         A pole is at starting position 0 with no velocity and acceleration.
     """
 
+    _context: MultiSystemLearningContext
+    _current_input: float = 0
+    _config: SystemConfiguration = SystemConfiguration()
+    _current_time: float = 0
+
+    def __init__(
+        self,
+        state: Optional[State] = None,
+    ) -> None:
+        state = state if state else State.home()
+
+        self._setup_context(state)
+
+    def _setup_context(
+        self,
+        state: State,
+    ) -> None:
+        batch_state = state.as_tensor().reshape(4, -1)
+        batch_ms_state = MultiSystemState(batch_state)  # type: ignore
+        self._context = MultiSystemLearningContext(
+            states_cost_fn=None,  # type: ignore
+            inputs_cost_fn=None,  # type: ignore
+            config=self._config,
+            discreditizer=Discreditizer(self._config),
+            batch_state=batch_ms_state,
+        )
+
     def reset(self, config: SystemConfiguration) -> None:
         """
         Resets the device to the initial state.
         The pole is at rest position and cart is centered.
         It must be called at the beginning of any session.
         """
-        raise NotImplementedError
+        self._setup_context(State.home())
+
+        self._config = config
+        self._current_time = 0
+
+    def reset_to_state(self, config: SystemConfiguration, state: State) -> None:
+        self._setup_context(state)
+
+        self._config = config
+        self._current_time = 0
 
     def get_state(self) -> State:
         """
         Returns current device state.
         """
-        raise NotImplementedError
+        state_tensor = self._context.batch_state.states.flatten()
+        return State.from_collection(state_tensor)  # type: ignore
 
     def get_info(self) -> dict:
         """
@@ -197,28 +240,43 @@ class CartPoleSystem(CartPoleBase):
         """
         Returns current target acceleration.
         """
-        raise NotImplementedError
+        return self._current_input
 
     def set_target(self, target: float) -> None:
         """
         Set desired target acceleration.
         """
-        raise NotImplementedError
+        self._current_input = target
 
     def advance(self, delta: float) -> None:
         """
         Advance the dynamic system by delta seconds.
         """
-        pass
+        sim_steps = self._config.discretization.simulation_step_n
+        for _ in range(int(delta * sim_steps)):
+            self._context.batch_state.set_state_space(
+                CartPoleMultiSystem.get_new_states(
+                    context=self._context,
+                    inputs=torch.full(
+                        size=(1,),
+                        fill_value=self._current_input,  # type: ignore
+                        dtype=torch.float64,
+                    ),
+                ),
+            )
+        self._current_time += delta
 
     def timestamp(self) -> float:
         """
         Current time.
         """
-        raise NotImplementedError
+        return self._current_time
 
     def close(self) -> None:
         """
         Free all allocated resources.
         """
-        raise NotImplementedError
+        del self._context  # noqa: WPS420
+        del self._current_input  # noqa: WPS420
+        del self._config  # noqa: WPS420
+        del self._current_time  # noqa: WPS420
