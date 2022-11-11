@@ -11,7 +11,6 @@ evaluating new states (after inputs are applied).
 
 
 from dataclasses import dataclass
-from typing import Callable, Optional
 
 import torch
 from torch import DoubleTensor, cos, sin
