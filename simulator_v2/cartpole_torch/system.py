@@ -263,12 +263,3 @@ class CartPoleSystem(CartPoleBase):
         Current time.
         """
         return self._current_time
-
-    def close(self) -> None:
-        """
-        Free all allocated resources.
-        """
-        del self._context  # noqa: WPS420
-        del self._current_input  # noqa: WPS420
-        del self._config  # noqa: WPS420
-        del self._current_time  # noqa: WPS420
