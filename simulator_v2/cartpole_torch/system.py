@@ -16,6 +16,7 @@ import torch
 from torch import DoubleTensor, cos, sin
 
 from common import CartPoleBase
+from common import Error
 
 from .config import SystemConfiguration
 from .discreditizer import Discreditizer
@@ -166,6 +167,7 @@ class CartPoleSystem(CartPoleBase):
     _current_input: float = 0
     _config: SystemConfiguration = SystemConfiguration()
     _current_time: float = 0
+    _error: Error = Error.NO_ERROR
 
     def _setup_context(
         self,
@@ -221,12 +223,24 @@ class CartPoleSystem(CartPoleBase):
         """
         Set desired target acceleration.
         """
+        max_target = self._config.limits.max_abs_acceleration
+        if not -max_target <= target <= max_target:
+            self._error = Error.A_OVERFLOW
+            return
+
         self._current_input = target
 
     def advance(self, delta: float) -> None:
         """
         Advance the dynamic system by delta seconds.
         """
+        if self._error != Error.NO_ERROR:
+            print(f"Error occurred: {self._error}. Simulation is stopped")
+            return
+
+        max_x = self._config.limits.max_abs_position
+        max_v = self._config.limits.max_abs_velocity
+
         sim_steps = self._config.discretization.simulation_step_n
         for _ in range(int(delta * sim_steps)):
             CartPoleMultiSystem.eval_transitions(
@@ -237,6 +251,14 @@ class CartPoleSystem(CartPoleBase):
                     dtype=torch.float64,
                 ),
             )
+
+            # Check that all the limits are ok
+            state = self._context.batch_state.states[:, 0]
+            if not -max_x <= state[0] <= max_x:
+                self._error = Error.X_OVERFLOW
+            if not -max_v <= state[1] <= max_v:
+                self._error = Error.V_OVERFLOW
+
         self._current_time += delta
 
     def timestamp(self) -> float:
