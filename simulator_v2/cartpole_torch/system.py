@@ -184,14 +184,6 @@ class CartPoleSystem(CartPoleBase):
     _config: SystemConfiguration = SystemConfiguration()
     _current_time: float = 0
 
-    def __init__(
-        self,
-        state: Optional[State] = None,
-    ) -> None:
-        state = state if state else State.home()
-
-        self._setup_context(state)
-
     def _setup_context(
         self,
         state: State,
