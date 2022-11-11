@@ -213,18 +213,3 @@ class MultiSystemState:
             - `state_space[3]` is a 1xN DoubleTensor containing angular velocities
         """
         return self._state_space
-
-    def set_state_space(self, states: DoubleTensor) -> None:
-        """
-        Sets `state_space` to given input.
-
-        Args:
-        DoubleTensor
-            4xN tensor, where N is the number of systems
-            - `state_space[0]` is a 1xN DoubleTensor containing cart positions
-            - `state_space[1]` is a 1xN DoubleTensor containing pole angles
-            - `state_space[2]` is a 1xN DoubleTensor containing cart velocities
-            - `state_space[3]` is a 1xN DoubleTensor containing angular velocities
-        """
-        assert states.shape[0] == 4, "Wrong dimensions specified"
-        self._state_space = states

@@ -34,28 +34,20 @@ class CartPoleMultiSystem:
     """
 
     @staticmethod
-    def get_new_states(
+    def eval_transitions(
         context: MultiSystemLearningContext, inputs: DoubleTensor
-    ) -> DoubleTensor:
+    ) -> None:
         """
-        Reterns positions after applying `inputs`
+        Calculates new states and writes them in-place.
 
         Parameters
         ----------
         context : MultiSystemLearningContext
         inputs : DoubleTensor
             A 1xN tensor containing input cart accelerations.
-
-        Returns
-        -------
-        DoubleTensor
-            A 4xN Tensor containing N states after an input tick.
-            By default input tick is
-            `1 / context.config.discretization.input_time`
         """
         # Current state
         cur_st = context.batch_state.states
-        cur_st: DoubleTensor = torch.clone(cur_st)  # type: ignore
         steps: int = context.config.discretization.integration_step_n
         # dynamics delta time
         d_time: float = 1 / (steps * context.config.discretization.simulation_step_n)
@@ -78,16 +70,13 @@ class CartPoleMultiSystem:
 
         for _ in range(steps):
             # Evaluate derivatives
-            ds1 = compute_derivative(cur_st)
+            ds1 = compute_derivative(cur_st)  # type: ignore
             ds2 = compute_derivative(cur_st + ds1 * d_time)  # type: ignore
             cur_st += (ds1 + ds2) / 2 * d_time  # type: ignore
-
-        return cur_st
 
     @staticmethod
     def eval_transition_costs(
         context: MultiSystemLearningContext,
-        new_states: DoubleTensor,
         inputs: DoubleTensor,
     ) -> DoubleTensor:
         """
@@ -96,8 +85,6 @@ class CartPoleMultiSystem:
         Parameters
         ----------
         context : MultiSystemLearningContext
-        new_states : DoubleTensor
-            States after applying inputs (after transition).
         inputs : DoubleTensor
             The inputs applied
 
@@ -107,15 +94,13 @@ class CartPoleMultiSystem:
             1xK Tensor containing total cost of applying
             i-th action to i-th state.
         """
-        states_cost = context.states_cost_fn(new_states)
+        states_cost = context.states_cost_fn(context.batch_state.states)
         inputs_cost = context.inputs_cost_fn(inputs)
 
         return states_cost + inputs_cost  # type: ignore
 
     @staticmethod
-    def get_best_accelerations(
-        context: MultiSystemLearningContext,
-    ) -> DoubleTensor:
+    def get_best_accelerations(context: MultiSystemLearningContext) -> DoubleTensor:
         """
         Returns best input for each state.
 
@@ -144,10 +129,9 @@ class CartPoleMultiSystem:
                 dtype=torch.float64,
             )  # type: ignore
 
-            new_states = CartPoleMultiSystem.get_new_states(context, inputs)
+            CartPoleMultiSystem.eval_transitions(context, inputs)
             costs = CartPoleMultiSystem.eval_transition_costs(
                 context,
-                new_states,
                 inputs,
             )
 
@@ -246,14 +230,12 @@ class CartPoleSystem(CartPoleBase):
         """
         sim_steps = self._config.discretization.simulation_step_n
         for _ in range(int(delta * sim_steps)):
-            self._context.batch_state.set_state_space(
-                CartPoleMultiSystem.get_new_states(
-                    context=self._context,
-                    inputs=torch.full(
-                        size=(1,),
-                        fill_value=self._current_input,  # type: ignore
-                        dtype=torch.float64,
-                    ),
+            CartPoleMultiSystem.eval_transitions(
+                context=self._context,
+                inputs=torch.full(
+                    size=(1,),
+                    fill_value=self._current_input,  # type: ignore
+                    dtype=torch.float64,
                 ),
             )
         self._current_time += delta
