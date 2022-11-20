@@ -25,6 +25,7 @@ class CartPoleDevice(CartPoleBase):
         self.interface = interface or ProtobufWireInterface()
         self.step_count = 0
         self.target_key = target_key
+        self.zero_angle = 0
         self.prev_angle = 0
         self.rotations = 0
 
@@ -37,6 +38,10 @@ class CartPoleDevice(CartPoleBase):
 
     def get_state(self) -> State:
         new_state: State = self.interface.get(DeviceState.full())
+        new_state.pole_angle -= self.zero_angle
+        if new_state.pole_angle < 0:
+            new_state.pole_angle += 2 * math.pi
+        
         curr = new_state.pole_angle
         prev = self.prev_angle
         max_delta = math.pi
@@ -47,8 +52,6 @@ class CartPoleDevice(CartPoleBase):
         elif delta < -max_delta:
             self.rotations += 1
         abs_angle = 2 * math.pi * self.rotations + curr
-        # abs_pole_angles.append(abs_angle)
-        # rotations_arr.append(2 * math.pi * rotations)
         self.prev_angle = curr
 
         new_state.pole_angle = abs_angle

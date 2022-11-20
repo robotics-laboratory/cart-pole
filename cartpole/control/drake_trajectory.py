@@ -8,7 +8,7 @@ from cartpole.simulator.pydrake.system import CartPoleSystem
 import math
 import numpy
 
-def build_trajectory(config, initial_state, sample_n=100, duration=5):
+def build_trajectory(config, initial_state, sample_n=100, duration=10):
     system = CartPoleSystem()
     context = system.CreateContext(config, initial_state)
         
@@ -64,8 +64,8 @@ def build_trajectory(config, initial_state, sample_n=100, duration=5):
 
 
 class Trajectory:
-    def __init__(self, config, initial_state, sample_n=100, max_duration=5):
-        states, targets = build_trajectory(config, initial_state, sample_n=100, max_duration=5)
+    def __init__(self, config, initial_state, sample_n=100, max_duration=10):
+        states, targets = build_trajectory(config, initial_state, sample_n=sample_n, max_duration=max_duration)
         self.states = states
         self.targets = targets
 
