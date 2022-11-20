@@ -1,10 +1,3 @@
-import logging
-import time
-from math import pi
-
-import numpy as np
-import scipy.linalg as linalg
-
 from cartpole.common.interface import State
 
 
