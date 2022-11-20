@@ -4,7 +4,7 @@ from pydrake.systems.controllers import FiniteHorizonLinearQuadraticRegulatorOpt
 from pydrake.systems.primitives import Linearize
 
 from cartpole.common import Config, Error, State
-from simulator.system import CartPoleSystem
+import cartpole.simulator.pydrake.system import CartPoleSystem
 
 import math
 import numpy

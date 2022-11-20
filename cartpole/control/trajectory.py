@@ -6,7 +6,7 @@ from pydrake.systems.trajectory_optimization import DirectCollocation
 from pydrake.trajectories import PiecewisePolynomial
 
 from cartpole.common import Config, Error, State
-from simulator.system import CartPoleSystem
+import cartpole.simulator.pydrake.system import CartPoleSystem
 
 import math
 import numpy
