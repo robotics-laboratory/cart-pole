@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "cartpole"
+version = "0.1.0"
+description = ""
+authors = []
+readme = "readme.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+protobuf = "^4.21.9"
+pyserial = "^3.5"
+torch = "^1.13.0"
+
+[tool.poetry.group.dev.dependencies]
+jupyter = "^1.0.0"
+pytest = "^7.2.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
