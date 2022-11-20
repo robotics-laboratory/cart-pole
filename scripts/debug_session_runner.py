@@ -6,8 +6,8 @@ from cartpole.actors.demo import DemoActor
 from cartpole.common.interface import CartPoleBase, Config
 from cartpole.common.util import init_logging
 from cartpole.device import CartPoleDevice
-from sessions.actor import Actor
-from sessions.collector import CollectorProxy
+from cartpole.sessions.actor import Actor
+from cartpole.sessions.collector import CollectorProxy
 
 LOGGER = logging.getLogger("debug-session-runner")
 

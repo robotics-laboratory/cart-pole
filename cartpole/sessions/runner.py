@@ -1,8 +1,8 @@
 from cartpole.common.interface import CartPoleBase
 import logging
 from typing import Type
-from sessions.actor import Actor
-from sessions.collector import CollectorProxy
+from cartpole.sessions.actor import Actor
+from cartpole.sessions.collector import CollectorProxy
 from web_view import server
 
 

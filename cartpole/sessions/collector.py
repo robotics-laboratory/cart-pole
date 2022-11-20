@@ -17,7 +17,7 @@ import dacite
 
 from cartpole.common.interface import CartPoleBase, Config, State
 from cartpole.common.util import init_logging
-from sessions.actor import Actor
+from cartpole.sessions.actor import Actor
 
 
 LOGGER = logging.getLogger(__name__)
