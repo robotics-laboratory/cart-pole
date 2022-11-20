@@ -10,7 +10,7 @@ as if right after homing procedure.
 import logging
 import time
 
-from device.wire_interface import (
+from cartpole.device.wire_interface import (
     WireInterface, 
     DeviceTarget, 
     DeviceState,

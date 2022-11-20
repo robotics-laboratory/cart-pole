@@ -336,8 +336,8 @@
 #
 #
 # # def get_real_device(port: str = None):  # TODO: Move to common?
-# #     from device.device import CartPoleDevice
-# #     from device.wire_interface import WireInterface
+# #     from cartpole.device.device import CartPoleDevice
+# #     from cartpole.device.wire_interface import WireInterface
 # #
 # #     PORT = port or os.environ.get('CARTPOLE_PORT', None)
 # #     assert PORT is not None, "No port specified"

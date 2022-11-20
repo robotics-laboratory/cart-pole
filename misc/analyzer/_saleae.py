@@ -161,7 +161,7 @@ class SaleaeAnalyzer:
 
 
 if __name__ == '__main__':
-    from device import CartPoleDevice
+    from cartpole.device import CartPoleDevice
     from cartpole.common.util import init_logging
 
     init_logging()

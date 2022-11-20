@@ -1,6 +1,6 @@
 import time
 from pathlib import Path
-from device import CartPoleDevice, DeviceTarget
+from cartpole.device import CartPoleDevice, DeviceTarget
 from sessions.actor import Actor
 from sessions.collector import CollectorProxy
 from cartpole.common.interface import Config, CartPoleBase

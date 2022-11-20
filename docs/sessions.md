@@ -1,9 +1,9 @@
 # How to record sessions
 
 ```python
-from device.wire_interface import WireInterface, DeviceConfig, DeviceTarget
+from cartpole.device.wire_interface import WireInterface, DeviceConfig, DeviceTarget
 from collector import CollectorProxy
-from device import CartPoleDevice
+from cartpole.device import CartPoleDevice
 import logging
 
 

@@ -1,10 +1,10 @@
 import json
 
-from device.wire_interface import WireInterface, DeviceConfig
+from cartpole.device.wire_interface import WireInterface, DeviceConfig
 from sessions.collector import CollectorProxy
 from sessions.runner import Runner
 from sessions.actor import OscillatingActor, Actor
-from device import CartPoleDevice
+from cartpole.device import CartPoleDevice
 from cartpole.common.util import init_logging
 from misc.analyzer._saleae import SaleaeAnalyzer
 
