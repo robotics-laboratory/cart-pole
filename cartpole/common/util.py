@@ -5,7 +5,7 @@ import os
 from contextlib import closing
 import sys
 
-from common.interface import State
+from cartpole.common.interface import State
 
 STEP_COUNT = 'step_count'
 

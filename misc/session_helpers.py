@@ -7,7 +7,7 @@
 # from io import StringIO
 # from typing import Callable, Dict, List, NamedTuple, Set, Tuple, Type, Union
 #
-# from common.interface import CartPoleBase, Config, State
+# from cartpole.common.interface import CartPoleBase, Config, State
 #
 # # class SessionProxy(CartPoleBase):
 # #     '''Proxy class that records various method calls of a wrapped cartpole device'''

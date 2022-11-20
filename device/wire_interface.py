@@ -9,7 +9,7 @@ import threading
 from typing import Union, Type, Any
 
 import device.controller_pb2 as proto
-from common.interface import Error, Config, State
+from cartpole.common.interface import Error, Config, State
 import os
 
 LOGGER = logging.getLogger(__name__)

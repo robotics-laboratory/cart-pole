@@ -15,8 +15,8 @@ from dataclasses import dataclass
 import torch
 from torch import DoubleTensor, cos, sin
 
-from common import CartPoleBase
-from common import Error
+from cartpole.common import CartPoleBase
+from cartpole.common import Error
 
 from .config import SystemConfiguration
 from .discreditizer import Discreditizer

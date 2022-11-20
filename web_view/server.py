@@ -7,7 +7,7 @@ import asyncio
 from aiohttp import web
 
 from sessions.collector import CollectorProxy
-from common.util import init_logging
+from cartpole.common.util import init_logging
 
 
 LOGGER = logging.getLogger(__name__)

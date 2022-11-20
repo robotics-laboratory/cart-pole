@@ -5,7 +5,7 @@ from pydrake.systems.primitives import Linearize
 from pydrake.systems.trajectory_optimization import DirectCollocation
 from pydrake.trajectories import PiecewisePolynomial
 
-from common import Config, Error, State
+from cartpole.common import Config, Error, State
 from simulator.system import CartPoleSystem
 
 import math

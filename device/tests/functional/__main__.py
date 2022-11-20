@@ -16,7 +16,7 @@ from device.wire_interface import (
     DeviceState,
     DeviceConfig,
 )
-from common.interface import Error
+from cartpole.common.interface import Error
 
 
 LOGGER = logging.getLogger(__name__)

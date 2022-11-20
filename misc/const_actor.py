@@ -1,4 +1,4 @@
-from common.interface import State
+from cartpole.common.interface import State
 from sessions.actor import Actor
 
 

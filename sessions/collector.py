@@ -15,8 +15,8 @@ from io import StringIO
 from typing import Callable, List, Dict, Type, Tuple, Union
 import dacite
 
-from common.interface import CartPoleBase, Config, State
-from common.util import init_logging
+from cartpole.common.interface import CartPoleBase, Config, State
+from cartpole.common.util import init_logging
 from sessions.actor import Actor
 
 

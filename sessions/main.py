@@ -5,7 +5,7 @@ from sessions.collector import CollectorProxy
 from sessions.runner import Runner
 from sessions.actor import OscillatingActor, Actor
 from device import CartPoleDevice
-from common.util import init_logging
+from cartpole.common.util import init_logging
 from misc.analyzer._saleae import SaleaeAnalyzer
 
 import logging

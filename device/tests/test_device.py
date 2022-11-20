@@ -1,6 +1,6 @@
 from unittest import mock
 
-from common.interface import State, Config
+from cartpole.common.interface import State, Config
 from device import CartPoleDevice
 
 

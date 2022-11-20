@@ -1,5 +1,5 @@
 from device import ProtobufWireInterface, DeviceConfig, DeviceState, DeviceTarget
-from common.util import init_logging
+from cartpole.common.util import init_logging
 import logging
 import time
 
