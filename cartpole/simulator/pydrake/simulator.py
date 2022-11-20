@@ -1,7 +1,7 @@
 from pydrake.systems.analysis import Simulator
 
 from cartpole.common import CartPoleBase, Error, State
-import cartpole.simulator.pydrake.system import CartPoleSystem
+from cartpole.simulator.pydrake.system import CartPoleSystem
 
 import logging
 import numpy

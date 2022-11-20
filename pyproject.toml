@@ -7,14 +7,23 @@ readme = "readme.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
+torch = "^1.13.0"
+numpy = "^1.23.5"
 protobuf = "^4.21.9"
 pyserial = "^3.5"
-torch = "^1.13.0"
+varint = "^1.0.2"
+dacite = "^1.6.0"
+drake = {version = "^1.10.0", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"
 pytest = "^7.2.0"
 matplotlib = "^3.6.2"
+pandas = "^1.5.1"
+seaborn = "^0.12.1"
+
+[tool.poetry.extras]
+pydrake = ["drake"]
 
 [build-system]
 requires = ["poetry-core"]

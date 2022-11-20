@@ -6,7 +6,7 @@ from pydrake.systems.trajectory_optimization import DirectCollocation
 from pydrake.trajectories import PiecewisePolynomial
 
 from cartpole.common import Config, Error, State
-import cartpole.simulator.pydrake.system import CartPoleSystem
+from cartpole.simulator.pydrake.system import CartPoleSystem
 
 import math
 import numpy
@@ -27,14 +27,14 @@ def build_trajectory(config, initial_state, sample_n=100, max_duration=5):
     program.AddEqualTimeIntervalsConstraints()
     program.AddDurationBounds(0, max_duration)
 
-    program.AddBoundingBoxConstraint(
+    program.prog().AddBoundingBoxConstraint(
         initial_state.as_array(),
         initial_state.as_array(),
         program.initial_state())
 
     target_x_max = config.max_position * 0.75
 
-    program.AddBoundingBoxConstraint(
+    program.prog().AddBoundingBoxConstraint(
         [-target_x_max, math.pi, 0.0, 0.0],
         [+target_x_max, math.pi, 0.0, 0.0],
         program.final_state())
@@ -57,7 +57,7 @@ def build_trajectory(config, initial_state, sample_n=100, max_duration=5):
     # program.AddFinalCost(u**2)
     program.AddFinalCost(x**2)
 
-    result = Solve(program)
+    result = Solve(program.prog())
     assert result.is_success(), 'Impossible find trajectory'
     
     targets = program.ReconstructInputTrajectory(result)
@@ -67,7 +67,7 @@ def build_trajectory(config, initial_state, sample_n=100, max_duration=5):
 
 class Trajectory:
     def __init__(self, config, initial_state, sample_n=100, max_duration=5):
-        states, targets = build_trajectory(config, initial_state, sample_n=100, max_duration=5)
+        states, targets = build_trajectory(config, initial_state, sample_n, max_duration)
         self.states = states
         self.targets = targets
         self.duration = targets.end_time() - targets.start_time()

@@ -1,1 +1,1 @@
-import cartpole.simulator.pydrake.simulator import CartPoleSimulator
+from cartpole.simulator.pydrake.simulator import CartPoleSimulator
