@@ -6,3 +6,11 @@
 **/__pycache__
 **/.pytest_cache
 venv
+*.py[cod]
+*$py.class
+
+# Protobuf auto-generated bindings
+firmware/src/protocol.pb.[ch]
+firmware/src/nanopb.pb.[ch]
+cartpole/device/protocol_pb2.py
+cartpole/device/nanopb_pb2.py
