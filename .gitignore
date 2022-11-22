@@ -8,7 +8,6 @@
 venv
 *.py[cod]
 *$py.class
-data/
 
 # Protobuf auto-generated bindings
 firmware/src/protocol.pb.[ch]
