@@ -10,7 +10,9 @@ from dataclasses import dataclass
 from typing import Collection
 
 from numpy import pi
-from torch import DoubleTensor, LongTensor
+from torch import FloatTensor, LongTensor
+
+import torch
 
 
 @dataclass
@@ -58,35 +60,18 @@ class State:
             initial state of the system
         """
         return State(0, 0, 0, 0)
-
-    @staticmethod
-    def target() -> "State":
-        """
-        Target (ideal) state of the system.
-
-        Returns
-        -------
-        State
-            Ideal state of the system
-        """
-        return State(
-            cart_position=0,
-            pole_angle=pi,
-            cart_velocity=0,
-            angular_velocity=0,
-        )
-
-    def as_tensor(self) -> DoubleTensor:
+ 
+    def as_tensor(self) -> FloatTensor:
         """
         Returns current state as a 1x4 tensor
 
         Returns
         -------
-        DoubleTensor
+        FloatTensor
             1x4 Tensor containing `cart_position`,
             `pole_angle`, `cart_velocity` and `angular_velocity`
         """
-        return DoubleTensor(
+        return FloatTensor(
             [
                 self.cart_position,
                 self.pole_angle,
@@ -132,13 +117,13 @@ class MultiSystemState:
     A class to represent states of multiple systems at a time.
     """
 
-    _state_space: DoubleTensor
+    _state_space: FloatTensor
     """
     4xN tensor, where N is the number of systems
-    - `_state_space[0]` is a 1xN DoubleTensor containing cart positions
-    - `_state_space[1]` is a 1xN DoubleTensor containing pole angles
-    - `_state_space[2]` is a 1xN DoubleTensor containing cart velocities
-    - `_state_space[3]` is a 1xN DoubleTensor containing angular velocities
+    - `_state_space[0]` is a 1xN FloatTensor containing cart positions
+    - `_state_space[1]` is a 1xN FloatTensor containing pole angles
+    - `_state_space[2]` is a 1xN FloatTensor containing cart velocities
+    - `_state_space[3]` is a 1xN FloatTensor containing angular velocities
     """
 
     @staticmethod
@@ -155,7 +140,7 @@ class MultiSystemState:
         -------
         MultiSystemState
         """
-        data = DoubleTensor(size=(4, systems_num))
+        data = FloatTensor(size=(4, systems_num))
         home_state = State.home().as_tensor()
 
         for i in range(systems_num):
@@ -164,8 +149,20 @@ class MultiSystemState:
         return MultiSystemState(_state_space=data)  # type: ignore
 
     @staticmethod
+    def sample_near_target(num: int, angle_var=0.1, angular_velocity_var=0.) -> "MultiSystemState":
+        data = FloatTensor(size=(4, num))
+
+        data[0, :].zero_()
+        data[1, :].normal_(pi, angle_var)
+        data[2, :].zero_()
+        data[3, :].normal_(0, angular_velocity_var)
+
+        return MultiSystemState(_state_space=data)
+
+
+    @staticmethod
     def create_from_batch(
-        all_states: DoubleTensor,
+        all_states: FloatTensor,
         batch: LongTensor,
     ) -> "MultiSystemState":
         """
@@ -173,8 +170,8 @@ class MultiSystemState:
 
         Parameters
         ----------
-        all_states : DoubleTensor
-            The state space (4xN DoubleTensor).
+        all_states : FloatTensor
+            The state space (4xN FloatTensor).
         batch : IntTensor
             A vector of integers containing the indexes of states
             we want to simulate.
@@ -199,17 +196,20 @@ class MultiSystemState:
         return self._state_space.shape[1]
 
     @property
-    def states(self) -> DoubleTensor:
+    def states(self) -> FloatTensor:
         """
         Returns all states
 
         Returns
         -------
-        DoubleTensor
+        FloatTensor
             4xN tensor, where N is the number of systems
-            - `state_space[0]` is a 1xN DoubleTensor containing cart positions
-            - `state_space[1]` is a 1xN DoubleTensor containing pole angles
-            - `state_space[2]` is a 1xN DoubleTensor containing cart velocities
-            - `state_space[3]` is a 1xN DoubleTensor containing angular velocities
+            - `state_space[0]` is a 1xN FloatTensor containing cart positions
+            - `state_space[1]` is a 1xN FloatTensor containing pole angles
+            - `state_space[2]` is a 1xN FloatTensor containing cart velocities
+            - `state_space[3]` is a 1xN FloatTensor containing angular velocities
         """
         return self._state_space
+
+    def clone(self):
+        return MultiSystemState(_state_space=torch.clone(self.states))

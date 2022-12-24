@@ -1,7 +1,7 @@
+import dataclasses
 import enum
-import dataclasses as dc
-
-import numpy as np
+import numpy
+import torch
 
 
 class Error(enum.IntEnum):
@@ -17,7 +17,7 @@ class Error(enum.IntEnum):
         return self != Error.NO_ERROR
 
 
-@dc.dataclass
+@dataclasses.dataclass
 class Config:
     # software cart limits
     max_position: float = 0.25  # m
@@ -37,7 +37,7 @@ class Config:
     gravity: float = 9.8  # m/s^2
 
 
-@dc.dataclass
+@dataclasses.dataclass
 class State:
     cart_position: float = 0
     cart_velocity: float = 0
@@ -71,6 +71,9 @@ class State:
     def as_array_4x1(self):
         return self.as_array().reshape(4, 1)
 
+    def torch4x1(self):
+        return FloatTensor(self.as_tuple()).reshape(4, 1)
+
     def __repr__(self):
         return '(x={x:+.2f}, v={v:+.2f}, a={a:+.2f}, w={w:+.2f}, err={err})'.format(
             x = self.cart_position,
@@ -79,6 +82,15 @@ class State:
             w = self.pole_angular_velocity,
             err=self.error,
         )
+
+@dataclasses.dataclass
+class Transition:
+    source = State()
+    action: float = 0
+    destination = State()
+    reward: float = 0
+    finish: bool = False
+
 
 
 class CartPoleBase:
