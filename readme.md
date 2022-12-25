@@ -1,21 +1,24 @@
-# Cart pole
+# CartPole
 
 [![CI](https://github.com/dasimagin/cart_pole/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/dasimagin/cart_pole/actions/workflows/ci.yml)
 
 ## Overview
-This is a student project that is designed to learn the basics of robotics.
+This is a student project that is designed to learn the basics of robotics and control theory.
 The environment is some variation of the cart-pole problem described by Barto, Sutton, and Anderson.
 A pole is attached by an joint to a cart, which moves along guide axis.
-Some stepper drives the cart. The motor is controlled by discrete velocity changing.
-The control target is desired acceleration of the cart.
+Some stepper drives the cart. The control target is desired acceleration of the cart.
 
 The cart starts at the middle with no velocity and acceleration. The pole is initially at rest state.
 The goal is to swing up the pole and maintain it in upright pose by increasing and reducing the cart's velocity.
 
-![schema](https://github.com/dasimagin/cart_pole/blob/master/docs/model.svg)
+![CartPole](docs/svg/classic_cart_pole.svg)
+
+Also there is radial variation, where cart moves in a circle.
+
+![RadialCartPole](docs/svg/radial_cart_pole.svg)
 
 ## Interface
-We declare a common [interface](https://github.com/dasimagin/cart_pole/blob/master/interface.py) both for simulator and control.
+We declare a common [interface](cart_pole/blob/master/interface.py) both for simulator and control.
 It allows us to easily train model and make inference on device, use transfer learning, generate real training samples and etc.
 
 ### State
