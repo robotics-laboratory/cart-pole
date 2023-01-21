@@ -1,4 +1,4 @@
-from cartpole import State, Logger
+from cartpole import log, State
 from pydantic import BaseModel
 from time import sleep, time
 
@@ -10,38 +10,45 @@ class SomeObject(BaseModel):
 
 
 def test_log_some_object():
-    log = Logger('test.mcap')
-    log('/some/object', time(), SomeObject(name='first', value=1.0))
-    log('/some/object', time(), SomeObject(name='second', value=2.0))
+    # use default setting and lazy initialization
+    
+    # send some object, use current time
+    log.publish('/some/object', SomeObject(name='first', value=1.0))
+
+    # send another object, specify time explicitly
+    log.publish('/some/object', SomeObject(name='second', value=2.0), time())
+
+def test_log_state():
+    # explicitly setup logger, specify log path
+    log.setup(log_path='test.mcap')
+
+    # send state
+    log.publish('/cartpole/state', State())
+
 
 def test_log_bad_object():
-    log = Logger('test.mcap')
-
     # send bad object (not pydantic model)
-    log('/str', time(), 'something')
+    log.publish('/str', 'something')
 
     # after a while get an error on next call
     sleep(0.1)
     with pytest.raises(RuntimeError):
-        log('/some/object', time(), SomeObject())
+        log.publish('/some/object', SomeObject())
 
-
-def test_log_state():
-    log= Logger('test.mcap')
-    log('/cartpole/state', time(), State())
 
 
 def test_log_different_types_to_one_topic():
+    # reset logger, after fail before
+    log.setup('test.mcap')
     topic = '/cartpole/state'
-    log = Logger('test.mcap')
 
-    log(topic, time(), State())
+    log.publish(topic, State())
 
     # send another type to the same topic
-    log(topic, time(), SomeObject())
+    log.publish(topic, SomeObject())
 
     # after a while get an error on next call
     sleep(0.1)
     with pytest.raises(RuntimeError):
-        log(topic, time(), State())
+        log.publish(topic, State())
 

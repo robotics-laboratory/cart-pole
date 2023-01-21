@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import time
 
 from threading import Event, Thread
 from foxglove_websocket.server import FoxgloveServer
@@ -32,11 +33,11 @@ class MCAPLogger:
         self._topic_to_registration: Dict[str, Registration] = {}
 
     def _register(self, topic_name: str, cls: Any) -> None:
-        assert issubclass(cls, BaseModel), 'Required pydantic model'
+        assert issubclass(cls, BaseModel), 'Required pydantic model, but got {cls.__name__}'
 
         if topic_name in self._topic_to_registration:
             cached = self._topic_to_registration[topic_name]
-            assert cached.cls == cls, 'Topic already registered with different model'
+            assert cached.cls == cls, f'Topic {topic} already registered with {cached.cls.__name__}'
             return
 
         schema_id = self._writer.register_schema(
@@ -51,12 +52,12 @@ class MCAPLogger:
 
         self._topic_to_registration[topic_name] = Registration(cls=cls, channel_id=channel_id)
 
-    def __call__(self, topic: str, stamp: float, obj: BaseModel) -> None:
+    def publish(self, topic: str, obj: BaseModel, stamp: float) -> None:
         '''
         Args:
         * topic: topic name
-        * stamp: timestamp in nanoseconds (float)
         * obj: object to dump (pydantic model)
+        * stamp: timestamp in nanoseconds (float)
         '''
 
         self._register(topic, type(obj))
@@ -68,7 +69,7 @@ class MCAPLogger:
 
 def foxglove_logger() -> logging.Logger:
     logger = logging.getLogger("LogServer")
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.ERROR)
 
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter("%(asctime)s: [%(levelname)s] %(message)s"))
@@ -81,11 +82,11 @@ async def _foxglove_async_entrypoint(queue: asyncio.Queue, stop: Event) -> None:
         topic_to_registration = {}
 
         async def register(topic_name, cls):
-            assert issubclass(cls, BaseModel), 'Required pydantic model'
+            assert issubclass(cls, BaseModel), f'Required pydantic model, but got {cls.__name__}'
 
             if topic_name in topic_to_registration:
                 cached = topic_to_registration[topic_name]
-                assert cached.cls == cls, 'Topic already registered with different model'
+                assert cached.cls == cls, f'Topic {topic} already registered with {cached.cls.__name__}'
                 return
 
             spec = {
@@ -123,18 +124,16 @@ class FoxgloveWebsocketLogger:
 
         self._foxlgove_thread.start()
 
-    def __call__(self, topic_name: str, stamp: float, obj: BaseModel) -> None:
+    def publish(self, topic_name: str, obj: BaseModel, stamp: float) -> None:
         '''
         Args:
         * topic_name: topic name
-        * stamp: timestamp in nanoseconds (float)
         * obj: object to dump (pydantic model)
+        * stamp: timestamp in nanoseconds (float)
         '''
 
         if not (self._loop.is_running() and self._foxlgove_thread.is_alive()):
             raise RuntimeError('Foxglove logger is not running')
-
-        print(f'loop: {self._loop.is_running()}, thread: {self._foxlgove_thread.is_alive()}')
 
         item = (topic_name, stamp, obj)
         asyncio.run_coroutine_threadsafe(self._queue.put(item), self._loop)
@@ -154,14 +153,44 @@ class Logger:
         if log_path:
             self.mcap_log = MCAPLogger(log_path)
 
-    def __call__(self, topic_name: str, stamp: float, obj: BaseModel) -> None:
+    def publish(self, topic_name: str, obj: BaseModel, stamp: float) -> None:
         '''
         Args:
         * topic_name: topic name
-        * stamp: timestamp in nanoseconds (float)
         * obj: pydantic model
+        * stamp: timestamp in nanoseconds (float)
         '''
 
-        self._foxglove_log(topic_name, stamp, obj)
         if self._mcap_log:
-            self._mcap_log(topic_name, stamp, obj)
+            self._mcap_log.publish(topic_name, obj, stamp)
+
+        self._foxglove_log.publish(topic_name, obj, stamp)
+
+
+__logger = None
+
+def setup(log_path: str = '') -> None:
+    '''
+    Args:
+    * log_path: path to mcap log file, if not provided, no mcap log will be created
+    '''
+
+    global __logger
+    __logger = Logger(log_path)
+
+
+def publish(topic_name: str, obj: BaseModel, stamp: float|None = None) -> None:
+    '''
+    Args:
+    * topic_name: topic name
+    * obj: pydantic model
+    * stamp: timestamp in nanoseconds (float), if not provided, current time used
+    '''
+
+    if not __logger:
+        setup()
+
+    if stamp is None:
+        stamp = time.time()
+
+    __logger.publish(topic_name, obj, stamp)
