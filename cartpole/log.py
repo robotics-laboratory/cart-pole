@@ -1,11 +1,12 @@
 import asyncio
+import atexit
 import json
 import logging
 import time
 
 from threading import Event, Thread
 from foxglove_websocket.server import FoxgloveServer
-from mcap.writer import Writer
+from mcap.writer import CompressionType, Writer
 from pydantic import BaseModel
 from typing import Any
 
@@ -22,6 +23,17 @@ class Registration(BaseModel):
     cls: Any
     channel_id: int
 
+def make_logger(name) -> logging.Logger:
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.INFO)
+
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("[%(name)s] [%(levelname)s] %(asctime)s:  %(message)s"))
+    logger.addHandler(handler)
+
+    return logger
+
+
 class MCAPLogger:
     def __init__(self, log_path: str):
         '''
@@ -29,28 +41,42 @@ class MCAPLogger:
             log_path: path to mcap log file
         '''
 
+        self._log = make_logger('MCAPLogger')
+
         self._writer = Writer(open(log_path, "wb"))
+        self._writer.start()
+
         self._topic_to_registration: Dict[str, Registration] = {}
 
-    def _register(self, topic_name: str, cls: Any) -> None:
+    def __enter__(self):
+        return self
+
+    def _register(self, topic_name: str, cls: Any) -> Registration:
         assert issubclass(cls, BaseModel), 'Required pydantic model, but got {cls.__name__}'
 
         if topic_name in self._topic_to_registration:
             cached = self._topic_to_registration[topic_name]
             assert cached.cls == cls, f'Topic {topic} already registered with {cached.cls.__name__}'
-            return
+            return cached
+
+        schema = cls.schema_json()
 
         schema_id = self._writer.register_schema(
             name=cls.__name__,
             encoding="jsonschema",
-            data=cls.schema_json().encode())
+            data=schema.encode())
 
         channel_id = self._writer.register_channel(
             schema_id=schema_id,
             topic=topic_name,
             message_encoding="json")
 
-        self._topic_to_registration[topic_name] = Registration(cls=cls, channel_id=channel_id)
+        cached = Registration(cls=cls, channel_id=channel_id)
+        self._topic_to_registration[topic_name] = cached
+
+        self._log.debug('Registration: "%s"=%i %s=%s', topic_name, channel_id, cls.__name__, schema)
+
+        return cached
 
     def publish(self, topic: str, obj: BaseModel, stamp: float) -> None:
         '''
@@ -60,50 +86,56 @@ class MCAPLogger:
         * stamp: timestamp in nanoseconds (float)
         '''
 
-        self._register(topic, type(obj))
+        registation = self._register(topic, type(obj))
         self._writer.add_message(
-                channel_id=self._topic_to_registration[topic].channel_id,
+                channel_id=registation.channel_id,
                 log_time=to_ns(stamp),
                 data=obj.json().encode(),
                 publish_time=to_ns(stamp))
 
-def foxglove_logger() -> logging.Logger:
-    logger = logging.getLogger("LogServer")
-    logger.setLevel(logging.ERROR)
+    def close(self):
+        self._writer.finish()
 
-    handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter("%(asctime)s: [%(levelname)s] %(message)s"))
-    logger.addHandler(handler)
-
-    return logger
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
 
 async def _foxglove_async_entrypoint(queue: asyncio.Queue, stop: Event) -> None:
-    async with FoxgloveServer("0.0.0.0", 8765, "CartPole", logger=foxglove_logger()) as server:
+    logger = make_logger('LogServer')
+    async with FoxgloveServer("0.0.0.0", 8765, "CartPole", logger=logger) as server:
         topic_to_registration = {}
 
-        async def register(topic_name, cls):
+        async def register(topic_name, cls) -> Registration:
             assert issubclass(cls, BaseModel), f'Required pydantic model, but got {cls.__name__}'
 
             if topic_name in topic_to_registration:
                 cached = topic_to_registration[topic_name]
                 assert cached.cls == cls, f'Topic {topic} already registered with {cached.cls.__name__}'
-                return
+                return cached
+
+            schema = cls.schema_json()
 
             spec = {
                 "topic": topic_name,
                 "encoding": "json",
                 "schemaName": cls.__name__,
-                "schema": cls.schema_json().encode(),
+                "schema": schema,
             }
 
             channel_id = await server.add_channel(spec)
-            topic_to_registration[topic_name] = Registration(cls=cls, channel_id=channel_id)
+            cached = Registration(cls=cls, channel_id=channel_id)
+            topic_to_registration[topic_name] = cached
+
+            logger.debug('Registration "%s"=%i %s=%s', topic_name, channel_id, cls.__name__, schema)
+
+            return cached
 
         while not stop.is_set():
-            topic_name, stamp, obj = await queue.get()
-            await register(topic_name, type(obj))
-            channel_id = topic_to_registration[topic_name].channel_id
-            await server.send_message(channel_id, to_ns(stamp), obj.json().encode())
+            try:
+                topic_name, stamp, obj = await asyncio.wait_for(queue.get(), timeout=1.0)
+                registration = await register(topic_name, type(obj))
+                await server.send_message(registration.channel_id, to_ns(stamp), obj.json().encode())
+            except asyncio.TimeoutError:
+                pass
 
 def foxglove_main(loop: asyncio.AbstractEventLoop, queue: asyncio.Queue, stop: Event) -> None:
     asyncio.set_event_loop(loop)
@@ -124,6 +156,9 @@ class FoxgloveWebsocketLogger:
 
         self._foxlgove_thread.start()
 
+    def __enter__(self):
+        return self
+
     def publish(self, topic_name: str, obj: BaseModel, stamp: float) -> None:
         '''
         Args:
@@ -138,8 +173,12 @@ class FoxgloveWebsocketLogger:
         item = (topic_name, stamp, obj)
         asyncio.run_coroutine_threadsafe(self._queue.put(item), self._loop)
 
-    def __del__(self):
+    def close(self):
         self._stop.set()
+        self._foxlgove_thread.join()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
 
 class Logger:
     def __init__(self, log_path: str = ''):
@@ -151,7 +190,7 @@ class Logger:
         self._foxglove_log = FoxgloveWebsocketLogger()
         self._mcap_log = None
         if log_path:
-            self.mcap_log = MCAPLogger(log_path)
+            self._mcap_log = MCAPLogger(log_path)
 
     def publish(self, topic_name: str, obj: BaseModel, stamp: float) -> None:
         '''
@@ -166,6 +205,14 @@ class Logger:
 
         self._foxglove_log.publish(topic_name, obj, stamp)
 
+    def close(self):
+        self._foxglove_log.close()
+        if self._mcap_log:
+            self._mcap_log.close()
+
+    def __exit__(self):
+        self.close()
+
 
 __logger = None
 
@@ -176,8 +223,12 @@ def setup(log_path: str = '') -> None:
     '''
 
     global __logger
-    __logger = Logger(log_path)
 
+    if __logger:
+        __logger.close()
+
+    __logger = Logger(log_path)
+ 
 
 def publish(topic_name: str, obj: BaseModel, stamp: float|None = None) -> None:
     '''
@@ -187,6 +238,8 @@ def publish(topic_name: str, obj: BaseModel, stamp: float|None = None) -> None:
     * stamp: timestamp in nanoseconds (float), if not provided, current time used
     '''
 
+    global __logger
+
     if not __logger:
         setup()
 
@@ -194,3 +247,12 @@ def publish(topic_name: str, obj: BaseModel, stamp: float|None = None) -> None:
         stamp = time.time()
 
     __logger.publish(topic_name, obj, stamp)
+
+
+def close():
+    global __logger
+
+    if __logger:
+        __logger.close()
+
+atexit.register(close)

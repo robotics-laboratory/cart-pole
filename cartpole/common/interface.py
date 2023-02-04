@@ -2,7 +2,7 @@ import enum
 import numpy
 import torch
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Any
 
 class Error(enum.IntEnum):
@@ -16,11 +16,18 @@ class Error(enum.IntEnum):
     def __bool__(self) -> bool:
         return self != Error.NO_ERROR
 
+    def __str__(self) -> str:
+        return self.name
+
+    def __repr__(self) -> str:
+        return str(self.value)
+
+
 class Config(BaseModel):
     # software cart limits
-    max_position: float = 0.25  # m
-    max_velocity: float = 2.0  # m/s
-    max_acceleration: float = 3.5  # m/s^2
+    max_cart_position: float = 0.25  # m
+    max_cart_velocity: float = 2.0  # m/s
+    max_cart_acceleration: float = 3.5  # m/s^2
 
 class State(BaseModel):
     # cart state
@@ -35,10 +42,59 @@ class State(BaseModel):
     cart_acceleration: float = 0.0
     error: Error = Error.NO_ERROR
 
-    @staticmethod
-    def home() -> 'State':
-        return State() 
+    class Config:
+        @staticmethod
+        def schema_extra(schema: Any, model: Any) -> None:
+            # make schema lightweight
+            schema.pop('definitions', None)
 
+            properties = schema['properties']           
+            for name in properties:
+                properties[name].pop('title', None)
+
+            # simplify schema for foxglove
+            properties['error'] = {
+                'type': 'integer',
+                'enum': [e.value for e in Error]
+            }
+
+    def validate(self, config: Config) -> None:
+        if self.error:
+            return
+
+        if abs(self.cart_position) > config.max_cart_position:
+            self.error = Error.CART_POSITION_OVERFLOW
+            return
+
+        if abs(self.cart_velocity) > config.max_cart_velocity:
+            error = Error.CART_VELOCITY_OVERFLOW
+            return
+        
+        if abs(self.cart_acceleration) > config.max_cart_acceleration:
+            error = Error.CART_ACCELERATION_OVERFLOW
+            return
+
+#    @staticmethod
+#    def home() -> State:
+#        return State()
+
+    def as_tuple(self):
+        '''
+        Returns state (cart_position, cart_velocity, pole_angle, pole_angular_velocity) as tuple.
+        '''
+        return (self.cart_position, self.pole_angle, self.cart_velocity, self.pole_angular_velocity)
+
+    def torch4(self):
+        '''
+        Returns state tuple as torch tensor.
+        '''
+        return torch.tensor(self.as_tuple(), dtype=torch.float32)
+
+    def numpy4(self):
+        '''
+        Returns state tuple as numpy array.
+        '''
+        return numpy.array(self.as_tuple(), dtype=numpy.float32)
 
 class CartPoleBase:
     '''
@@ -57,7 +113,7 @@ class CartPoleBase:
     def __init__(self, config: Config):
         self.config = config
 
-    def reset(self, state: State = State.home()) -> None:
+    def reset(self, state: State = State()) -> None:
         '''
         Resets the device to the state.
         It must be called at the beginning of any session.

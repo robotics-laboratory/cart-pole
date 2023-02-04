@@ -2,7 +2,7 @@
 name = "cartpole"
 version = "0.1.0"
 description = "Control study project"
-authors = ["simagin.mail@yandex.ru"]
+authors = ["Simagin Denis <simagin.mail@yandex.ru>"]
 readme = "readme.md"
 packages = [
     { include = "cartpole" },

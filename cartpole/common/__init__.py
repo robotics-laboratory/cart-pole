@@ -1,1 +1,1 @@
-from cartpole.common.interface import Config, Error, State
+from cartpole.common.interface import CartPoleBase, Config, Error, State
