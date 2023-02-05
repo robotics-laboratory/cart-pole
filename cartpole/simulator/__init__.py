@@ -1,1 +1,1 @@
-from cartpole.simulator.torch import TorchSimulatorConfig, TorchCartPoleSimulator, TorchSimulatorInfo
+from cartpole.simulator.torch import TorchSimulatorConfig, TorchSimulator, TorchSimulatorInfo
