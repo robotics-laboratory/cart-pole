@@ -5,6 +5,7 @@ import torch
 from pydantic import BaseModel, Field
 from typing import Any
 
+
 class Error(enum.IntEnum):
     NO_ERROR = 0
     NEED_RESET = 1
@@ -67,16 +68,12 @@ class State(BaseModel):
             return
 
         if abs(self.cart_velocity) > config.max_cart_velocity:
-            error = Error.CART_VELOCITY_OVERFLOW
+            self.error = Error.CART_VELOCITY_OVERFLOW
             return
         
         if abs(self.cart_acceleration) > config.max_cart_acceleration:
-            error = Error.CART_ACCELERATION_OVERFLOW
+            self.error = Error.CART_ACCELERATION_OVERFLOW
             return
-
-#    @staticmethod
-#    def home() -> State:
-#        return State()
 
     def as_tuple(self):
         '''
