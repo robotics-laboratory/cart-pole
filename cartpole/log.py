@@ -56,7 +56,7 @@ class MCAPLogger:
 
         if topic_name in self._topic_to_registration:
             cached = self._topic_to_registration[topic_name]
-            assert cached.cls == cls, f'Topic {topic} already registered with {cached.cls.__name__}'
+            assert cached.cls == cls, f'Topic {topic_name} already registered with {cached.cls.__name__}'
             return cached
 
         schema = cls.schema_json()
@@ -78,15 +78,15 @@ class MCAPLogger:
 
         return cached
 
-    def publish(self, topic: str, obj: BaseModel, stamp: float) -> None:
+    def publish(self, topic_name: str, obj: BaseModel, stamp: float) -> None:
         '''
         Args:
-        * topic: topic name
+        * topic_name: topic name
         * obj: object to dump (pydantic model)
         * stamp: timestamp in nanoseconds (float)
         '''
 
-        registation = self._register(topic, type(obj))
+        registation = self._register(topic_name, type(obj))
         self._writer.add_message(
                 channel_id=registation.channel_id,
                 log_time=to_ns(stamp),
@@ -109,7 +109,7 @@ async def _foxglove_async_entrypoint(queue: asyncio.Queue, stop: Event) -> None:
 
             if topic_name in topic_to_registration:
                 cached = topic_to_registration[topic_name]
-                assert cached.cls == cls, f'Topic {topic} already registered with {cached.cls.__name__}'
+                assert cached.cls == cls, f'Topic {topic_name} already registered with {cached.cls.__name__}'
                 return cached
 
             schema = cls.schema_json()
