@@ -13,7 +13,7 @@ const int TMC_DIR = 32;
 const int TMC_STALLGUARD = 39;
 const int ENDSTOP_LEFT = 34;
 const int ENDSTOP_RIGHT = 35;
-const bool INVERSE_ENDSTOPS = true;
+const bool INVERSE_ENDSTOPS = false;
 
 const HardwareSerial STEPPER_SERIAL_PORT = Serial2;
 const float STEPPER_CURRENT = 2.0;

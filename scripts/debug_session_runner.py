@@ -20,14 +20,14 @@ def control_loop(device: CartPoleBase, actor: Actor, max_duration: float):
         target = actor(state, stamp=stamp)
         logging.info("STAMP: %s", stamp)
         device.set_target(target)
-        device.advance()
+        device.advance(0)
 
 
 def reset_pole_angle(device: CartPoleDevice):
     # FIXME: Move to firmware
     device.rotations = 0
     device.prev_angle = 0
-    device.zero_angle = proxy.get_state().pole_angle
+    device.zero_angle = device.get_state().pole_angle
     LOGGER.info(f"Pole angle correction: {device.zero_angle:.5f}")
 
 
@@ -58,23 +58,23 @@ if __name__ == "__main__":
     )
 
     device = CartPoleDevice()
-    proxy = CollectorProxy(
-        cart_pole=device,
-        actor_class=ACTOR_CLASS,
-        actor_config=ACTOR_CONFIG,
-    )
+    # proxy = CollectorProxy(
+    #     cart_pole=device,
+    #     actor_class=ACTOR_CLASS,
+    #     actor_config=ACTOR_CONFIG,
+    # )
 
     try:
-        proxy.reset(DEVICE_CONFIG)
+        device.reset(DEVICE_CONFIG)
         actor = DemoActor(**ACTOR_CONFIG)
-        actor.proxy = proxy
+        # actor.proxy = proxy
         reset_pole_angle(device)  # FIXME
-        control_loop(proxy, actor, max_duration=SESSION_MAX_DURATION)
+        control_loop(device, actor, max_duration=SESSION_MAX_DURATION)
     except Exception:
         LOGGER.exception("Aborting run due to error")
     finally:
         LOGGER.info("Run finished")
-        proxy.set_target(0)
-        proxy.close()
+        # proxy.set_target(0)
+        # proxy.close()
 
-    proxy.save(OUTPUT_PATH / "session.json")
+    # proxy.save(OUTPUT_PATH / "session.json")
