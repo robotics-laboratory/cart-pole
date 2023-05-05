@@ -1,4 +1,4 @@
-#include "stepper.h"
+#include "fas_stepper.h"
 
 #include <iomanip>
 #include <sstream>
@@ -6,14 +6,20 @@
 #include "globals.h"
 #include "protocol_processor.h"
 
+#define RADIAL
+
 namespace {
 const int TMC_EN = 25;
 const int TMC_STEP = 33;
 const int TMC_DIR = 32;
 const int TMC_STALLGUARD = 39;
+#ifdef RADIAL
+const int HALL_SENSOR = 34;
+#else
 const int ENDSTOP_LEFT = 34;
 const int ENDSTOP_RIGHT = 35;
 const bool INVERSE_ENDSTOPS = true;
+#endif
 
 const HardwareSerial STEPPER_SERIAL_PORT = Serial2;
 const float STEPPER_CURRENT = 2.0;
@@ -23,7 +29,11 @@ const float R_SENSE = 0.11;
 const int TOFF_VALUE = 5;
 const int MICROSTEPS = 16;
 const bool REVERSE_STEPPER = false;
+#ifdef RADIAL
+const int FULL_STEPS_PER_METER = 530;
+#else
 const int FULL_STEPS_PER_METER = 1666;
+#endif
 const float HOMING_SPEED = 0.1;
 const float HOMING_ACCELERATION = 0.5;
 
@@ -134,7 +144,7 @@ void Stepper::Disable() {
 void Stepper::ForceStop() {
     ProtocolProcessor &P = GetProtocolProcessor();
     fas_stepper->forceStopAndNewPosition(fas_stepper->getCurrentPosition());
-    P.Log("Force stopped stepper");
+    P.Log("Force stopped fas_stepper");
 }
 
 float Stepper::GetCurrentPosition() {
@@ -162,10 +172,33 @@ void Stepper::Homing() {
     SetSpeed(HOMING_SPEED);
     SetAcceleration(HOMING_ACCELERATION);
 
+    #ifdef RADIAL
+    int32_t pos1, pos2;
+    // ○●○ <-Arrangement of magnets
+    // Run forward until get ●
+    fas_stepper->runForward();
+    while(digitalRead(sensorPIN)){
+    }
+    pos1 = fas_stepper->getCurrentPosition();
+    // Serial.printf("pos1:%d", pos1);
+    // Run forward until get the ○
+    fas_stepper->runForward();
+    while(!digitalRead(sensorPIN)) {
+    }
+    pos2 = fas_stepper->getCurrentPosition();
+    // Serial.printf("pos2:%d", pos2);
+    fas_stepper->moveTo((pos1 + pos2)/2, true);
+    // Serial.printf("finished move");
+
+    G.full_length_meters = 1.25663 // Approximately two revolutions
+
+    G.errcode = Error::NO_ERROR;
+
+    #else
     // RUN LEFT
     fas_stepper->runBackward();
-    while (!(INVERSE_ENDSTOPS ^ digitalRead(ENDSTOP_LEFT))) {
-    }
+    // while (!(INVERSE_ENDSTOPS ^ digitalRead(ENDSTOP_LEFT))) {
+    // }
 
     ForceStop();
     fas_stepper->setCurrentPosition(0);
@@ -190,7 +223,7 @@ void Stepper::Homing() {
     G.hw_max_x = G.full_length_meters / 2;
 
     G.errcode = Error::NO_ERROR;
-
+    #endif
     // std::stringstream stream;
     // stream << std::fixed << std::setprecision(5) << "Full length: " << delta_steps << " steps"
     //        << G.full_length_meters << " meters";
@@ -223,7 +256,7 @@ void Stepper::SetSpeed(float value) {
 
     // ProtocolProcessor &P = GetProtocolProcessor();
     // std::stringstream stream;
-    // stream << std::fixed << std::setprecision(5) << "Set stepper speed: "
+    // stream << std::fixed << std::setprecision(5) << "Set fas_stepper speed: "
     //        << value << " m/s, " << speed_hz << " steps/s";
     // P.Log(stream.str());
 }
@@ -234,7 +267,7 @@ void Stepper::SetAcceleration(float value) {
 
     // ProtocolProcessor &P = GetProtocolProcessor();
     // std::stringstream stream;
-    // stream << std::fixed << std::setprecision(5) << "Set stepper acceleration: "
+    // stream << std::fixed << std::setprecision(5) << "Set fas_stepper acceleration: "
     //        << value << " m/s^2, " << steps_per_ss << " steps/s^2";
     // P.Log(stream.str());
 }
@@ -258,12 +291,12 @@ void Stepper::SetTargetAcceleration(float value) {
 
     // ProtocolProcessor &P = GetProtocolProcessor();
     // std::stringstream stream;
-    // stream << std::fixed << std::setprecision(5) << "Moving stepper by acceleration: "
+    // stream << std::fixed << std::setprecision(5) << "Moving fas_stepper by acceleration: "
     //        << value << " m/s^2, " << steps_per_ss << " steps/s^2";
     // P.Log(stream.str());
 }
 
 Stepper &GetStepper() {
-    static Stepper stepper{};
-    return stepper;
+    static Stepper fas_stepper{};
+    return fas_stepper;
 }
