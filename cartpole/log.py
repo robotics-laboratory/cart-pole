@@ -25,7 +25,7 @@ class Registration(BaseModel):
 
 def make_logger(name) -> logging.Logger:
     logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.WARN)
 
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter("[%(name)s] [%(levelname)s] %(asctime)s:  %(message)s"))
@@ -131,20 +131,27 @@ async def _foxglove_async_entrypoint(queue: asyncio.Queue, stop: Event) -> None:
 
         while not stop.is_set():
             try:
-                topic_name, stamp, obj = await asyncio.wait_for(queue.get(), timeout=1.0)
+                topic_name, stamp, obj = await asyncio.wait_for(queue.get(), timeout=0.2)
                 registration = await register(topic_name, type(obj))
                 await server.send_message(registration.channel_id, to_ns(stamp), obj.json().encode())
             except asyncio.TimeoutError:
                 pass
 
-def foxglove_main(loop: asyncio.AbstractEventLoop, queue: asyncio.Queue, stop: Event) -> None:
+async def _foxglove_async_wrapping(input_queue: asyncio.Queue, stop: Event, exception_queue: asyncio.Queue) -> None:
+    try:
+        await _foxglove_async_entrypoint(input_queue, stop)
+    except Exception as e:
+        await exception_queue.put(e)
+
+def foxglove_main(loop: asyncio.AbstractEventLoop, input_queue: asyncio.Queue, stop: Event, exception_queue: asyncio.Queue) -> None:
     asyncio.set_event_loop(loop)
-    loop.run_until_complete(_foxglove_async_entrypoint(queue, stop))
+    loop.run_until_complete(_foxglove_async_wrapping(input_queue, stop, exception_queue))
 
 class FoxgloveWebsocketLogger:
     def __init__(self):
         self._loop = asyncio.new_event_loop()
-        self._queue = asyncio.Queue()
+        self._input_queue = asyncio.Queue()
+        self._exception_queue = asyncio.Queue()
         self._stop = Event()
         self._writer = None
 
@@ -152,7 +159,7 @@ class FoxgloveWebsocketLogger:
             target=foxglove_main,
             name='foxglove_main_loop',
             daemon=True,
-            args=(self._loop, self._queue, self._stop))
+            args=(self._loop, self._input_queue, self._stop, self._exception_queue))
 
         self._foxlgove_thread.start()
 
@@ -168,10 +175,13 @@ class FoxgloveWebsocketLogger:
         '''
 
         if not (self._loop.is_running() and self._foxlgove_thread.is_alive()):
-            raise RuntimeError('Foxglove logger is not running')
+            if not self._exception_queue.empty():
+                raise self._exception_queue.get_nowait()
+
+            raise AssertionError('Foxglove logger is not running')
 
         item = (topic_name, stamp, obj)
-        asyncio.run_coroutine_threadsafe(self._queue.put(item), self._loop)
+        asyncio.run_coroutine_threadsafe(self._input_queue.put(item), self._loop)
 
     def close(self):
         self._stop.set()
@@ -224,9 +234,7 @@ def setup(log_path: str = '') -> None:
 
     global __logger
 
-    if __logger:
-        __logger.close()
-
+    close()
     __logger = Logger(log_path)
  
 
@@ -254,5 +262,6 @@ def close():
 
     if __logger:
         __logger.close()
+        __logger = None
 
 atexit.register(close)

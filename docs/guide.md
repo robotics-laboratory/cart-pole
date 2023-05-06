@@ -8,6 +8,8 @@ Firstly, you need checkout repo and prepare environemnt, using [poetry](https://
 ```bash
 # upload repo
 git clone https://github.com/robotics-laboratory/cart-pole.git
+
+# go to repo
 cd cart-pole
 
 # check poetry config
@@ -17,14 +19,15 @@ poetry config --list
 poetry install
 
 # run tests to check that everithing is OK
-poetry pytest tests
+poetry run pytest tests
 
+# to run your script (e.g. some example)
+poetry run python examples/simulation.py
 ```
-
 > Do we need docker?
 
 ## Foxglove
-For visualization of real time data we use [foxglove studio](https://foxglove.dev/). There is docker container with server and our spefic fixes and panels (more information [here](https://github.com/robotics-laboratory/foxglove)). Just enable СartPole plugin and use some of predfined [layouts](layouts/).
+For visualization of real time data we use [foxglove studio](https://foxglove.dev/). You may use our [instance](http://foxglove.robotics-lab.ru) or use docker container with server and spefic fixes. More information about setup [here](https://github.com/robotics-laboratory/foxglove). Predefined layouts are stored at this [folder](layouts).
 
 ## Logging
 We have convinient logging system, it may show data in real time and replay saved data in [mcap](https://mcap.dev/) format.
@@ -55,7 +58,7 @@ for i in range(20):
 ## Simulation
 For development and testing of control algorithms, we provide CartPole simulator, which fully implemntet CartPoleBase [interface](/cartpole/common/interface.py). The simulation is carried out by numerical integration of parameterized dynamic system (more information [here](/docs/cart_pole.pdf)). Also simulator may be used to train ML agents.
 
-![CartPole](/docs/svg/classic_cart_pole.svg)
+![CartPole](docs/svg/classic_cart_pole.svg)
 
 ```python
 from cartpole import Error, State
@@ -79,8 +82,9 @@ cartpole = TorchSimulator(config=config)
 cartpole.reset(state=State(cart_position=0, pole_angle=(2/4 * torch.pi)))
 energy_start = cartpole.evaluate_energy()
 
+
 # run simulation
-for _ in range(200):
+for _ in range(1000):
     # use for loggin simulation time instead of real time
     stamp = cartpole.timestamp()
 
@@ -90,4 +94,5 @@ for _ in range(200):
 
     # make simulation step
     cartpole.advance(delta)
+    time.sleep(delta)
 ```

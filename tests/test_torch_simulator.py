@@ -3,7 +3,7 @@ from cartpole import Error, State, TorchSimulator, TorchSimulatorConfig
 import pytest
 import math
 
-delta = 0.05
+delta = 0.01
 
 def test_simple_run():
     cartpole = TorchSimulator(config=TorchSimulatorConfig.for_thin_pole())

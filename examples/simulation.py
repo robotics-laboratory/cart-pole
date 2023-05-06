@@ -21,7 +21,7 @@ energy_start = cartpole.evaluate_energy()
 
 
 # run simulation
-for _ in range(200):
+for _ in range(1000):
     # use for loggin simulation time instead of real time
     stamp = cartpole.timestamp()
 
@@ -31,4 +31,5 @@ for _ in range(200):
 
     # make simulation step
     cartpole.advance(delta)
+    time.sleep(delta)
 

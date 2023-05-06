@@ -8,17 +8,15 @@ class SomeObject(BaseModel):
     name: str = ''
     value: float = 0.0
 
-@pytest.mark.skip(reason="broken log.close")
 def test_log_some_object():
     # use default setting and lazy initialization
-    
+
     # send some object, use current time
     log.publish('/some/object', SomeObject(name='first', value=1.0))
 
     # send another object, specify time explicitly
     log.publish('/some/object', SomeObject(name='second', value=2.0), time())
 
-@pytest.mark.skip(reason="broken log.close")
 def test_log_state():
     # explicitly setup logger, specify log path
     log.setup(log_path='test.mcap')
@@ -26,28 +24,26 @@ def test_log_state():
     # send state
     log.publish('/cartpole/state', State())
 
-@pytest.mark.skip(reason="broken log.close")
 def test_log_bad_object():
+    # explicitly setup logger only for foxglove
+    log.setup()
+ 
     # send bad object (not pydantic model)
     log.publish('/str', 'something')
 
-    # after a while get an error on next call
+    # after a while get an forwarded error from foxglove thread
     sleep(0.1)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(AssertionError):
         log.publish('/some/object', SomeObject())
 
-@pytest.mark.skip(reason="broken log.close")
 def test_log_different_types_to_one_topic():
-    # reset logger, after fail before
+    # reset logger, after fail before and setup for mcap
     log.setup('test.mcap')
     topic = '/cartpole/state'
 
     log.publish(topic, State())
 
-    # send another type to the same topic
-    log.publish(topic, SomeObject())
-
-    # after a while get an error on next call
-    sleep(0.1)
-    with pytest.raises(RuntimeError):
-        log.publish(topic, State())
+    # send another type to the same topic, now we get an error immediately,
+    # because mcap logger works at the same thread
+    with pytest.raises(AssertionError):
+        log.publish(topic, SomeObject())
