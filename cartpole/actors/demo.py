@@ -29,8 +29,17 @@ class DemoActor(Actor):
     def save_expected_state(self, stamp):
         state_expected, target_expected = self.trajectory(stamp)
         ts = self.proxy._timestamp()
-        self.proxy._add_value('expected.cart_position', ts, float(state_expected.cart_position))
-        self.proxy._add_value('expected.cart_velocity', ts, float(state_expected.cart_velocity))
-        self.proxy._add_value('expected.pole_angle', ts, float(state_expected.pole_angle))
-        self.proxy._add_value('expected.pole_angular_velocity', ts, float(state_expected.pole_angular_velocity))
-        self.proxy._add_value('expected.target', ts, float(target_expected))
+        self.proxy.kek(
+            {
+                'exp_cart_position': float(state_expected.cart_position),
+                'exp_cart_velocity': float(state_expected.cart_velocity),
+                'exp_pole_angle': float(state_expected.pole_angle),
+                'exp_pole_angular_velocity': float(state_expected.pole_angular_velocity),
+                'exp_cart_acceleration': float(target_expected),
+            }
+        )
+        # self.proxy._add_value('expected.cart_position', ts, float(state_expected.cart_position))
+        # self.proxy._add_value('expected.cart_velocity', ts, float(state_expected.cart_velocity))
+        # self.proxy._add_value('expected.pole_angle', ts, float(state_expected.pole_angle))
+        # self.proxy._add_value('expected.pole_angular_velocity', ts, float(state_expected.pole_angular_velocity))
+        # self.proxy._add_value('expected.target', ts, float(target_expected))

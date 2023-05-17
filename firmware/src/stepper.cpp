@@ -1,4 +1,4 @@
-#include "fas_stepper.h"
+#include "stepper.h"
 
 #include <iomanip>
 #include <sstream>
@@ -13,13 +13,9 @@ const int TMC_EN = 25;
 const int TMC_STEP = 33;
 const int TMC_DIR = 32;
 const int TMC_STALLGUARD = 39;
-#ifdef RADIAL
-const int HALL_SENSOR = 34;
-#else
 const int ENDSTOP_LEFT = 34;
 const int ENDSTOP_RIGHT = 35;
 const bool INVERSE_ENDSTOPS = true;
-#endif
 
 const HardwareSerial STEPPER_SERIAL_PORT = Serial2;
 const float STEPPER_CURRENT = 2.0;
@@ -31,6 +27,7 @@ const int MICROSTEPS = 16;
 const bool REVERSE_STEPPER = false;
 #ifdef RADIAL
 const int FULL_STEPS_PER_METER = 530;
+const float MAX_HW_POS = 2.0;  // Approximately two revolutions is 1.25663 
 #else
 const int FULL_STEPS_PER_METER = 1666;
 #endif
@@ -62,7 +59,6 @@ Stepper::Stepper()
     pinMode(TMC_STALLGUARD, INPUT);
     pinMode(ENDSTOP_LEFT, INPUT);
     pinMode(ENDSTOP_RIGHT, INPUT);
-
     digitalWrite(TMC_EN, LOW);
     delay(10);
     tmc_serial_port.begin(SERIAL_SPEED);
@@ -84,8 +80,8 @@ void Stepper::Poll() {
     G.curr_v = GetCurrentVelocity();
     G.curr_a = GetCurrentAcceleration();
     if (G.errcode == Error::NO_ERROR) {
-        CheckStallGuard();
-        CheckEndstops();
+        // CheckStallGuard();
+        // CheckEndstops();
         CheckLimits();
     }
 }
@@ -97,10 +93,13 @@ void Stepper::CheckStallGuard() {
 }
 
 void Stepper::CheckEndstops() {
+    #ifdef RADIAL
+    #else
     if (INVERSE_ENDSTOPS ^ digitalRead(ENDSTOP_LEFT) ||
         INVERSE_ENDSTOPS ^ digitalRead(ENDSTOP_RIGHT)) {
         SetError(Error::ENDSTOP_HIT, "Endstop hit detected");
     }
+    #endif
 }
 
 void Stepper::CheckLimits() {
@@ -177,28 +176,34 @@ void Stepper::Homing() {
     // ○●○ <-Arrangement of magnets
     // Run forward until get ●
     fas_stepper->runForward();
-    while(digitalRead(sensorPIN)){
+    while(digitalRead(ENDSTOP_LEFT)){ //一开始一直是0
     }
+    // fas_stepper->forceStop();
     pos1 = fas_stepper->getCurrentPosition();
     // Serial.printf("pos1:%d", pos1);
     // Run forward until get the ○
     fas_stepper->runForward();
-    while(!digitalRead(sensorPIN)) {
+    while(!digitalRead(ENDSTOP_LEFT)) {
     }
     pos2 = fas_stepper->getCurrentPosition();
+
     // Serial.printf("pos2:%d", pos2);
-    fas_stepper->moveTo((pos1 + pos2)/2, true);
+    fas_stepper->moveTo((pos1 + pos2) / 2, true);
+
     // Serial.printf("finished move");
 
-    G.full_length_meters = 1.25663 // Approximately two revolutions
+    G.full_length_meters = MAX_HW_POS;
+    G.hw_max_x = G.full_length_meters / 2;
+
+    fas_stepper->setCurrentPosition(G.full_length_meters / 2 * METERS_TO_STEPS_MULTIPLIER);
 
     G.errcode = Error::NO_ERROR;
 
     #else
     // RUN LEFT
     fas_stepper->runBackward();
-    // while (!(INVERSE_ENDSTOPS ^ digitalRead(ENDSTOP_LEFT))) {
-    // }
+    while (!(INVERSE_ENDSTOPS ^ digitalRead(ENDSTOP_LEFT))) {
+    }
 
     ForceStop();
     fas_stepper->setCurrentPosition(0);

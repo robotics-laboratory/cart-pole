@@ -18,6 +18,7 @@ const bool REVERSE = true;
 const float ROTATION_CARRY_THRESHOLD = 1.8 * PI;
 const int SECONDARY_ENCODER_SDA = 13;
 const int SECONDARY_ENCODER_SCL = 32;
+const int I2C_SPEED = 1000000;
 }  // namespace
 
 Encoder::Encoder(TwoWire *wire, float *x_ref, float *v_ref, float zero_angle)
@@ -103,7 +104,7 @@ void Encoder::Poll() {
 
 Encoder &GetPoleEncoder() {
     static TwoWire *primaryWire = []() {
-        Wire.begin(-1, -1, 1000000);
+        Wire.begin(-1, -1, I2C_SPEED);
         return &Wire;
     }();
     Globals &G = GetGlobals();

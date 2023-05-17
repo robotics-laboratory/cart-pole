@@ -18,9 +18,10 @@ cmd = [
     f"{PROTO_FILE}",
     "&&",
     # https://github.com/protocolbuffers/protobuf/issues/1491
-    "sed -i 's/import nanopb_pb2/from . import nanopb_pb2/'",
+    "sed -i'' -e 's/import nanopb_pb2/from . import nanopb_pb2/'",
     f"{PY_OUTPUT_DIR / 'protocol_pb2.py'}",
 ]
+
 
 proc = sp.Popen(" ".join(cmd), shell=True, text=True, stdout=sp.PIPE, stderr=sp.PIPE)
 assert proc.wait() == 0, f"Protobuf compilation failed:\n{proc.stderr.read()}"

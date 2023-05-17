@@ -7,13 +7,15 @@ readme = "readme.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-torch = "^1.13.0"
+# torch = "^1.13.0"
 numpy = "^1.23.5"
 protobuf = "^4.21.9"
 pyserial = "^3.5"
 varint = "^1.0.2"
 dacite = "^1.6.0"
-drake = {version = "^1.10.0", optional = true}
+# drake = {version = "^1.10.0", optional = true}
+drake = {version = "*", optional = true}
+foxglove-websocket = "^0.1.0"
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"

@@ -8,7 +8,7 @@
 #include <pb_encode.h>
 #include <pb_decode.h>
 extern "C" {
-    #include "controller.pb.h"
+    #include "protocol.pb.h"
 }
 
 // #include "freertos/FreeRTOS.h"

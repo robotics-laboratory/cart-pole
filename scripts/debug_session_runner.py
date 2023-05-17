@@ -3,7 +3,7 @@ import time
 from pathlib import Path
 
 from cartpole.actors.demo import DemoActor
-from cartpole.common.interface import CartPoleBase, Config
+from cartpole.common.interface import CartPoleBase, Config, Error
 from cartpole.common.util import init_logging
 from cartpole.device import CartPoleDevice
 from cartpole.sessions.actor import Actor
@@ -16,6 +16,8 @@ def control_loop(device: CartPoleBase, actor: Actor, max_duration: float):
     start = time.perf_counter()
     while time.perf_counter() - start < max_duration:
         state = device.get_state()
+        if state.error != Error.NO_ERROR:
+            break
         stamp = time.perf_counter() - start
         target = actor(state, stamp=stamp)
         logging.info("STAMP: %s", stamp)
@@ -42,18 +44,19 @@ if __name__ == "__main__":
 
     ACTOR_CLASS = DemoActor
     DEVICE_CONFIG = Config(
-        max_position=0.25,
-        max_velocity=5,
-        max_acceleration=10.0,
+        max_position=0.3, #0.25
+        max_velocity=10.0, #5
+        max_acceleration=12.0,
         clamp_velocity=True,
         clamp_acceleration=True,
     )
     ACTOR_CONFIG = dict(
         config=Config(
-            max_position=0.20,
-            max_velocity=4,
-            max_acceleration=7.0,
-            pole_length=0.18,
+            max_position=0.22,  #0.20
+            max_velocity=7,  #4
+            max_acceleration=10.0,
+            pole_length=0.18,  #0.18
+            pole_mass=0.07
         )
     )
 
@@ -66,9 +69,12 @@ if __name__ == "__main__":
 
     try:
         proxy.reset(DEVICE_CONFIG)
+        # exit(0)
         actor = DemoActor(**ACTOR_CONFIG)
         actor.proxy = proxy
         reset_pole_angle(device)  # FIXME
+        print("!!!!!!!!\n"*20)
+        time.sleep(3)
         control_loop(proxy, actor, max_duration=SESSION_MAX_DURATION)
     except Exception:
         LOGGER.exception("Aborting run due to error")
@@ -76,5 +82,6 @@ if __name__ == "__main__":
         LOGGER.info("Run finished")
         proxy.set_target(0)
         proxy.close()
+        proxy.kek("kek")
 
     proxy.save(OUTPUT_PATH / "session.json")
