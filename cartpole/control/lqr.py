@@ -27,7 +27,7 @@ class BalanceLQRControl:
 
         # Q = numpy.diag([1, 13, 1, 4])
         # R = numpy.diag([0.18])
-        Q = numpy.diag([10.0, 1, 1, 1])
+        Q = numpy.diag([5, 1, 1, 1])
         R = numpy.diag([0.5])
 
         linearized = Linearize(system, context)

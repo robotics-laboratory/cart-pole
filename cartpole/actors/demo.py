@@ -2,6 +2,7 @@ from cartpole.common.interface import State
 from cartpole.sessions.actor import Actor
 from cartpole.control import BalanceLQRControl, TrajectoryLQRControl, Trajectory
 from logging import getLogger
+import math
 
 logger = getLogger(__file__)
 
@@ -16,20 +17,25 @@ class DemoActor(Actor):
         self.trajectory_control = TrajectoryLQRControl(config, self.trajectory)
         self.begin = None
         self.proxy = None
+        self.mode = "trajectory"
         logger.info("Trajectory ready")
 
     def __call__(self, state: State, stamp=None) -> float:
         self.save_expected_state(stamp)
-        if stamp < self.trajectory.duration:
-            target = self.trajectory_control(stamp, state)
-        else:
+        old_mode = self.mode
+        if abs(state.pole_angle - math.pi) < 0.1:
+            self.mode = "balance"
+        if self.mode == "trajectory":
+            target = self.trajectory_control(max(0, stamp), state)
+        if self.mode == "balance":
             target = self.balance_control(state)
+        if old_mode != self.mode:
+            print(f"NEW MODE: {self.mode} \n" * 5)
         return float(target)
 
     def save_expected_state(self, stamp):
         state_expected, target_expected = self.trajectory(stamp)
-        ts = self.proxy._timestamp()
-        self.proxy.kek(
+        self.proxy.push_foxglove_data(
             {
                 'exp_cart_position': float(state_expected.cart_position),
                 'exp_cart_velocity': float(state_expected.cart_velocity),

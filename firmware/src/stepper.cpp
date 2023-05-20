@@ -22,15 +22,15 @@ const float STEPPER_CURRENT = 2.0;
 const int SERIAL_SPEED = 115200;
 const int ADDRESS = 0b00;
 const float R_SENSE = 0.11;
-const int TOFF_VALUE = 5;
-const int MICROSTEPS = 16;
-const bool REVERSE_STEPPER = false;
-#ifdef RADIAL
-const int FULL_STEPS_PER_METER = 530;
+const int TOFF_VALUE = 3;
+const int MICROSTEPS = 32;
+const bool REVERSE_STEPPER = true;
+// #ifdef RADIAL
+const int FULL_STEPS_PER_METER = 482;
 const float MAX_HW_POS = 2.0;  // Approximately two revolutions is 1.25663 
-#else
-const int FULL_STEPS_PER_METER = 1666;
-#endif
+// #else
+// const int FULL_STEPS_PER_METER = 1666;
+// #endif
 const float HOMING_SPEED = 0.1;
 const float HOMING_ACCELERATION = 0.5;
 
@@ -63,8 +63,11 @@ Stepper::Stepper()
     delay(10);
     tmc_serial_port.begin(SERIAL_SPEED);
     tmc_driver.begin();
+    tmc_driver.I_scale_analog(false);
     tmc_driver.rms_current(STEPPER_CURRENT * 1000);
     tmc_driver.microsteps(MICROSTEPS == 1 ? 0 : MICROSTEPS);
+    tmc_driver.en_spreadCycle(false);
+    tmc_driver.pwm_autoscale(true);
     tmc_driver.toff(0);
 
     // Init FastAccelStepper
@@ -93,13 +96,13 @@ void Stepper::CheckStallGuard() {
 }
 
 void Stepper::CheckEndstops() {
-    #ifdef RADIAL
-    #else
-    if (INVERSE_ENDSTOPS ^ digitalRead(ENDSTOP_LEFT) ||
-        INVERSE_ENDSTOPS ^ digitalRead(ENDSTOP_RIGHT)) {
-        SetError(Error::ENDSTOP_HIT, "Endstop hit detected");
-    }
-    #endif
+    // #ifdef RADIAL
+    // #else
+    // if (INVERSE_ENDSTOPS ^ digitalRead(ENDSTOP_LEFT) ||
+    //     INVERSE_ENDSTOPS ^ digitalRead(ENDSTOP_RIGHT)) {
+    //     SetError(Error::ENDSTOP_HIT, "Endstop hit detected");
+    // }
+    // #endif
 }
 
 void Stepper::CheckLimits() {
@@ -129,7 +132,8 @@ void Stepper::SetError(Error err, std::string what) {
 void Stepper::Enable() {
     ProtocolProcessor &P = GetProtocolProcessor();
     tmc_driver.toff(TOFF_VALUE);
-    tmc_driver.rms_current(STEPPER_CURRENT * 1000);
+    delay(10);
+    // tmc_driver.rms_current(STEPPER_CURRENT * 1000);
     P.Log("Stepper enabled");
 }
 
@@ -142,7 +146,7 @@ void Stepper::Disable() {
 
 void Stepper::ForceStop() {
     ProtocolProcessor &P = GetProtocolProcessor();
-    fas_stepper->forceStopAndNewPosition(fas_stepper->getCurrentPosition());
+    fas_stepper->forceStop();
     P.Log("Force stopped fas_stepper");
 }
 
@@ -171,7 +175,7 @@ void Stepper::Homing() {
     SetSpeed(HOMING_SPEED);
     SetAcceleration(HOMING_ACCELERATION);
 
-    #ifdef RADIAL
+    // #ifdef RADIAL
     int32_t pos1, pos2;
     // ○●○ <-Arrangement of magnets
     // Run forward until get ●
@@ -199,36 +203,38 @@ void Stepper::Homing() {
 
     G.errcode = Error::NO_ERROR;
 
-    #else
+    // #else
+
+
     // RUN LEFT
-    fas_stepper->runBackward();
-    while (!(INVERSE_ENDSTOPS ^ digitalRead(ENDSTOP_LEFT))) {
-    }
+    // fas_stepper->runBackward();
+    // while (!(INVERSE_ENDSTOPS ^ digitalRead(ENDSTOP_LEFT))) {
+    // }
 
-    ForceStop();
-    fas_stepper->setCurrentPosition(0);
-    delay(50);
+    // ForceStop();
+    // fas_stepper->setCurrentPosition(0);
+    // delay(50);
 
-    // RUN RIGHT
-    fas_stepper->runForward();
-    while (!(INVERSE_ENDSTOPS ^ digitalRead(ENDSTOP_RIGHT))) {
-    }
+    // // RUN RIGHT
+    // fas_stepper->runForward();
+    // while (!(INVERSE_ENDSTOPS ^ digitalRead(ENDSTOP_RIGHT))) {
+    // }
 
-    ForceStop();
-    int delta_steps = fas_stepper->getCurrentPosition();
-    fas_stepper->setCurrentPosition(delta_steps);
-    delay(50);
+    // ForceStop();
+    // int delta_steps = fas_stepper->getCurrentPosition();
+    // fas_stepper->setCurrentPosition(delta_steps);
+    // delay(50);
 
-    // GOTO CENTER
-    fas_stepper->moveTo(delta_steps / 2);
-    while (fas_stepper->isRunning()) {
-    }
+    // // GOTO CENTER
+    // fas_stepper->moveTo(delta_steps / 2);
+    // while (fas_stepper->isRunning()) {
+    // }
 
-    G.full_length_meters = static_cast<float>(delta_steps) / METERS_TO_STEPS_MULTIPLIER;
-    G.hw_max_x = G.full_length_meters / 2;
+    // G.full_length_meters = static_cast<float>(delta_steps) / METERS_TO_STEPS_MULTIPLIER;
+    // G.hw_max_x = G.full_length_meters / 2;
 
-    G.errcode = Error::NO_ERROR;
-    #endif
+    // G.errcode = Error::NO_ERROR;
+    // #endif
     // std::stringstream stream;
     // stream << std::fixed << std::setprecision(5) << "Full length: " << delta_steps << " steps"
     //        << G.full_length_meters << " meters";
@@ -302,6 +308,6 @@ void Stepper::SetTargetAcceleration(float value) {
 }
 
 Stepper &GetStepper() {
-    static Stepper fas_stepper{};
-    return fas_stepper;
+    static Stepper stepper{};
+    return stepper;
 }

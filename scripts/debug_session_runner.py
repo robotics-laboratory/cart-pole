@@ -15,14 +15,17 @@ LOGGER = logging.getLogger("debug-session-runner")
 def control_loop(device: CartPoleBase, actor: Actor, max_duration: float):
     start = time.perf_counter()
     while time.perf_counter() - start < max_duration:
+        # iter_start = time.perf_counter()
         state = device.get_state()
         if state.error != Error.NO_ERROR:
             break
         stamp = time.perf_counter() - start
         target = actor(state, stamp=stamp)
-        logging.info("STAMP: %s", stamp)
+        # logging.info("STAMP: %s", stamp)
         device.set_target(target)
         device.advance()
+        # iter_duration = time.perf_counter() - iter_start
+        # logging.info(f"Iter duration: {iter_duration:.3f}s, {1/iter_duration:.1f} Hz")
 
 
 def reset_pole_angle(device: CartPoleDevice):
@@ -44,18 +47,18 @@ if __name__ == "__main__":
 
     ACTOR_CLASS = DemoActor
     DEVICE_CONFIG = Config(
-        max_position=0.3, #0.25
-        max_velocity=10.0, #5
-        max_acceleration=12.0,
+        max_position=0.4,
+        max_velocity=8.0,
+        max_acceleration=10.0,
         clamp_velocity=True,
         clamp_acceleration=True,
     )
     ACTOR_CONFIG = dict(
         config=Config(
-            max_position=0.22,  #0.20
-            max_velocity=7,  #4
-            max_acceleration=10.0,
-            pole_length=0.18,  #0.18
+            max_position=0.35,
+            max_velocity=8,
+            max_acceleration=10,
+            pole_length=0.10,
             pole_mass=0.07
         )
     )
@@ -82,6 +85,5 @@ if __name__ == "__main__":
         LOGGER.info("Run finished")
         proxy.set_target(0)
         proxy.close()
-        proxy.kek("kek")
 
     proxy.save(OUTPUT_PATH / "session.json")
