@@ -1,6 +1,6 @@
 # CartPole
 
-Ыimle getting started is [here](docs/guide.md). Follow our progress on [YouTube](https://youtube.com/playlist?list=PLR1nN_AQOO9yAG5CHOA4l2x3j89t-3PYf).
+Simle getting started is [here](docs/guide.md). Follow our progress on [YouTube](https://youtube.com/playlist?list=PLR1nN_AQOO9yAG5CHOA4l2x3j89t-3PYf).
 
 ## Overview
 It is a student project that is designed to learn the basics of robotics and control theory.
