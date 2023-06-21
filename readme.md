@@ -11,6 +11,6 @@ Some stepper drives the cart. The control target is desired acceleration of the 
 The cart starts at the middle with no velocity and acceleration. The pole is initially at rest state.
 The goal is to swing up the pole and maintain it in upright pose by increasing and reducing cart's velocity. Also there is radial variation, where cart moves in circle.
 
-
-| ![CartPole](docs/svg/classic_cart_pole.svg) | ![RadialCartPole](docs/svg/radial_cart_pole.svg) |
+| **Linear CartPole**                         | **Radial CartPole**                              |
 |---------------------------------------------|--------------------------------------------------|
+| ![CartPole](docs/svg/linear_cart_pole.svg)  | ![RadialCartPole](docs/svg/radial_cart_pole.svg) |

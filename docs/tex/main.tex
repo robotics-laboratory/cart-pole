@@ -1,0 +1,193 @@
+\documentclass[12pt]{article}
+
+\usepackage{adjustbox}
+\usepackage{amsmath}
+\usepackage{mathpazo}
+\usepackage{color}
+\usepackage[utf8]{inputenc}
+\usepackage{graphics}
+\usepackage[colorlinks,urlcolor=blue]{hyperref}
+\usepackage{standalone}
+\usepackage{svg}
+\usepackage{tikz}
+\usepackage{tikz-3dplot}
+
+\usetikzlibrary{decorations.pathreplacing,calligraphy}
+
+\textheight=20cm 
+\textwidth=15cm
+\oddsidemargin=1.0cm
+
+\newcommand{\pmat}[1]{\begin{pmatrix}#1\end{pmatrix}}
+
+\begin{document}
+
+\begin{titlepage}
+    \begin{center}
+        \vspace*{0.1\paperheight}
+        \includegraphics[width=0.20\textwidth]{logo.png} \par
+        {\huge CartPole: dynamics and control \par}
+        \vspace{\stretch{0.05}}
+        {\Large Robotics Group \par}
+        \vspace*{\fill}
+    \end{center}
+ \end{titlepage}
+
+\section{Dynamics}
+
+CartPole is a classic control problem:
+cart moving along a horizontal line with freely hanging pendulum (metal pole) attached to it.
+Device is controlled with cart acceleration (stepper motor as drive),
+the goal is to bring up the pendulum to unstable equilibrium position and maintain it there.
+
+\subsection{Linear CartPole}
+
+A cart with mass $m_c$ moves along the $x$-axis, so its center $C$ has coordinates $(x, 0)^T$.
+A pole with mass $m_p$ is attached to the cart with a hinge at point $C$,
+and rotates around with viscous friction.
+The pole's center of mass is at $P$, moment of inertia is $I_p$.
+The angle of rotation is denoted as $\theta$, measured counterclockwise from the axis $-y$.
+A force $f_x$ is applied to the cart and the force of gravity $g$ acts on the pole.
+
+\begin{center}
+    \begin{adjustbox}{width=0.7\textwidth}
+        \input{linear_cart_pole.tex}
+    \end{adjustbox}
+\end{center}
+
+\begin{align}
+    & C = \pmat{x                 \\ 0}  & &\dot{C} = \pmat{\dot{x} \\ 0} \nonumber \\
+    & P = \pmat{x + l \sin \theta \\ - l \cos \theta} & &\dot{P} = \pmat{\dot{x} + l \dot{\theta} \cos \theta \\ l \dot{\theta} \sin \theta}
+\end{align}
+
+The kinetic energy of the cart is
+\begin{equation}
+    T_c = \frac{1}{2} m_c \begin{Vmatrix}
+        \dot{C}
+    \end{Vmatrix}_2^2 = \frac{1}{2} m_c \dot{x}^2.
+\end{equation}
+
+
+Kinetic energy of the pendulum is the sum of translational and rotational energies
+\begin{align}
+    T_p & = T^t_p + T^r_p \nonumber \\
+        & = \frac{1}{2} m_p \begin{Vmatrix}\dot{P}\end{Vmatrix}_2^2 + \frac{1}{2}I_p\dot{\theta}^2 \nonumber \\
+        & = \frac{1}{2} m_p (\dot{x} + l \dot{\theta} \cos \theta )^2 + \frac{1}{2} m_p (l \dot{\theta} \sin \theta)^2 + \frac{1}{2}I_p\dot{\theta}^2 \nonumber \\
+        & = \frac{1}{2} m_p \dot{x}^2 + m_p \dot{x} l \dot{\theta} \cos \theta + \frac{1}{2} \dot{\theta}^2 \left( m_p l^2  + I_p \right).
+\end{align}
+
+As a result energy of the whole system is following
+\begin{align}
+    T & = T_c + T_p \nonumber \\
+      & = \frac{1}{2} m_c \dot{x}^2 + \frac{1}{2} m_p \dot{x}^2 + m_p \dot{x} l \dot{\theta} \cos \theta + \frac{1}{2} \dot{\theta}^2 \left( m_p l^2  + I_p \right) \nonumber \\
+      & = \frac{1}{2} \dot{x}^2 (m_c + m_p) + m_p \dot{x} l \dot{\theta} \cos \theta + \frac{1}{2} \dot{\theta}^2 \left( m_p l^2  + I_p \right); \\
+      & \nonumber \\
+    U & = \underbrace{U_c}_{0} + U_p = -m_p gl \cos \theta.
+\end{align}
+
+To find the dynamics of system, let's use the Euler-Lagrange differential equation, where $L = T - U$, $q = (x, \theta)^T$ and $Q$ is the generalized force.
+In our case, we have deal with two forces: motor force $f_x$ and viscous friction $f_{\theta}(\theta, \dot{\theta}) = -\mu \dot{\theta}$.
+
+\begin{align*}
+    Q &= \frac{d}{dt} \frac{dL}{d\dot{q}} - \frac{dL}{dq} \\ 
+    Q &= \pmat{f_x \\ f_{\theta}}.
+\end{align*}
+
+As a result we get the following equations of motion
+\begin{align}
+    m_p \ddot{x} l \cos \theta + \ddot{\theta} \left(m_p l^2 + I_p\right) + m_p g l \sin \theta &= f_{\theta}(\theta, \dot{\theta}) \nonumber \\
+    \ddot{x}(m_c + m_p) + m_p l \ddot{\theta} \cos \theta - m_p l \dot{\theta}^2 \sin \theta &= f_{x}.
+\end{align}
+
+A more detailed calculation is below
+\begin{equation}
+    L = \frac{1}{2} \dot{x}^2 (m_c + m_p) + m_p \dot{x} l \dot{\theta} \cos \theta + \frac{1}{2} \dot{\theta}^2 \left( m_p l^2  + I_p \right) + m_p gl \cos \theta.
+\end{equation}
+
+\begin{align*}
+    \frac{dL}{d\theta}                                         & = - m_p \dot{x} l \dot{\theta} \sin \theta - m_p gl \sin \theta \\
+    \frac{dL}{d\dot{\theta}}                                   & = m_p \dot{x} l \cos \theta + \left(m_p l^2 + I_p\right) \dot{\theta} \\
+    \frac{d}{dt} \frac{dL}{d\dot{\theta}}                      & = m_p \ddot{x} l \cos \theta - m_p  \dot{x}  l \dot{\theta} \sin \theta + \left(m_p l^2 + I_p\right) \ddot{\theta}  \\
+    \frac{d}{dt} \frac{dL}{d\dot{\theta}} - \frac{dL}{d\theta} & = m_p \ddot{x} l \cos \theta - m_p  \dot{x}  l \dot{\theta} \sin \theta + \left(m_p l^2 + I_p\right) \ddot{\theta} + m_p \dot{x} l \dot{\theta} \sin \theta + m_p gl \sin \theta \nonumber \\
+                                                               & = m_p \ddot{x} l \cos \theta + \left(m_p l^2 + I_p\right) \ddot{\theta} + m_p g l \sin \theta \\
+                                                               & \nonumber \\
+    \frac{dL}{dx}                                              & = 0 \\
+    \frac{dL}{d\dot{x}}                                        & = (m_c + m_p) \dot{x} + m_p l \dot{\theta} \cos \theta \\
+    \frac{d}{dt} \frac{dL}{d\dot{x}}                           & = (m_c + m_p) \ddot{x} + m_p l \ddot{\theta} \cos \theta - m_p l \dot{\theta}^2 \sin \theta \\
+    \frac{d}{dt} \frac{dL}{d\dot{x}} - \frac{dL}{dx}           & = (m_c + m_p) \ddot{x} + m_p l \ddot{\theta} \cos \theta - m_p l \dot{\theta}^2 \sin \theta. \\
+\end{align*}
+
+\subsection{Acceleration control}
+
+Let's make the assumption that the motor can generate any force necessary for the cart to reach acceleration in $[-a, a]$ on a fixed cart velocity range.
+This fact allows us to consider the cart acceleration as a control input and significantly simplify the equations of motion
+
+\begin{align}
+    \left(m_p l^2 + I_p\right) \ddot{\theta} &= f_{\theta}(\theta, \dot{\theta}) - m_p \ddot{x} l \cos \theta - m_p g l \sin \theta \nonumber \\
+    \ddot{x}  &= u, \quad u \in [-a, a].
+\end{align}
+
+But for practice it's more convenient to use another form
+\begin{align*}
+    \left(m_p l^2 + I_p\right) \ddot{\theta} &= -\mu\dot{\theta} - m_p \ddot{x} l \cos \theta - m_p g l \sin \theta \\
+    \ddot{\theta} &= -\frac{\mu}{\left(m_p l^2 + I_p\right)}\dot{\theta} - \frac{\ddot{x} \cos \theta - g \sin \theta}{l + \frac{I_p}{m_p l}}. \\
+\end{align*}
+
+Since all parameters do not change over time, we can greatly simplify the motion equations
+\begin{align}
+    \ddot{\theta} &= -b\dot{\theta} - \frac{\ddot{x} \cos \theta - g \sin \theta}{k} \nonumber \\
+    \ddot{x} &= u.
+\end{align}
+
+\subsection{Radial CartPole}
+
+Linear CartPole is classic kinematic scheme, but it has some disadvantages,
+e.g. device requires a lot of space periodical homing is needed (return cart to the initial pose at the end of the episode).
+Radial CartPole is a modification, which allows to avoid these problems, keeping the same motion equations.
+In case of radial version cart moves along the circle with radius $r$.
+
+\begin{center}
+    \begin{adjustbox}{width=0.7\textwidth}
+        \input{radial_cart_pole.tex}
+    \end{adjustbox}
+\end{center}
+
+Pole's mass $m_p$, moment of inertian $I_p$ and distance from hinge to center of mass $l_p$ are known again.
+But instead of position $x$ there is angle $\phi$ (in some sense $x = r\phi$) and control input is radial acceleration $\ddot{\phi}$.
+Also, as shown in previous section, we can consider mass of cart is zero.
+
+Actually, after some calculations we can get the same motion equations as for classic version,
+but linear variables are replaced by angular ones
+\begin{align}
+    \left(m_p l^2 + I_p\right) \ddot{\theta} &= f_{\theta}(\theta, \dot{\theta}) - m_p r \ddot{\phi} l \cos \theta - m_p g l \sin \theta \nonumber \\
+    \ddot{\phi}  &= u, \quad u \in [-u_{min}, u_{max}].
+\end{align}
+
+Note that $T_p^r = \frac{1}{2}I_p\dot{\theta}^2$ and $T_p^t = \frac{1}{2}m_p \begin{Vmatrix} \dot{P} \end{Vmatrix}_2^2$.
+To calculate $\begin{Vmatrix} \dot{P} \end{Vmatrix}_2^2$, consider the coordinates system plane, which is attached to the cart and tangent to the circle (pole fully lies in that plane).
+
+\begin{center}
+    \begin{adjustbox}{width=0.5\textwidth}
+        \input{radial_cart_pole_helper.tex}
+    \end{adjustbox}
+\end{center}
+
+\begin{equation}
+    \begin{Vmatrix} \dot{P} \end{Vmatrix}_2^2 = \left(\underbrace{\dot{\phi} r + \dot{\theta} l_p \cos \theta }_{\dot{x}'}\right)^2 + \left(\underbrace{\dot{\theta} l_p \sin \theta}_{\dot{y}'} \right)^2 = \dot{\phi}^2 r^2 + 2 \dot{\phi} \dot{\theta} r l_p \cos \theta + \dot{\theta}^2 l_p^2
+\end{equation}
+
+Bellow rest of the calculations are shown
+\begin{align*}
+    T_p &= \frac{1}{2}I_p\dot{\theta}^2 + \frac{1}{2}m_p\left(\dot{\phi}^2 r^2 + 2 \dot{\phi} \dot{\theta} r l_p \cos \theta + \dot{\theta}^2 l_p^2\right) \\
+    U_p &= - m_p g l_p \cos \theta \\
+    L = T_p - U_p &= \frac{1}{2} I_p \dot{\theta}^2 + \frac{1}{2} m_p \left(\dot{\phi}^2 r^2 + 2 \dot{\phi} \dot{\theta} r l_p \cos \theta + \dot{\theta}^2 l_p^2\right) + m_p g l_p \cos \theta
+\end{align*}
+
+\begin{align*}
+    \frac{dL}{d\theta}                                         & = - m_p l_p (r \dot{\phi} \dot{\theta} \sin \theta + g \sin \theta) \nonumber \\
+    \frac{dL}{d\dot{\theta}}                                   & = I_p \dot{\theta} + m_p l_p (\dot{\phi} r \cos \theta + l_p \dot{\theta}) \nonumber \\
+    \frac{d}{dt} \frac{dL}{d\dot{\theta}}                      & = I_p \ddot{\theta} + m_p l_p (r \ddot{\phi} \cos \theta + l_p \ddot{\theta} - r \dot{\phi} \dot{\theta} \sin \theta) \nonumber \\
+    \frac{d}{dt} \frac{dL}{d\dot{\theta}} - \frac{dL}{d\theta} & = \ddot{\theta} (I_p  + m_p l_p^2) + m_p l_p (r \ddot{\phi} \cos \theta + g \sin \theta) = 0
+\end{align*}
+
+\end{document}
