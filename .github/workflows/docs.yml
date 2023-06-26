@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - readthedocs
+      - cart-pole-3
+      - master
 
 permissions:
   contents: write
