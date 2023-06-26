@@ -1,4 +1,5 @@
 site_name: CartPole
+site_url: https://robotics-laboratory.github.io/cart-pole/
 
 nav:
   - Overview: overview.md
