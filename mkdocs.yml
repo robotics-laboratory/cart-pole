@@ -1,0 +1,35 @@
+site_name: CartPole
+
+nav:
+  - Overview: overview.md
+  - Quickstart: quickstart.md
+  - Syntax test: syntax-test.md
+  - Hardware: protocol.md
+
+theme:
+  name: material
+  palette:
+    primary: deep orange
+  features:
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - md_in_html
+  - attr_list
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+extra_javascript:
+  - js/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js

@@ -1,15 +1,4 @@
-# CartPole Controller Protocol
-
-- [Overview](#overview)
-- [Variables](#variables)
-  - [Config group](#config)
-  - [State group](#state)
-  - [Target group](#target)
-  - [Error codes](#error-codes-enum)
-- [Commands](#commands)
-  - [Get variable](#get-group-key1-key2-)
-  - [Set variable](#set-group-key1val1-key2val2-)
-  - [Reset](#reset)
+# Hardware Protocol
 
 ## Overview
 
