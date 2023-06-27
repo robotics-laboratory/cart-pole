@@ -26,4 +26,4 @@ jobs:
           restore-keys: |
             mkdocs-material-
       - run: pip install mkdocs-material mike
-      - run: mkdocs deploy --push --force --branch gh-pages $GITHUB_REF_NAME
+      - run: mike deploy --push --force --branch gh-pages $GITHUB_REF_NAME
