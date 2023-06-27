@@ -25,8 +25,9 @@ jobs:
           path: .cache
           restore-keys: |
             mkdocs-material-
-      - run: pip install mkdocs-material mike
+      # TODO: Maybe use poetry-based action
+      - run: pip install mkdocs-material mike poetry
       - run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-      - run: mike deploy --push --force --update-aliases 0.1 latest
+      - run: mike deploy --push --force --update-aliases $(poetry version -s) latest
