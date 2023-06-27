@@ -1,9 +1,9 @@
 site_name: CartPole
 site_url: https://robotics-laboratory.github.io/cart-pole/
 repo_url: https://github.com/robotics-laboratory/cart-pole/
+repo_name: robotics-laboratory/cart-pole
 
 nav:
-  - Overview: index.md
   - Quickstart: quickstart.md
   - Syntax test: syntax-test.md
   - Hardware: protocol.md
@@ -17,6 +17,7 @@ theme:
 
 extra:
   version:
+    default: latest
     provider: mike
 
 markdown_extensions:
