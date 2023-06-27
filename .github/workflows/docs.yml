@@ -17,17 +17,11 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.x
-      - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
-      - uses: actions/cache@v3
-        with:
-          key: mkdocs-material-${{ env.cache_id }}
-          path: .cache
-          restore-keys: |
-            mkdocs-material-
+          python-version: 3.9
+      # TODO: Add proper chaching
       # TODO: Maybe use poetry-based action
       - run: pip install mkdocs-material mike poetry
       - run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-      - run: mike deploy --push --force --update-aliases $(poetry version -s) latest
+      - run: mike deploy --push --update-aliases $(poetry version -s) latest
