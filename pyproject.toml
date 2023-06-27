@@ -31,6 +31,7 @@ pandas = "^1.5.1"
 seaborn = "^0.12.1"
 mkdocs = "^1.4.3"
 mkdocs-material = "^9.1.17"
+mike = "^1.1.2"
 
 [tool.poetry.extras]
 pydrake = ["drake"]

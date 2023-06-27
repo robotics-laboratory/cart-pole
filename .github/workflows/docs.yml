@@ -1,4 +1,4 @@
-name: ci
+name: docs
 
 on:
   push:
@@ -25,5 +25,5 @@ jobs:
           path: .cache
           restore-keys: |
             mkdocs-material-
-      - run: pip install mkdocs-material
-      - run: mkdocs gh-deploy --force
+      - run: pip install mkdocs-material mike
+      - run: mkdocs deploy --push --force --branch gh-pages $GITHUB_REF_NAME
