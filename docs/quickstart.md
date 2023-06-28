@@ -1,6 +1,7 @@
-# Guide
+# Quickstart
 
 ## Enviroment
+
 Python is main language of project. So, students may learn control theory and make experiments faster and easier.
 
 Firstly, you need checkout repo and prepare environemnt, using [poetry](https://python-poetry.org/docs).
@@ -58,7 +59,7 @@ for i in range(20):
 ## Simulation
 For development and testing of control algorithms, we provide CartPole simulator, which fully implemntet CartPoleBase [interface](/cartpole/common/interface.py). The simulation is carried out by numerical integration of parameterized dynamic system (more information [here](/docs/cart_pole.pdf)). Also simulator may be used to train ML agents.
 
-![CartPole](docs/svg/classic_cart_pole.svg)
+![CartPole](svg/linear_cart_pole.svg)
 
 ```python
 from cartpole import Error, State
