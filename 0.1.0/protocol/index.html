@@ -1,0 +1,847 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://robotics-laboratory.github.io/cart-pole/0.1.0/protocol/">
+      
+      
+        <link rel="prev" href="../syntax-test/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.17">
+    
+    
+      
+        <title>Hardware - CartPole</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.26e3688c.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ecc896b0.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://tikzjax.com/v1/fonts.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-orange" data-md-color-accent="indigo">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#hardware-protocol" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="CartPole" class="md-header__button md-logo" aria-label="CartPole" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            CartPole
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Hardware
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/robotics-laboratory/cart-pole/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    robotics-laboratory/cart-pole
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="CartPole" class="md-nav__button md-logo" aria-label="CartPole" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    CartPole
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/robotics-laboratory/cart-pole/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    robotics-laboratory/cart-pole
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        Quickstart
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../syntax-test/" class="md-nav__link">
+        Syntax test
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Hardware
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Hardware
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    Overview
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variables" class="md-nav__link">
+    Variables
+  </a>
+  
+    <nav class="md-nav" aria-label="Variables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#config" class="md-nav__link">
+    Config
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#state" class="md-nav__link">
+    State
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#target" class="md-nav__link">
+    Target
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-codes-enum" class="md-nav__link">
+    Error codes (enum):
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#commands" class="md-nav__link">
+    Commands
+  </a>
+  
+    <nav class="md-nav" aria-label="Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-group-key1-key2" class="md-nav__link">
+    get &lt;group&gt; [key1 key2 ...]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set-group-key1val1-key2val2" class="md-nav__link">
+    set &lt;group&gt; [key1=val1 key2=val2 ...]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reset" class="md-nav__link">
+    reset
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    Overview
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variables" class="md-nav__link">
+    Variables
+  </a>
+  
+    <nav class="md-nav" aria-label="Variables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#config" class="md-nav__link">
+    Config
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#state" class="md-nav__link">
+    State
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#target" class="md-nav__link">
+    Target
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-codes-enum" class="md-nav__link">
+    Error codes (enum):
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#commands" class="md-nav__link">
+    Commands
+  </a>
+  
+    <nav class="md-nav" aria-label="Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-group-key1-key2" class="md-nav__link">
+    get &lt;group&gt; [key1 key2 ...]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set-group-key1val1-key2val2" class="md-nav__link">
+    set &lt;group&gt; [key1=val1 key2=val2 ...]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reset" class="md-nav__link">
+    reset
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="hardware-protocol">Hardware Protocol</h1>
+<h2 id="overview">Overview</h2>
+<p>This document defines communication protocol between higher-level SBC ("brain") 
+and lower-level MCU ("controller"). Brain operates with high-level commands like 
+"go to x=0.1m", "accelerate to v=0.5m/s", "get current pole angle". Controller 
+is responsible for translating these commands to underlying hardware (stepper 
+motor, encoder, endstop switches etc.). Controller also implements safety checks 
+to prevent incorrect brain commands from damaging the device (e.g. when the brain 
+asks for x=10m when max allowed x is 1m).</p>
+<p>Communication is performed through serial connection, using plain-text messages 
+with ASCII encoding. This allows easy (de)serialization and ability to manually 
+debug the device. A message is the smallest protocol entity that can be sent or 
+received. Messages are separated by UNIX-style "\n" delimiter. Protocol follows 
+a "request-reply" strategy, where the brain only sends requests, and the controller 
+only sends replies to those requests. Request-reply pairs (also called “commands”) 
+are described in a separate section below. There are several types of replies, 
+which can be determined by message prefix:</p>
+<ul>
+<li><code>+ &lt;data&gt;</code> - Successful request. <code>&lt;data&gt;</code> is a response payload.</li>
+<li><code>! &lt;data&gt;</code> - Request failed. <code>&lt;data&gt;</code> is an error description.</li>
+<li><code># &lt;data&gt;</code> - Debug message. Could be ignored and/or logged.</li>
+<li><code>~</code> - Request in progress. This message is sent to prevent timeouts.</li>
+</ul>
+<p>The main rule of a command is that it must eventually return either successful (<code>+</code>) or unsuccessful (<code>!</code>) response.
+If it takes a long time to process a command (e.g. homing), the controller should send multiple <code>~</code> messages to 
+prevent a timeout. The brain can consider a fatal communication error in two cases:</p>
+<ul>
+<li>After sending a request, there’s no <code>+</code>, <code>!</code> or <code>~</code> replies for longer than 1 second.</li>
+<li>After sending a request, there’s multiple <code>~</code> replies, but no <code>+</code> or <code>!</code> reply for longer than 30 seconds.</li>
+</ul>
+<p>If a fatal error is detected, the best thing the brain can do is to hard-reset the controller.
+Hopefully, that can be done by re-opening the serial connection. In order for this to work, 
+the serial adapter must have DTR/RTS output connected to MCU reset pin.</p>
+<h2 id="variables">Variables</h2>
+<h3 id="config">Config</h3>
+<table>
+<thead>
+<tr>
+<th>KEY</th>
+<th>TYPE</th>
+<th>DEFAULT</th>
+<th>RANGE</th>
+<th>COMMENT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MAX_X</td>
+<td>m, float</td>
+<td>0</td>
+<td>[0, HW_MAX_X]</td>
+<td>Max cart position (X=0 is center)</td>
+</tr>
+<tr>
+<td>MAX_V</td>
+<td>m/s, float</td>
+<td>0.5</td>
+<td>[0, HW_MAX_V]</td>
+<td>Max cart velocity</td>
+</tr>
+<tr>
+<td>MAX_A</td>
+<td>m/s^2, float</td>
+<td>1.0</td>
+<td>[0, HW_MAX_A]</td>
+<td>Max cart acceleration</td>
+</tr>
+<tr>
+<td>HW_MAX_X</td>
+<td>m, float</td>
+<td>0</td>
+<td>-</td>
+<td>[READONLY] Max allowed cart position</td>
+</tr>
+<tr>
+<td>HW_MAX_V</td>
+<td>m/s, float</td>
+<td>TBD</td>
+<td>-</td>
+<td>[READONLY] Max allowed cart velocity</td>
+</tr>
+<tr>
+<td>HW_MAX_A</td>
+<td>m/s^2, float</td>
+<td>TBD</td>
+<td>-</td>
+<td>[READONLY] Max allowed cart acceleration</td>
+</tr>
+<tr>
+<td>CLAMP_X </td>
+<td>flag, bool</td>
+<td>FALSE</td>
+<td>true/false</td>
+<td>Round X to allowed range without errors</td>
+</tr>
+<tr>
+<td>CLAMP_V</td>
+<td>flag, bool</td>
+<td>FALSE</td>
+<td>true/false</td>
+<td>Round V to allowed range without errors</td>
+</tr>
+<tr>
+<td>CLAMP_A</td>
+<td>flag, bool</td>
+<td>FALSE</td>
+<td>true/false</td>
+<td>Round A to allowed range without errors</td>
+</tr>
+</tbody>
+</table>
+<p>Notes about <code>HW_*</code> variables:
+- <code>HW_MAX_X</code> is updated after the homing procedure.
+- <code>HW_MAX_V</code> and <code>HW_MAX_A</code> are hardcoded values, determined by stress-tests. It’s recommended to 
+always set <code>MAX_V</code> and <code>MAX_A</code> slightly lower than <code>HW_MAX_V</code> and <code>HW_MAX_A</code>. Otherwise, the device 
+operation may be unstable (probably, <code>MOTOR_STALLED</code> error will be raised at some point).</p>
+<h3 id="state">State</h3>
+<table>
+<thead>
+<tr>
+<th>KEY</th>
+<th>TYPE</th>
+<th>DEFAULT</th>
+<th>RANGE</th>
+<th>COMMENT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>X</td>
+<td>m, float</td>
+<td>0</td>
+<td>-</td>
+<td>[READONLY] Current cart position</td>
+</tr>
+<tr>
+<td>V</td>
+<td>m/s, float</td>
+<td>0</td>
+<td>-</td>
+<td>[READONLY] Current cart velocity</td>
+</tr>
+<tr>
+<td>A</td>
+<td>m/s^2, float</td>
+<td>0</td>
+<td>-</td>
+<td>[READONLY] Current cart acceleration</td>
+</tr>
+<tr>
+<td>POLE_X</td>
+<td>rad, float</td>
+<td>0</td>
+<td>-</td>
+<td>[READONLY] Current pole angle</td>
+</tr>
+<tr>
+<td>POLE_V</td>
+<td>rad/s, float</td>
+<td>0</td>
+<td>-</td>
+<td>[READONLY] Current pole angular velocity</td>
+</tr>
+<tr>
+<td>ERRCODE</td>
+<td>enum, int</td>
+<td>1</td>
+<td>-</td>
+<td>[READONLY] Current error code (see enum below)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="target">Target</h3>
+<table>
+<thead>
+<tr>
+<th>KEY</th>
+<th>TYPE</th>
+<th>DEFAULT</th>
+<th>RANGE</th>
+<th>COMMENT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>X</td>
+<td>m, float</td>
+<td>0</td>
+<td>[-MAX_A, MAX_X]</td>
+<td>Target cart position</td>
+</tr>
+<tr>
+<td>V</td>
+<td>m/s, float</td>
+<td>0</td>
+<td>[-MAX_V, MAX_V]</td>
+<td>Target cart velocity</td>
+</tr>
+<tr>
+<td>A</td>
+<td>m/s^2, float</td>
+<td>0</td>
+<td>[-MAX_A, MAX_A]</td>
+<td>Target cart acceleration</td>
+</tr>
+</tbody>
+</table>
+<p>Note: validation logic of <code>X</code>, <code>V</code> and <code>A</code> variables depends on <code>CLAMP_*</code> flags. If set, invalid 
+values are silently clamped to allowed range. Otherwise, corresponding <code>*_OVERFLOW</code> error is raised.</p>
+<h3 id="error-codes-enum">Error codes (enum):</h3>
+<table>
+<thead>
+<tr>
+<th>KEY</th>
+<th>INT</th>
+<th>COMMENT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NO_ERROR</td>
+<td>0</td>
+<td>This is fine (no errors, motion is allowed)</td>
+</tr>
+<tr>
+<td>NEED_RESET</td>
+<td>1</td>
+<td>Device needs homing (see reset command)</td>
+</tr>
+<tr>
+<td>X_OVERFLOW</td>
+<td>2</td>
+<td>Current or target position was out of allowed range</td>
+</tr>
+<tr>
+<td>V_OVERFLOW</td>
+<td>3</td>
+<td>Current or target velocity was out of allowed range</td>
+</tr>
+<tr>
+<td>A_OVERFLOW</td>
+<td>4</td>
+<td>Current or target acceleration was out of allowed range</td>
+</tr>
+<tr>
+<td>MOTOR_STALLED</td>
+<td>5</td>
+<td>Stepper driver detected motor failure (TMC’s StallGuard is triggered)</td>
+</tr>
+<tr>
+<td>ENDSTOP_HIT</td>
+<td>6</td>
+<td>One of endstops is triggered during movement</td>
+</tr>
+</tbody>
+</table>
+<h2 id="commands">Commands</h2>
+<h3 id="get-group-key1-key2"><code>get &lt;group&gt; [key1 key2 ...]</code></h3>
+<p>Returns values for given keys in the form of space-separated "key=value" pairs. If no keys are specified, returns all keys from given group.
+<div class="highlight"><pre><span></span><code>&gt;&gt;&gt; get config max_x
+&lt;&lt;&lt; + max_x=123.456
+&gt;&gt;&gt; get state non_existent_key
+&lt;&lt;&lt; ! No such key: non_existent_key
+&gt;&gt;&gt; get target
+&lt;&lt;&lt; + x=123 v=456 a=789
+</code></pre></div></p>
+<h3 id="set-group-key1val1-key2val2"><code>set &lt;group&gt; [key1=val1 key2=val2 ...]</code></h3>
+<p>Updates values of given keys and returns them back (format matches "get" command).
+<div class="highlight"><pre><span></span><code>&gt;&gt;&gt; set state x=123
+&lt;&lt;&lt; ! This key is readonly
+&gt;&gt;&gt; set config max_v=1.0 max_a=2.0
+&lt;&lt;&lt; + max_v=1.0 max_a=2.0
+&gt;&gt;&gt; config set max_v=1000
+&lt;&lt;&lt; ! Value out of range: 1000 &gt; 10 [at max_v=1000]
+</code></pre></div></p>
+<h3 id="reset"><code>reset</code></h3>
+<p>Performs homing procedure and resets all variables. This command may take a long time to complete,
+so it will periodically send keepalive <code>~</code> messages. After completion, returns the word "ok".
+<div class="highlight"><pre><span></span><code>&gt;&gt;&gt; reset
+&lt;&lt;&lt; ~
+&lt;&lt;&lt; ~
+&lt;&lt;&lt; ~
+&lt;&lt;&lt; ~
+&lt;&lt;&lt; + ok
+</code></pre></div></p>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["content.code.copy"], "search": "../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.b425cdc4.min.js"></script>
+      
+        
+          <script src="../js/mathjax.js"></script>
+        
+      
+        
+          <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        
+      
+        
+          <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        
+      
+        
+          <script src="https://tikzjax.com/v1/tikzjax.js"></script>
+        
+      
+    
+  </body>
+</html>
