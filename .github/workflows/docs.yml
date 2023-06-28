@@ -15,6 +15,8 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           python-version: 3.9
@@ -24,4 +26,5 @@ jobs:
       - run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-      - run: mike deploy --push --force $(poetry version -s) latest
+      - run: git --no-pager log --pretty=oneline
+      # - run: mike deploy --push --force $(poetry version -s) latest
