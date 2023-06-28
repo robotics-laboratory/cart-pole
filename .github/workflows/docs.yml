@@ -26,5 +26,4 @@ jobs:
       - run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-      # - run: git --no-pager log --pretty=oneline
-      - run: mike deploy --push --force $(poetry version -s) latest
+      - run: mike deploy --push --force --update-aliases $(poetry version -s) latest
