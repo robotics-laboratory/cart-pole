@@ -3,9 +3,8 @@ name: docs
 on:
   push:
     branches:
-      - readthedocs
-      - cart-pole-3
       - master
+      - cart-pole-3  # TODO: Remove after merging to master
 
 permissions:
   contents: write
