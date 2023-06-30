@@ -1,9 +1,7 @@
 # Quickstart
 
 ## Enviroment
-
 Python is main language of project. So, students may learn control theory and make experiments faster and easier.
-
 Firstly, you need checkout repo and prepare environemnt, using [poetry](https://python-poetry.org/docs).
 
 ```bash
@@ -25,10 +23,11 @@ poetry run pytest tests
 # to run your script (e.g. some example)
 poetry run python examples/simulation.py
 ```
-> Do we need docker?
 
 ## Foxglove
 For visualization of real time data we use [foxglove studio](https://foxglove.dev/). You may use our [instance](http://foxglove.robotics-lab.ru) or use docker container with server and spefic fixes. More information about setup [here](https://github.com/robotics-laboratory/foxglove). Predefined layouts are stored at this [folder](layouts).
+
+> TODO: add usage example (images)
 
 ## Logging
 We have convinient logging system, it may show data in real time and replay saved data in [mcap](https://mcap.dev/) format.
@@ -59,7 +58,6 @@ for i in range(20):
 ## Simulation
 For development and testing of control algorithms, we provide CartPole simulator, which fully implemntet CartPoleBase [interface](/cartpole/common/interface.py). The simulation is carried out by numerical integration of parameterized dynamic system (more information [here](/docs/cart_pole.pdf)). Also simulator may be used to train ML agents.
 
-![CartPole](svg/linear_cart_pole.svg)
 
 ```python
 from cartpole import Error, State

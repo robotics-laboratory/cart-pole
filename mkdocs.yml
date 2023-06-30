@@ -5,8 +5,7 @@ repo_name: robotics-laboratory/cart-pole
 
 nav:
   - Quickstart: quickstart.md
-  - Syntax test: syntax-test.md
-  - Hardware: protocol.md
+  - Dynamics & Control: dynamics-and-control.md
 
 theme:
   name: material
@@ -14,15 +13,27 @@ theme:
     primary: deep orange
   features:
     - content.code.copy
+    - content.tabs.link
 
 extra:
   version:
     default: latest
     provider: mike
 
+
+
 markdown_extensions:
   - admonition
   - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
   - md_in_html
   - attr_list
   - pymdownx.arithmatex:
