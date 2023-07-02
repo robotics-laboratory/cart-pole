@@ -1,13 +1,9 @@
 [tool.poetry]
 name = "cartpole"
 version = "0.1.0"
-description = "Control study project"
-authors = ["Simagin Denis <simagin.mail@yandex.ru>"]
+description = ""
+authors = []
 readme = "readme.md"
-packages = [
-    { include = "cartpole" },
-]
-
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -22,6 +18,7 @@ mcap = "^0.0.15"
 tqdm = "^4.64.0"
 drake = {version = "^1.10.0", optional = true}
 pydantic = "^1.10.2"
+betterproto = {version = "^2.0.0b6", allow-prereleases = true}
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"
@@ -32,6 +29,9 @@ seaborn = "^0.12.1"
 mkdocs = "^1.4.3"
 mkdocs-material = "^9.1.17"
 mike = "^1.1.2"
+betterproto = {extras = ["compiler"], version = "^2.0.0b6", allow-prereleases = true}
+grpcio-tools = "^1.56.0"
+platformio = "^6.1.7"
 
 [tool.poetry.extras]
 pydrake = ["drake"]
