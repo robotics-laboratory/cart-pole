@@ -19,6 +19,8 @@ tqdm = "^4.64.0"
 drake = {version = "^1.10.0", optional = true}
 pydantic = "^1.10.2"
 betterproto = {version = "^2.0.0b6", allow-prereleases = true}
+crc = "^4.3.0"
+cobs = "^1.2.0"
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"

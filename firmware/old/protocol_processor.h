@@ -3,7 +3,7 @@
 
 #include <sstream>
 #include <string>
-#include "controller.pb.h"
+#include "proto/protocol.pb.h"
 
 struct ProtocolProcessor {
     // HardwareSerial serial_port;

@@ -1,1 +1,1 @@
-from cartpole.device._device import *
+from cartpole.device.device import CartPoleDevice

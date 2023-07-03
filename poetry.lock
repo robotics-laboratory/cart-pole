@@ -472,6 +472,25 @@ files = [
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
+name = "cobs"
+version = "1.2.0"
+description = "Consistent Overhead Byte Stuffing (COBS)"
+optional = false
+python-versions = "*"
+files = [
+    {file = "cobs-1.2.0-cp310-cp310-win32.whl", hash = "sha256:991fc195f0581e456d3dd21e29df493fe9ca1b772084c26921601e48dbc34bd2"},
+    {file = "cobs-1.2.0-cp310-cp310-win_amd64.whl", hash = "sha256:4625f7648e8b0ea50702cf213dcfcc0a50dc78fc6678b174f1f5e0d6fc3687c1"},
+    {file = "cobs-1.2.0-cp311-cp311-win32.whl", hash = "sha256:7c4a9e246c11f48e12c1231ad5738ea927f663b7b4ffd1de0be3b1cae5bb3884"},
+    {file = "cobs-1.2.0-cp311-cp311-win_amd64.whl", hash = "sha256:d0f7e7fcad3020676feef505a0212bcd0c86549d3e4c3680f6a7c77ef599e52b"},
+    {file = "cobs-1.2.0-cp38-cp38-win32.whl", hash = "sha256:cb573184d982edf8e7c3c08c753b765790790e7ffdca4c2ca5c258bbd9099f33"},
+    {file = "cobs-1.2.0-cp38-cp38-win_amd64.whl", hash = "sha256:f68ee5e70ae6be79b424cb270835e864b86320a9fcb8048575443b658f61ee0a"},
+    {file = "cobs-1.2.0-cp39-cp39-win32.whl", hash = "sha256:b4af64be97f2a7215c3ffcd5cca26e6aa166e49cd90941efab95c76211b6710c"},
+    {file = "cobs-1.2.0-cp39-cp39-win_amd64.whl", hash = "sha256:c747c4b385f04203e1d2b767d61a69580b58c97eea7a6ed998edd42ddd9fcdc5"},
+    {file = "cobs-1.2.0-py3-none-any.whl", hash = "sha256:3f2e8ef22070c3a95ed998303b81c209dd49aaaebf45173499a1a48b8b17bb6f"},
+    {file = "cobs-1.2.0.tar.gz", hash = "sha256:d93b10b5370dc8868960aefb70adb1f73a4e6107b16918307a4aeeefd3edb8f6"},
+]
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -586,6 +605,17 @@ docs = ["docutils (<0.18)", "sphinx (<=5.2.0)", "sphinx-rtd-theme"]
 test = ["Pillow", "flake8", "isort", "matplotlib", "pytest"]
 test-minimal = ["pytest"]
 test-no-codebase = ["Pillow", "matplotlib", "pytest"]
+
+[[package]]
+name = "crc"
+version = "4.3.0"
+description = "Library and CLI to calculate and verify all kinds of CRC checksums"
+optional = false
+python-versions = ">=3.8,<4.0"
+files = [
+    {file = "crc-4.3.0-py3-none-any.whl", hash = "sha256:d9604ed4322631fb7043e30ed9d378422f88f89b4cf85063e7380a0e8b32abb2"},
+    {file = "crc-4.3.0.tar.gz", hash = "sha256:02be8a4e1b8aaa7f8685f05699b577286983aee2394e223d7aa894825954a8c6"},
+]
 
 [[package]]
 name = "cycler"
@@ -3865,4 +3895,4 @@ pydrake = ["drake"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "71a2ad79091bdafa876a0104da12ed8701f40f76a2e9fdd3e0318629080585c3"
+content-hash = "3ef4053e51a4e42a4935f018ca5947ef4112df41bc7d50b23414d3dd25e747be"
