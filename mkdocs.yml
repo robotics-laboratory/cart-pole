@@ -20,10 +20,11 @@ extra:
     default: latest
     provider: mike
 
-
-
 markdown_extensions:
   - admonition
+  - attr_list
+  - def_list
+  - md_in_html
   - pymdownx.details
   - pymdownx.highlight:
       anchor_linenums: true
@@ -34,8 +35,6 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
-  - md_in_html
-  - attr_list
   - pymdownx.arithmatex:
       generic: true
   - pymdownx.emoji:

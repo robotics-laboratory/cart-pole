@@ -2,15 +2,37 @@
 
 ## Enviroment
 Python is main language of project. So, students may learn control theory and make experiments faster and easier.
-Firstly, you need checkout repo and prepare environemnt, using [poetry](https://python-poetry.org/docs).
+Firstly, you need checkout repo and prepare enviroment.
 
 ```bash
-# upload repo
 git clone https://github.com/robotics-laboratory/cart-pole.git
+```
 
-# go to repo
-cd cart-pole
+We have prepared a container with all dependencies, use it for development and testing
+(you need to have [docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/) installed).
+Run in root of repo following commands.
 
+```bash
+# start container
+docker compose up -d
+
+# enter to container
+docker exec -it cartpole-{$USER} bash
+
+# run tests to check that everithing is OK
+pytest tests
+```
+
+Repo folder is mounted to `/cartpole` in container, so you can edit files in your favorite IDE and run scripts in container.
+Also there are some environment variables, which may be useful for you:
+
+- `$CONTAINER_NAME` - name of container (default is `cartpole-{$USER}`)
+- `$FOXGLOVE_PORT` - port of foxglove server (default is 8765)
+- `$DOCKER_RUNTIME` - docker runtime (default is `runc`)
+
+If you want to use your own python environment, you can install all dependencies manually, using [poetry](https://python-poetry.org/).
+
+```bash
 # check poetry config
 poetry config --list 
 
@@ -19,15 +41,12 @@ poetry install
 
 # run tests to check that everithing is OK
 poetry run pytest tests
-
-# to run your script (e.g. some example)
-poetry run python examples/simulation.py
 ```
 
 ## Foxglove
-For visualization of real time data we use [foxglove studio](https://foxglove.dev/). You may use our [instance](http://foxglove.robotics-lab.ru) or use docker container with server and spefic fixes. More information about setup [here](https://github.com/robotics-laboratory/foxglove). Predefined layouts are stored at this [folder](layouts).
-
-> TODO: add usage example (images)
+For visualization of real time data we use [foxglove studio](https://foxglove.dev/).
+We strongly suggest to use our [instance](http://foxglove.robotics-lab.ru), but you may also setupserver with our specific fixes by yourself.
+More information [here](https://github.com/robotics-laboratory/foxglove). In foxglove select `Open connection` than `Foxglove WebSocket` and enter `ws://localhost:8765` (use your port) in address field.
 
 ## Logging
 We have convinient logging system, it may show data in real time and replay saved data in [mcap](https://mcap.dev/) format.

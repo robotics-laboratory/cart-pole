@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  cartpole:
+    container_name: "${CONTAINER_NAME:-cartpole-${USER}}"
+    image: registry.robotics-lab.ru/cartpole:0.1.0
+    runtime: ${DOCKER_RUNTIME:-runc}
+    privileged: true
+    entrypoint: "/bin/bash -c 'trap : TERM INT; sleep infinity & wait'"
+    working_dir: /cartpole
+    build:
+      dockerfile: Dockerfile
+      context: .
+      tags:
+        - registry.robotics-lab.ru/cartpole:0.1.0
+        - "registry.robotics-lab.ru/cartpole:latest"
+      x-bake:
+        platforms: [linux/arm64, linux/amd64]
+        cache-to: "type=registry,ref=registry.robotics-lab.ru/cartpole:cache,mode=max"
+        cache-from: "type=registry,ref=registry.robotics-lab.ru/cartpole:cache"
+    volumes:
+      - "${PWD}:/cartpole"
+      - "/dev:/dev"
+    ports:
+      - "${FOXGLOVE_PORT:-8765}:8765"
+    networks:
+      - default
+
+networks:
+  default:
+    name: "${CONTAINER_NAME:-cartpole-${USER}}"
