@@ -24,7 +24,9 @@ priority = "explicit"
 python = "~3.10"
 
 casadi = "^3.6"
-dacite = "^1.6.0"
+dacite = "^1.6"
+foxglove-websocket = "^0.1"
+mcap = "^1.1"
 numpy = "^1.26"
 pydantic = "^2.3"
 protobuf = "^4.21.9"
@@ -32,7 +34,7 @@ pyserial = "^3.5"
 torch = [
     {url="https://download.pytorch.org/whl/cpu/torch-2.0.1-cp310-none-macosx_11_0_arm64.whl", markers="platform_system == 'Darwin' and platform_machine == 'arm64'"},
     {url="https://download.pytorch.org/whl/cpu/torch-2.0.1-cp310-none-macosx_10_9_x86_64.whl", markers="platform_system == 'Darwin' and platform_machine == 'x86_64'"},
-    {url="https://download.pytorch.org/whl/torch-2.0.1-cp310-cp310-manylinux2014_aarch64.whl", markers="platform_system == 'Linux' and platform_machine == 'arm64'"},
+    {url="https://download.pytorch.org/whl/torch-2.0.1-cp310-cp310-manylinux2014_aarch64.whl", markers="platform_system == 'Linux' and platform_machine == 'aarch64'"},
     {url="https://download.pytorch.org/whl/cpu/torch-2.0.1%2Bcpu-cp310-cp310-linux_x86_64.whl", markers="platform_system == 'Linux' and platform_machine == 'x86_64'"},
     {url="https://download.pytorch.org/whl/cpu/torch-2.0.1%2Bcpu-cp310-cp310-win_amd64.whl", markers="platform_system == 'Windows' and platform_machine == 'amd64'"}
 ]

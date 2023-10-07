@@ -2,9 +2,8 @@ version: "3.9"
 
 services:
   cartpole:
-    container_name: "${CONTAINER_NAME:-cartpole-${USER}}"
+    container_name: "${CONTAINER_NAME:-cartpole}"
     image: registry.robotics-lab.ru/cartpole:0.1.0
-    runtime: ${DOCKER_RUNTIME:-runc}
     privileged: true
     entrypoint: "/bin/bash -c 'trap : TERM INT; sleep infinity & wait'"
     working_dir: /cartpole
@@ -23,9 +22,10 @@ services:
       - "/dev:/dev"
     ports:
       - "${FOXGLOVE_PORT:-8765}:8765"
+      - "${JUPYTER_PORT:-8888}:8888"
     networks:
       - default
 
 networks:
   default:
-    name: "${CONTAINER_NAME:-cartpole-${USER}}"
+    name: "${CONTAINER_NAME:-cartpole}"

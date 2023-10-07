@@ -14,7 +14,6 @@ RUN apt update -q \
         python3 \
         python3-dev \
         python3-pip \
-        vim \
     && pip3 install --no-cache-dir -U pip \
     && rm -rf /var/lib/apt/lists/* && apt-get clean
 

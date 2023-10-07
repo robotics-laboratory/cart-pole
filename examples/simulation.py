@@ -1,5 +1,5 @@
 from cartpole import Error, State
-from cartpole import TorchSimulator, TorchSimulatorConfig
+from cartpole import Simulator
 from cartpole import log
 
 import time
@@ -12,22 +12,21 @@ delta = 0.05
 log.setup(log_path='simulation_example.mcap')
 
 # create simulator with default config
-config = TorchSimulatorConfig.for_thin_pole()
-cartpole = TorchSimulator(config=config)
+cartpole = Simulator()
 
 # reset simulator to initial state
 cartpole.reset(state=State(cart_position=0, pole_angle=(2/4 * torch.pi)))
-energy_start = cartpole.evaluate_energy()
+# energy_start = cartpole.evaluate_energy()
 
 
 # run simulation
 for _ in range(1000):
     # use for loggin simulation time instead of real time
-    stamp = cartpole.timestamp()
+    state = cartpole.get_state()
 
     # log system state and simulator info
-    log.publish('/cartpole/state', cartpole.get_state(), stamp)
-    log.publish('/cartpole/info', cartpole.get_info(), stamp)
+    log.publish('/cartpole/state', state, state.stamp)
+    log.publish('/cartpole/info', cartpole.get_info(), state.stamp)
 
     # make simulation step
     cartpole.advance(delta)
