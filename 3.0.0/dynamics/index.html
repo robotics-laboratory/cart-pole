@@ -8,7 +8,7 @@
       
       
       
-        <link rel="canonical" href="https://robotics-laboratory.github.io/cart-pole/3.0.0/dynamics-and-control/">
+        <link rel="canonical" href="https://robotics-laboratory.github.io/cart-pole/3.0.0/dynamics/">
       
       
         <link rel="prev" href="../quickstart/">
@@ -19,7 +19,7 @@
     
     
       
-        <title>Dynamics & Control - CartPole</title>
+        <title>Dynamics - CartPole</title>
       
     
     
@@ -69,7 +69,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#dynamics-control" class="md-skip">
+        <a href="#dynamics" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Dynamics & Control
+              Dynamics
             
           </span>
         </div>
@@ -245,12 +245,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Dynamics & Control
+          Dynamics
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
-        Dynamics & Control
+        Dynamics
       </a>
       
         
@@ -269,19 +269,12 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#dynamics" class="md-nav__link">
-    Dynamics
-  </a>
-  
-    <nav class="md-nav" aria-label="Dynamics">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#linear-cartpole" class="md-nav__link">
     Linear CartPole
   </a>
   
-</li>
+    <nav class="md-nav" aria-label="Linear CartPole">
+      <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#acceleration-control" class="md-nav__link">
@@ -290,15 +283,15 @@
   
 </li>
         
-          <li class="md-nav__item">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#radial-cartpole" class="md-nav__link">
     Radial CartPole
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -337,19 +330,12 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#dynamics" class="md-nav__link">
-    Dynamics
-  </a>
-  
-    <nav class="md-nav" aria-label="Dynamics">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#linear-cartpole" class="md-nav__link">
     Linear CartPole
   </a>
   
-</li>
+    <nav class="md-nav" aria-label="Linear CartPole">
+      <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#acceleration-control" class="md-nav__link">
@@ -358,15 +344,15 @@
   
 </li>
         
-          <li class="md-nav__item">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#radial-cartpole" class="md-nav__link">
     Radial CartPole
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -388,9 +374,8 @@
   
 
 
-<h1 id="dynamics-control">Dynamics &amp; Control</h1>
-<h2 id="dynamics">Dynamics</h2>
-<h3 id="linear-cartpole">Linear CartPole</h3>
+<h1 id="dynamics">Dynamics</h1>
+<h2 id="linear-cartpole">Linear CartPole</h2>
 <p>A cart with mass <span class="arithmatex">\(m_c\)</span> moves along the <span class="arithmatex">\(x\)</span>-axis, so its center <span class="arithmatex">\(C\)</span> has coordinates <span class="arithmatex">\((x, 0)^T\)</span>.
 A pole with mass <span class="arithmatex">\(m_p\)</span> is attached to the cart with a hinge at point <span class="arithmatex">\(C\)</span>,
 and rotates around with viscous friction.
@@ -505,7 +490,7 @@ This fact allows us to consider the cart acceleration as a control input and sig
 \end{align}
 \]</div>
 </div>
-<h3 id="radial-cartpole">Radial CartPole</h3>
+<h2 id="radial-cartpole">Radial CartPole</h2>
 <p>Linear CartPole is classic kinematic scheme,
 but it requires a lot of space, periodical homing (return cart to the initial pose ) and etc.
 Radial CartPole is a modification, which allows to avoid problems, keeping the same motion equations.

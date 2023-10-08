@@ -12,7 +12,7 @@
       
       
       
-        <link rel="next" href="../dynamics-and-control/">
+        <link rel="next" href="../dynamics/">
       
       <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.17">
@@ -297,8 +297,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../dynamics-and-control/" class="md-nav__link">
-        Dynamics & Control
+      <a href="../dynamics/" class="md-nav__link">
+        Dynamics
       </a>
     </li>
   
@@ -382,24 +382,22 @@
 Firstly, you need checkout repo and prepare enviroment.</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/robotics-laboratory/cart-pole.git
 </span></code></pre></div>
-<p>We have prepared a container with all dependencies, use it for development and testing
+<p>We have a built container with all dependencies, use it for development and testing
 (you need to have <a href="https://docs.docker.com/get-docker/">docker</a> and <a href="https://docs.docker.com/compose/install/">docker-compose</a> installed).
 Run in root of repo following commands.</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># start container</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
 </span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># enter to container</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>cartpole-<span class="o">{</span><span class="nv">$USER</span><span class="o">}</span><span class="w"> </span>bash
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>cartpole<span class="w"> </span>bash
 </span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
 </span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># run tests to check that everithing is OK</span>
 </span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>pytest<span class="w"> </span>tests
 </span></code></pre></div>
-<p>Repo folder is mounted to <code>/cartpole</code> in container, so you can edit files in your favorite IDE and run scripts in container.
+<p>Repo folder is mounted as <code>/cartpole</code> dir, so you can edit files in your favorite IDE and run scripts in container.
 Also there are some environment variables, which may be useful for you:</p>
 <ul>
-<li><code>$CONTAINER_NAME</code> - name of container (default is <code>cartpole-{$USER}</code>)</li>
-<li><code>$FOXGLOVE_PORT</code> - port of foxglove server (default is 8765)</li>
-<li><code>$DOCKER_RUNTIME</code> - docker runtime (default is <code>runc</code>)</li>
+<li><code>$CONTAINER_NAME</code> - name of container (default is <code>cartpole</code>)</li>
 </ul>
 <p>If you want to use your own python environment, you can install all dependencies manually, using <a href="https://python-poetry.org/">poetry</a>.</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># check poetry config</span>
@@ -411,69 +409,76 @@ Also there are some environment variables, which may be useful for you:</p>
 </span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># run tests to check that everithing is OK</span>
 </span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>poetry<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests
 </span></code></pre></div>
+<p>Also you can build and run docs server locally.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>mkdocs<span class="w"> </span>serve<span class="w"> </span>-a<span class="w"> </span><span class="m">0</span>.0.0.0:8000
+</span></code></pre></div>
 <h2 id="foxglove">Foxglove</h2>
 <p>For visualization of real time data we use <a href="https://foxglove.dev/">foxglove studio</a>.
-We strongly suggest to use our <a href="http://foxglove.robotics-lab.ru">instance</a>, but you may also setupserver with our specific fixes by yourself.
-More information <a href="https://github.com/robotics-laboratory/foxglove">here</a>. In foxglove select <code>Open connection</code> than <code>Foxglove WebSocket</code> and enter <code>ws://localhost:8765</code> (use your port) in address field.</p>
+We strongly suggest to use our <a href="http://foxglove.robotics-lab.ru">instance</a>, but you may also setup server with our specific fixes by yourself (more information <a href="https://github.com/robotics-laboratory/foxglove">here</a>).
+In Foxglove Studio select <code>Open connection</code> than <code>Foxglove WebSocket</code> and enter <code>ws://localhost:8765</code> (use your port) in address field.</p>
 <h2 id="logging">Logging</h2>
 <p>We have convinient logging system, it may show data in real time and replay saved data in <a href="https://mcap.dev/">mcap</a> format.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kn">import</span> <span class="nn">cartpole.log</span> <span class="k">as</span> <span class="nn">log</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="kn">import</span> <span class="nn">random</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="kn">import</span> <span class="nn">time</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="c1"># all messages must be inherited from BaseModel</span>
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="k">class</span> <span class="nc">RandMsg</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="n">dist</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;uniform(0, 1)&#39;</span>
-</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="n">value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
-</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
-</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="c1"># define log file name</span>
-</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="n">log</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">log_path</span><span class="o">=</span><span class="s1">&#39;log_example.mcap&#39;</span><span class="p">)</span>
-</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>
-</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="c1"># messages are available in real time in foxglove (websocket mode)</span>
-</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">):</span>
-</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>    <span class="c1"># publish message, timestamp is optional (default is current time)</span>
-</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>    <span class="n">log</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="s1">&#39;/random&#39;</span><span class="p">,</span> <span class="n">RandMsg</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()))</span>
-</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.2</span><span class="p">)</span> <span class="c1"># add some delay</span>
+<div class="language-python highlight"><span class="filename">examples/log.py</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">import</span> <span class="nn">cartpole.log</span> <span class="k">as</span> <span class="nn">log</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="kn">import</span> <span class="nn">random</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="kn">import</span> <span class="nn">time</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1"># all messages must be inherited from BaseModel</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="k">class</span> <span class="nc">RandMsg</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="n">dist</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;uniform(0, 1)&#39;</span>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="n">value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="c1"># define log file name</span>
+</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="n">log</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">log_path</span><span class="o">=</span><span class="s1">&#39;log_example.mcap&#39;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">log</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>
+</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="c1"># messages are available in real time in foxglove (websocket mode)</span>
+</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>    <span class="n">value</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>
+</span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>    <span class="c1"># publish message, timestamp is optional (default is current time)</span>
+</span><span id="__span-4-21"><a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>    <span class="n">log</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="s1">&#39;/random&#39;</span><span class="p">,</span> <span class="n">RandMsg</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">))</span>
+</span><span id="__span-4-22"><a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>
+</span><span id="__span-4-23"><a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>    <span class="c1"># print message to console and log (see /log topic)</span>
+</span><span id="__span-4-24"><a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;publish </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</span><span id="__span-4-25"><a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>
+</span><span id="__span-4-26"><a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>    <span class="c1"># add some delay for demo purposes</span>
+</span><span id="__span-4-27"><a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.2</span><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="simulation">Simulation</h2>
-<p>For development and testing of control algorithms, we provide CartPole simulator, which fully implemntet CartPoleBase <a href="/cartpole/common/interface.py">interface</a>. The simulation is carried out by numerical integration of parameterized dynamic system (more information <a href="/docs/cart_pole.pdf">here</a>). Also simulator may be used to train ML agents.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span> <span class="nn">cartpole</span> <span class="kn">import</span> <span class="n">Error</span><span class="p">,</span> <span class="n">State</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span> <span class="nn">cartpole</span> <span class="kn">import</span> <span class="n">TorchSimulator</span><span class="p">,</span> <span class="n">TorchSimulatorConfig</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kn">from</span> <span class="nn">cartpole</span> <span class="kn">import</span> <span class="n">log</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="kn">import</span> <span class="nn">time</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="kn">import</span> <span class="nn">torch</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1"># set simulation step as 0.05 seconds</span>
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="n">delta</span> <span class="o">=</span> <span class="mf">0.05</span>
-</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
-</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="c1"># setup logging (look at mcap logs after simulation)</span>
-</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="n">log</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">log_path</span><span class="o">=</span><span class="s1">&#39;simulation_example.mcap&#39;</span><span class="p">)</span>
-</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>
-</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="c1"># create simulator with default config</span>
-</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="n">config</span> <span class="o">=</span> <span class="n">TorchSimulatorConfig</span><span class="o">.</span><span class="n">for_thin_pole</span><span class="p">()</span>
-</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="n">cartpole</span> <span class="o">=</span> <span class="n">TorchSimulator</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
-</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>
-</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="c1"># reset simulator to initial state</span>
-</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="n">cartpole</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">State</span><span class="p">(</span><span class="n">cart_position</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">pole_angle</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="o">/</span><span class="mi">4</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">pi</span><span class="p">)))</span>
-</span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="n">energy_start</span> <span class="o">=</span> <span class="n">cartpole</span><span class="o">.</span><span class="n">evaluate_energy</span><span class="p">()</span>
-</span><span id="__span-4-21"><a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>
-</span><span id="__span-4-22"><a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>
-</span><span id="__span-4-23"><a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="c1"># run simulation</span>
-</span><span id="__span-4-24"><a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a><span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
-</span><span id="__span-4-25"><a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>    <span class="c1"># use for loggin simulation time instead of real time</span>
-</span><span id="__span-4-26"><a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>    <span class="n">stamp</span> <span class="o">=</span> <span class="n">cartpole</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span>
-</span><span id="__span-4-27"><a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>
-</span><span id="__span-4-28"><a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>    <span class="c1"># log system state and simulator info</span>
-</span><span id="__span-4-29"><a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a>    <span class="n">log</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="s1">&#39;/cartpole/state&#39;</span><span class="p">,</span> <span class="n">cartpole</span><span class="o">.</span><span class="n">get_state</span><span class="p">(),</span> <span class="n">stamp</span><span class="p">)</span>
-</span><span id="__span-4-30"><a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a>    <span class="n">log</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="s1">&#39;/cartpole/info&#39;</span><span class="p">,</span> <span class="n">cartpole</span><span class="o">.</span><span class="n">get_info</span><span class="p">(),</span> <span class="n">stamp</span><span class="p">)</span>
-</span><span id="__span-4-31"><a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a>
-</span><span id="__span-4-32"><a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a>    <span class="c1"># make simulation step</span>
-</span><span id="__span-4-33"><a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>    <span class="n">cartpole</span><span class="o">.</span><span class="n">advance</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
-</span><span id="__span-4-34"><a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a>    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
+<p>For development and testing of control algorithms, we provide CartPole simulator, which fully implemntet CartPoleBase <a href="/cartpole/common.py">interface</a>. 
+The simulation is carried out by numerical integration of parameterized dynamic system (more information <a href="/docs/cart_pole.pdf">here</a>).
+Also simulator may be used to train ML agents.</p>
+<div class="language-python highlight"><span class="filename">examples/simulatio.py</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span> <span class="nn">cartpole</span> <span class="kn">import</span> <span class="n">Error</span><span class="p">,</span> <span class="n">State</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kn">from</span> <span class="nn">cartpole</span> <span class="kn">import</span> <span class="n">Simulator</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="kn">from</span> <span class="nn">cartpole</span> <span class="kn">import</span> <span class="n">log</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="kn">import</span> <span class="nn">time</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># set simulation step as 0.05 seconds</span>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="n">delta</span> <span class="o">=</span> <span class="mf">0.05</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1"># setup logging (look at mcap logs after simulation)</span>
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="n">log</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">log_path</span><span class="o">=</span><span class="s1">&#39;simulation_example.mcap&#39;</span><span class="p">)</span>
+</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>
+</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="c1"># create simulator with default config</span>
+</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="n">cartpole</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">()</span>
+</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>
+</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="c1"># reset simulator to initial state</span>
+</span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="n">cartpole</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">State</span><span class="p">(</span><span class="n">cart_position</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">pole_angle</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>
+</span><span id="__span-5-19"><a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="c1"># run simulation</span>
+</span><span id="__span-5-20"><a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+</span><span id="__span-5-21"><a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>    <span class="c1"># use for loggin simulation time instead of real time</span>
+</span><span id="__span-5-22"><a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>    <span class="n">state</span> <span class="o">=</span> <span class="n">cartpole</span><span class="o">.</span><span class="n">get_state</span><span class="p">()</span>
+</span><span id="__span-5-23"><a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>
+</span><span id="__span-5-24"><a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>    <span class="c1"># log system state and simulator info</span>
+</span><span id="__span-5-25"><a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>    <span class="n">log</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="s1">&#39;/cartpole/state&#39;</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">stamp</span><span class="p">)</span>
+</span><span id="__span-5-26"><a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>
+</span><span id="__span-5-27"><a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>    <span class="c1"># make simulation step</span>
+</span><span id="__span-5-28"><a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>    <span class="n">cartpole</span><span class="o">.</span><span class="n">advance</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
+</span><span id="__span-5-29"><a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
 </span></code></pre></div>
 
 
