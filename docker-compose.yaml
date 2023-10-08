@@ -3,7 +3,7 @@ version: "3.9"
 services:
   cartpole:
     container_name: "${CONTAINER_NAME:-cartpole}"
-    image: registry.robotics-lab.ru/cartpole:0.1.0
+    image: registry.robotics-lab.ru/cartpole:0.2.0
     privileged: true
     entrypoint: "/bin/bash -c 'trap : TERM INT; sleep infinity & wait'"
     working_dir: /cartpole
@@ -11,7 +11,7 @@ services:
       dockerfile: Dockerfile
       context: .
       tags:
-        - registry.robotics-lab.ru/cartpole:0.1.0
+        - registry.robotics-lab.ru/cartpole:0.2.0
         - "registry.robotics-lab.ru/cartpole:latest"
       x-bake:
         platforms: [linux/arm64, linux/amd64]
@@ -21,8 +21,9 @@ services:
       - "${PWD}:/cartpole"
       - "/dev:/dev"
     ports:
-      - "${FOXGLOVE_PORT:-8765}:8765"
-      - "${JUPYTER_PORT:-8888}:8888"
+      - "8765:8765"
+      - "8888:8888"
+      - "8000:8000"
     networks:
       - default
 

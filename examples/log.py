@@ -24,7 +24,7 @@ for i in range(10):
     # print message to console and log (see /log topic)
     log.info(f'publish {value:.2f}')
 
-    # add some delay
+    # add some delay for demo purposes
     time.sleep(0.2)
 
 

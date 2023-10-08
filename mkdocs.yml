@@ -5,7 +5,7 @@ repo_name: robotics-laboratory/cart-pole
 
 nav:
   - Quickstart: quickstart.md
-  - Dynamics & Control: dynamics-and-control.md
+  - Dynamics: dynamics.md
 
 theme:
   name: material

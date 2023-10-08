@@ -1,7 +1,5 @@
-# Dynamics & Control
-
-## Dynamics
-### Linear CartPole
+# Dynamics
+## Linear CartPole
 
 A cart with mass $m_c$ moves along the $x$-axis, so its center $C$ has coordinates $(x, 0)^T$.
 A pole with mass $m_p$ is attached to the cart with a hinge at point $C$,
@@ -131,7 +129,7 @@ Since all parameters do not change over time, we can greatly simplify the motion
     \end{align}
     $$
 
-### Radial CartPole
+## Radial CartPole
 
 Linear CartPole is classic kinematic scheme,
 but it requires a lot of space, periodical homing (return cart to the initial pose ) and etc.
