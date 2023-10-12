@@ -7,6 +7,6 @@ hardware_limit:
   cart_velocity: 3.0
   cart_acceleration: 5.0
 parameters:
-  b: 0.30
-  g: 9.81
-  k: 0.20
+  friction_coef: 0.30
+  gravity: 9.81
+  mass_coef: 5

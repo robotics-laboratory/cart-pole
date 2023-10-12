@@ -38,7 +38,7 @@ def find_parameters(states, gravity=9.81) -> Parameters:
     # system dynamics
     q_dot = cs.vertcat(
         theta_dot,
-        -b * theta_dot - (u * cs.cos(theta) + gravity * cs.sin(theta)) / k
+        -b * theta_dot - k * (u * cs.cos(theta) + gravity * cs.sin(theta))
     )
 
     F = cs.Function('f', [q, u, b, k], [q_dot], ['q', 'u', 'b', 'k'], ['q_dot'])
@@ -130,4 +130,4 @@ def find_parameters(states, gravity=9.81) -> Parameters:
     b = float(solution['x'][0])
     k = float(solution['x'][1])
 
-    return Parameters(b=b, k=k, g=gravity)
+    return Parameters(friction_coef=b, mass_coef=k, gravity=gravity)

@@ -124,7 +124,7 @@ Since all parameters do not change over time, we can greatly simplify the motion
 !!! abstract "Motion equations"
     $$
     \begin{align}
-        \ddot{\theta} &= -b\dot{\theta} - \frac{\ddot{x} \cos \theta - g \sin \theta}{k} \\
+        \ddot{\theta} &= -b\dot{\theta} - k \big(\ddot{x} \cos \theta - g \sin \theta\big) \\
         \ddot{x} &= u, \quad u \in [-a, a].
     \end{align}
     $$
@@ -158,7 +158,7 @@ $$
 !!! abstract "Dynamics equation"
     $$
     \begin{align}
-        \ddot{\theta} &= -b\dot{\theta} - \frac{r \ddot{\phi} \cos \theta - g \sin \theta}{k} \\
+        \ddot{\theta} &= -b\dot{\theta} - k\big(r \ddot{\phi} \cos \theta - g \sin \theta\big) \\
         \ddot{\phi} &= u, \quad u \in [u_{min}, u_{max}].
     \end{align}
     $$

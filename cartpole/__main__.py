@@ -53,7 +53,6 @@ def evaluate(device: CartPoleBase, config: Config, args: argparse.Namespace) -> 
     state = start
 
     target = Target(position=0, velocity=0, acceleration=0)
-
     states = []
 
     while not state.error and state.stamp - start.stamp < duration:
@@ -79,7 +78,7 @@ def evaluate(device: CartPoleBase, config: Config, args: argparse.Namespace) -> 
             time.sleep(advance) # simulate real time
 
     log.info(f'find parameters')
-    parameters = find_parameters(states, config.parameters.g)
+    parameters = find_parameters(states, config.parameters.gravity)
 
     log.info(f'parameters: {parameters}')
 

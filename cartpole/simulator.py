@@ -68,11 +68,11 @@ class Simulator(CartPoleBase):
 
         assert config.control_limit.stronger(config.hardware_limit)
         
-        assert config.parameters.b is not None
-        assert config.parameters.b >= 0
+        assert config.parameters.friction_coef is not None
+        assert config.parameters.friction_coef >= 0
 
-        assert config.parameters.k is not None
-        assert config.parameters.k > 0
+        assert config.parameters.mass_coef is not None
+        assert config.parameters.mass_coef > 0
 
         self._config = config
 
@@ -129,14 +129,14 @@ class Simulator(CartPoleBase):
 
         result = numpy.zeros(4)
 
-        b = self._config.parameters.b
-        k = self._config.parameters.k
-        g = self._config.parameters.g
+        b = self._config.parameters.friction_coef
+        k = self._config.parameters.mass_coef
+        g = self._config.parameters.gravity
 
         result[0] = s[2]
         result[1] = s[3]
         result[2] = a
-        result[3] = - b * s[3] - (a * numpy.cos(s[1]) + g * numpy.sin(s[1])) / k
+        result[3] = - b * s[3] - k * (a * numpy.cos(s[1]) + g * numpy.sin(s[1]))
 
         return result
 

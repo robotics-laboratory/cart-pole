@@ -38,16 +38,36 @@ class Parameters(BaseModel):
     CartPole dynamics parameters.Parameters are defined and matter only for simulation.
 
     Fields:
-        g: gravity constant (m/s^2)
-        b, k: inner system parameters
+        gravity: gravity constant (default 9.8 m/s^2)
+        friction_coef, mass_coef: inner system parameters
 
     For more information see:
       https://cartpole.robotics-lab.ru/3.0.0/dynamics-and-control
     '''
 
-    g: float = 9.81
-    b: float | None = None
-    k: float | None = None
+    @staticmethod
+    def make(mass: float, inertia: float, length: float, friction: float = 0.0, gravity: float = 9.81) -> 'Parameters':
+        '''
+        Create parameters from physical properties.
+            mass: pole mass (kg)
+            inertia: pole moment of inertia (kg*m^2)
+            length: distance from the pivot to the center of mass (m)
+            friction: friction coefficient (N*s/m)
+            gravity: gravity constant (m/s^2)
+        '''
+
+
+        delimeter = mass * length * length + inertia
+
+        return Parameters(
+            gravity = gravity,
+            friction_coef = friction / delimeter,
+            mass_coef = (mass * length) / delimeter
+        )
+
+    gravity: float = 9.81
+    friction_coef: float | None = None
+    mass_coef: float | None = None
 
 
 class Config(BaseModel):
