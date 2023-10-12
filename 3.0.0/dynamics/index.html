@@ -485,7 +485,7 @@ This fact allows us to consider the cart acceleration as a control input and sig
 <p class="admonition-title">Motion equations</p>
 <div class="arithmatex">\[
 \begin{align}
-    \ddot{\theta} &amp;= -b\dot{\theta} - \frac{\ddot{x} \cos \theta - g \sin \theta}{k} \\
+    \ddot{\theta} &amp;= -b\dot{\theta} - k \big(\ddot{x} \cos \theta - g \sin \theta\big) \\
     \ddot{x} &amp;= u, \quad u \in [-a, a].
 \end{align}
 \]</div>
@@ -514,7 +514,7 @@ but linear variables are replaced by angular ones</p>
 <p class="admonition-title">Dynamics equation</p>
 <div class="arithmatex">\[
 \begin{align}
-    \ddot{\theta} &amp;= -b\dot{\theta} - \frac{r \ddot{\phi} \cos \theta - g \sin \theta}{k} \\
+    \ddot{\theta} &amp;= -b\dot{\theta} - k\big(r \ddot{\phi} \cos \theta - g \sin \theta\big) \\
     \ddot{\phi} &amp;= u, \quad u \in [u_{min}, u_{max}].
 \end{align}
 \]</div>
