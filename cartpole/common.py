@@ -84,38 +84,6 @@ class Config(BaseModel):
     control_limit: Limits = Limits()
     parameters: Parameters = Parameters()
 
-    def to_json(self) -> str:
-        '''
-        Convert config to json string.
-        '''
-
-        return self.json(indent=2)
-    
-    def to_json_file(self, file_path: str) -> None:
-        '''
-        Save config to json file.
-        '''
-
-        with open(file_path, 'w') as f:
-            f.write(self.to_json())
-    
-    @staticmethod
-    def from_json(json_str: str) -> 'Config':
-        '''
-        Load config from json string.
-        '''
-
-        return Config.parse_obj(json.loads(json))
-    
-    @staticmethod
-    def from_json_file(file_path: str) -> 'Config':
-        '''
-        Load config from json file.
-        '''
-
-        with open(file_path, 'r') as f:
-            return Config.from_json(f.read())
-    
     def to_yaml(self) -> str:
         '''
         Convert config to yaml string.
@@ -132,7 +100,7 @@ class Config(BaseModel):
             f.write(self.to_yaml())
 
     @staticmethod
-    def from_yaml(yaml_str: str) -> 'Cofig':
+    def from_yaml(yaml_str: str) -> 'Config':
         '''
         Load config from yaml string.
         '''
@@ -222,15 +190,15 @@ class State(BaseModel):
         if self.error:
             return # keep error
 
-        if abs(self.cart_position) > config.control_limit.cart_position:
+        if abs(self.cart_position) > config.hardware_limit.cart_position:
             self.error = Error.CART_POSITION_OVERFLOW
             return
 
-        if abs(self.cart_velocity) > config.control_limit.cart_velocity:
+        if abs(self.cart_velocity) > config.hardware_limit.cart_velocity:
             self.error = Error.CART_VELOCITY_OVERFLOW
             return
         
-        if abs(self.cart_acceleration) > config.control_limit.cart_acceleration:
+        if abs(self.cart_acceleration) > config.hardware_limit.cart_acceleration:
             self.error = Error.CART_ACCELERATION_OVERFLOW
             return
 
@@ -373,5 +341,17 @@ class CartPoleBase:
     def close(self) -> None:
         '''
         Free all allocated resources.
+        '''
+        raise NotImplementedError
+
+
+class Actor:
+    '''
+    Actor is a functor that returns control target for the given state.
+    '''
+
+    def __call__(self, state: State) -> Target:
+        '''
+        Returns control target for the given state.
         '''
         raise NotImplementedError
