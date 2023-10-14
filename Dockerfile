@@ -11,6 +11,7 @@ WORKDIR /tmp
 RUN apt update -q \
     && apt install -yq --no-install-recommends \
         build-essential \
+        coinor-libipopt-dev \
         python3 \
         python3-dev \
         python3-pip \
