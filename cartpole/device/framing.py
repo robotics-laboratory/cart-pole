@@ -35,7 +35,7 @@ def decode(data: bytes, payload_type: Message = None) -> Tuple[proto.RequestType
     assert payload_length >= 0, "Incorrect payload length"
     payload = None
     if payload_type is not None:
-        payload = payload_type().parse(data[2 : 2 + payload_length])
+        payload = payload_type.FromString(data[2 : 2 + payload_length])
     return type, payload
 
 

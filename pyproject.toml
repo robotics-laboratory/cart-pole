@@ -11,10 +11,6 @@ repository = "https://github.com/robotics-laboratory/cart-pole"
 documentation = "https://cartpole.robotics-lab.ru"
 keywords = ["cartpole", "control", "reinforcement learning"]
 
-packages = [
-    { include = "cartpole" },
-]
-
 [[tool.poetry.source]]
 name = "torch"
 url = "https://download.pytorch.org/whl/cpu/"
@@ -28,7 +24,7 @@ dacite = "^1.6"
 foxglove-websocket = "^0.1"
 mcap = "^1.1"
 numpy = "^1.26"
-pydantic = "^2.3"
+pydantic = "<2.0"
 protobuf = "^4.21.9"
 pyserial = "^3.5"
 scipy = "^1.11"
@@ -43,6 +39,7 @@ varint = "^1.0.2"
 betterproto = {version = "^2.0.0b6", allow-prereleases = true}
 crc = "^4.3.0"
 cobs = "^1.2.0"
+jsonref = "^1.1.0"
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0"

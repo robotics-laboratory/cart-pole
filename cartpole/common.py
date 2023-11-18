@@ -3,10 +3,11 @@ import numpy
 import torch
 
 from pydantic import BaseModel, Field
-from typing import Any
+from typing import Any, Optional
 
 import json
 import yaml
+import time
 
 
 class Limits(BaseModel):
@@ -152,7 +153,7 @@ class State(BaseModel):
         pole_angle - absolute accumulated pole angle (rad)
         pole_angular_velocity - pole angular velocity (rad/s)
 
-        stamp - system time stamp (s)
+        stamp - system time stamp in seconds
         error - system error code
     '''
 
@@ -163,24 +164,8 @@ class State(BaseModel):
     pole_angle: float = 0.0
     pole_angular_velocity: float = 0.0
 
-    stamp: float = 0.0
+    stamp: float = Field(default_factory=time.perf_counter)
     error: Error = Error.NO_ERROR
-
-    class Config:
-        @staticmethod
-        def json_schema_extra(schema: Any, model: Any) -> None:
-            # make schema lightweight
-            schema.pop('definitions', None)
-
-            properties = schema['properties']
-            for name in properties:
-                properties[name].pop('title', None)
-
-            # simplify schema for foxglove
-            properties['error'] = {
-                'type': 'integer',
-                'enum': [e.value for e in Error]
-            }
 
     def validate(self, config: Config) -> None:
         '''
@@ -240,9 +225,9 @@ class Target(BaseModel):
     If velocity/accleration is not specified (absolute value needed), use control limit as a default.
     '''
 
-    position: float | None = None
-    velocity: float | None = None
-    acceleration: float | None = None
+    position: Optional[float] = None
+    velocity: Optional[float] = None
+    acceleration: Optional[float] = None
 
     def acceleration_or(self, default: float) -> float:
         '''

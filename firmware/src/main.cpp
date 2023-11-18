@@ -1,69 +1,105 @@
 #include <Arduino.h>
-#include <pb_decode.h>
-#include <pb_encode.h>
 
-#include "CRC.h"
-#include "CRC8.h"
-#include "cobs.h"
-#include "proto/protocol.pb.h"
+#include "encoder.h"
+#include "helpers.h"
+#include "protocol.h"
+#include "stepper.h"
 
-const uint32_t SERIAL_SPEED = 1000000;
-const uint8_t FRAME_DELIMITER = 0x00;
+using namespace cartpole;
 
-uint8_t rx_buff[256];
-CRC8 crc;
+// GLOBALS
+
+State state = getDefaultState();
+Config config = getDefaultConfig();
+
+Encoder encoder;
+Stepper stepper;
+Protocol protocol;
+
+// PROTOCOL CALLBACKS
+
+State reset() {
+    if (!stepper.isHoming()) {
+        state.error = Error_NEED_RESET;
+        stepper.reset();
+    }
+    return state;
+}
+
+State setTarget(Target target) {
+    if (state.error) return state;
+    state.error = validateTarget(target, config);
+    if (state.error) {
+        stepper.disable();
+        return state;
+    }
+
+    // TODO: Prettify
+    float velocity = target.has_velocity ? target.velocity : config.max_cart_velocity;
+    float accel = target.has_acceleration ? target.acceleration : config.max_cart_acceleration;
+
+    if (target.has_position) {
+        stepper.setMaxAccel(accel);
+        stepper.setMaxSpeed(velocity);
+        stepper.setPosition(target.position);
+    }
+    // TODO: Velocity control, accel control
+    return state;
+}
+
+Config setConfig(Config newConfig) {
+    // ...
+    return config;
+}
+
+// HELPER FUNCTIONS
+
+void homingCallback() {
+    if (!stepper.getErrors()) {
+        config.max_cart_position = stepper.getFullRange() / 2;
+        state.hardware_errors = HardwareError_NO_ERRORS;
+        state.error = Error_NO_ERROR;
+    }
+}
+
+void updateState() {
+    state.cart_position = stepper.getPosition();
+    state.cart_velocity = stepper.getVelocity();
+    state.cart_acceleration = stepper.getAcceleration();
+    state.pole_angle = encoder.getAngle();
+    state.pole_angular_velocity = encoder.getVelocity();
+    state.hardware_errors |= encoder.getErrors();
+    state.hardware_errors |= stepper.getErrors();
+    state.hardware_errors |= protocol.getErrors();
+}
+
+void checkErrors() {
+    if (state.hardware_errors && state.error == Error_NO_ERROR) {
+        state.error = Error_HARDWARE;
+    } else if (std::abs(state.cart_position) > config.max_cart_position) {
+        state.error = Error_CART_POSITION_OVERFLOW;
+    } else if (std::abs(state.cart_velocity) > config.max_cart_velocity) {
+        state.error = Error_CART_VELOCITY_OVERFLOW;
+    } else if (std::abs(state.cart_acceleration) > config.max_cart_acceleration) {
+        state.error = Error_CART_ACCELERATION_OVERFLOW;
+    }
+    if (state.error && state.error != Error_NEED_RESET) stepper.disable();
+}
+
+// ENTRYPOINT
 
 void setup() {
-    Serial.begin(SERIAL_SPEED);
-    Serial.print("start");
+    protocol.resetCallback = reset;
+    protocol.targetCallback = setTarget;
+    protocol.configCallback = setConfig;
+    stepper.homingCallback = homingCallback;
+
+    encoder.init();
+    stepper.init();
+    protocol.init();
 }
 
 void loop() {
-    size_t length = Serial.readBytesUntil(FRAME_DELIMITER, rx_buff, sizeof(rx_buff));
-    if (!length) return;
-    cobs::decode(rx_buff, length);
-    // uint8_t type = rx_buff[1];
-    uint8_t type = 2;
-    // size_t payload_len = rx_buff[1];
-    if (type == 0) {
-        uint8_t tx_buff[256];
-        tx_buff[0] = 0;                  // Reserved for COBS overhead byte
-        tx_buff[1] = type;               // Request type
-        tx_buff[2] = 0;                  // Data length
-        crc.restart();
-        crc.add(tx_buff + 1, 2);         
-        tx_buff[3] = crc.getCRC();       // CRC8 for bytes 1-2
-        tx_buff[4] = FRAME_DELIMITER;    // End of frame
-        size_t tx_size = cobs::encode(tx_buff, 4);
-        Serial.write(tx_buff, 5);
-    } else if (type == 2) {
-        uint8_t tx_buff[256];
-        tx_buff[0] = 0;
-        tx_buff[1] = type;
-        tx_buff[2] = 0;
-
-        // Data region starts at byte 3
-        // 5 extra bytes reserved for COBS, TYPE, LEN, CRC8, EOF
-        pb_ostream_t ostream = pb_ostream_from_buffer(tx_buff + 3, sizeof(tx_buff) - 5);
-        State state = State_init_zero;
-        state.cart_position = 123.0;
-        state.has_cart_position = true;
-        bool ok = pb_encode(&ostream, &State_msg, &state);
-
-        // Serial.printf("size: %d ", ostream.bytes_written);
-        // Serial.printf("ok: %d ", ok);
-        // Serial.write(FRAME_DELIMITER);
-        // return;
-
-        tx_buff[2] = ostream.bytes_written;
-        crc.restart();
-        crc.add(tx_buff + 1, 2 + ostream.bytes_written);
-        tx_buff[3 + ostream.bytes_written] = crc.getCRC();
-        tx_buff[4] = FRAME_DELIMITER;
-        size_t tx_size = cobs::encode(tx_buff, 4 + ostream.bytes_written);
-        Serial.write(tx_buff, 5 + ostream.bytes_written);
-    } else {
-        Serial.print("error");
-        Serial.write(FRAME_DELIMITER);
-    }
+    updateState();
+    if (!stepper.isHoming()) checkErrors();
 }

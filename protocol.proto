@@ -7,22 +7,41 @@ enum RequestType {
   TARGET = 2;
 }
 
+enum Error {
+  NO_ERROR = 0;
+  NEED_RESET = 1;
+  CART_POSITION_OVERFLOW = 2;
+  CART_VELOCITY_OVERFLOW = 3;
+  CART_ACCELERATION_OVERFLOW = 4;
+  HARDWARE = 5;
+}
+
+enum HardwareError {
+  NO_ERRORS = 0;
+  ENCODER_COMM_ERROR = 1;
+  ENCODER_MAGNET_ERROR = 2;
+  STEPPER_FAS_ENGINE_ERROR = 4;
+  STEPPER_TMC_COMM_ERROR = 8;
+  STEPPER_ENDSTOP_HIT = 16;
+  HOMING_FAILED = 32;
+  PROTOCOL_DECODE_ERROR = 64;
+  PROTOCOL_CRC_ERROR = 128;
+}
+
 message Config {
   optional float max_cart_position = 1;         // [m] Absolute max cart position
   optional float max_cart_velocity = 2;         // [m/s] Absolute max cart velocity
   optional float max_cart_acceleration = 3;     // [m/s^2] Absolute max cart acceleration
-  optional float hw_max_cart_position = 4;      // [m] Absolute max hardware-allowed position
-  optional float hw_max_cart_velocity = 5;      // [m/s] Absolute max hardware-allowed velocity
-  optional float hw_max_cart_acceleration = 6;  // [m/s^2] Absolute max hardware-allowed acceleration
 }
 
 message State {
-  float cart_position = 1;          // [m] Current cart position
-  float cart_velocity = 2;          // [m/s] Current cart velocity
-  float cart_acceleration = 3;      // [m/s^2] Current cart acceleration
-  float pole_angle = 4;             // [rad] Current pole angle
-  float pole_angular_velocity = 5;  // [rad/s] Current pole angular velocity
-  int32 error = 6;                  // Current error code
+  optional float cart_position = 1;          // [m] Current cart position
+  optional float cart_velocity = 2;          // [m/s] Current cart velocity
+  optional float cart_acceleration = 3;      // [m/s^2] Current cart acceleration
+  optional float pole_angle = 4;             // [rad] Current pole angle
+  optional float pole_angular_velocity = 5;  // [rad/s] Current pole angular velocity
+  optional int32 error = 6;                  // Global error code
+  optional int32 hardware_errors = 7;        // Hardware error bitmask
 }
 
 message Target {

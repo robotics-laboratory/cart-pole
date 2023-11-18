@@ -4,12 +4,14 @@ import enum
 import json
 import logging
 import time
+import jsonref
 
 from threading import Event, Thread
 from foxglove_websocket.server import FoxgloveServer
 from mcap.writer import CompressionType, Writer
 from pydantic import BaseModel
 from typing import Any, Dict
+import os
 
 
 class Level(enum.IntEnum):
@@ -167,6 +169,26 @@ def get_pylogger(name: str, level: Level) -> logging.Logger:
     return logger
 
 
+# JSON schema helper functions, TODO: preffity
+
+def _remove_allof(schema):
+    if not isinstance(schema, dict):
+        return schema
+    if "allOf" in schema:
+        items = schema.pop("allOf")
+        assert len(items) == 1, "Union types are not supported"
+        assert isinstance(items[0], dict), "allOf members must be dicts"
+        schema.update(items[0])
+    return {key: _remove_allof(value) for key, value in schema.items()}
+
+
+def _model_to_schema(model: BaseModel) -> str:
+    schema = jsonref.replace_refs(model.schema(), proxies=False)
+    schema = _remove_allof(schema)
+    schema = jsonref.dumps(schema)
+    return schema
+
+
 class MCAPLogger:
     '''
     Logger to mcap file.
@@ -189,8 +211,9 @@ class MCAPLogger:
         self._pylog = get_pylogger('cartpole.mcap', level)
 
         self._writer = Writer(
-            open(log_path, "wb"),
-            CompressionType.ZSTD if compress else CompressionType.NONE)
+            output=open(log_path, "wb"),
+            compression=CompressionType.ZSTD if compress else CompressionType.NONE,
+        )
 
         self._writer.start()
         self._topic_to_registration: Dict[str, Registration] = {}
@@ -228,25 +251,29 @@ class MCAPLogger:
 
     def _register_class(self, topic_name: str, cls: Any) -> Registration:
         name = cls.__name__
+        if name in self._topic_to_registration:
+            return self._topic_to_registration[name]
         assert issubclass(cls, BaseModel), 'Required pydantic model, but got {name}'
-        return self._register(topic_name, name, cls.schema_json())
+        schema = _model_to_schema(cls)
+        return self._register(topic_name, name, schema)
 
     def publish(self, topic_name: str, obj: BaseModel, stamp: float) -> None:
         '''
-        Publish object to topic.
+        Publish object to topic.    
 
         Args:
             topic_name: topic name
             obj: object to dump (pydantic model)
-            stamp: timestamp in nanoseconds (float)
+            stamp: timestamp in seconds (float)
         '''
 
         registation = self._register_class(topic_name, type(obj))
+        stamp_ns = to_ns(stamp)
         self._writer.add_message(
                 channel_id=registation.channel_id,
-                log_time=to_ns(stamp),
+                log_time=stamp_ns,
                 data=obj.json().encode(),
-                publish_time=to_ns(stamp))
+                publish_time=stamp_ns)
         
     def log(self, msg: str, stamp: float, level: Level) -> None:
         '''
@@ -254,12 +281,12 @@ class MCAPLogger:
 
         Args:
             msg: message to print
-            stamp: timestamp in nanoseconds (float)
+            stamp: timestamp in seconds (float)
             level: log level (UNKNOWN, DEBUG, INFO, WARNING, ERROR, FATAL)
         '''
 
-        sec, nsec = to_stamp(stamp)
         stamp_ns = to_ns(stamp)
+        sec, nsec = to_stamp(stamp_ns)
     
         obj = {
             "timestamp": {"sec": sec, "nsec": nsec},
@@ -305,11 +332,6 @@ async def _foxglove_async_entrypoint(queue: asyncio.Queue, stop: Event, level: L
         topic_to_registration = {}
 
         async def register(topic_name, name, schema) -> Registration:
-            if topic_name in topic_to_registration:
-                cached = topic_to_registration[topic_name]
-                assert cached.name == name, f'Topic {topic_name} registered with {cached.name}'
-                return cached
-
             spec = {
                 "topic": topic_name,
                 "encoding": "json",
@@ -324,11 +346,15 @@ async def _foxglove_async_entrypoint(queue: asyncio.Queue, stop: Event, level: L
             logger.debug('id=%i topic=\'%s\', type=\'%s\'', channel_id, topic_name, name)
             return cached
 
-
         async def register_class(topic_name, cls) -> Registration:
             name = cls.__name__
+            if topic_name in topic_to_registration:
+                cached = topic_to_registration[topic_name]
+                assert cached.name == name, f'Topic {topic_name} registered with {cached.name}'
+                return cached
             assert issubclass(cls, BaseModel), f'Required pydantic model, but got {name}'
-            return await register(topic_name, name, cls.schema_json())
+            schema = _model_to_schema(cls)
+            return await register(topic_name, name, schema)
 
         # preventive topic creation
         registration_log = await register(
@@ -339,12 +365,13 @@ async def _foxglove_async_entrypoint(queue: asyncio.Queue, stop: Event, level: L
         while not stop.is_set():
             try:
                 topic_name, stamp, obj = await asyncio.wait_for(queue.get(), timeout=0.2)
+                stamp_ns = to_ns(stamp)
+                sec, nsec = to_stamp(stamp_ns)
 
                 if topic_name == FOXGLOVE_LOG_TOPIC:
                     # special logic for logs
                     assert isinstance(obj, str), f'Expected string, but got {type(obj)}'
                     registration = registration_log
-                    sec, nsec = to_stamp(stamp)
 
                     msg = {
                         "timestamp": {"sec": sec, "nsec": nsec},
@@ -360,7 +387,7 @@ async def _foxglove_async_entrypoint(queue: asyncio.Queue, stop: Event, level: L
                     registration = await register_class(topic_name, type(obj))
                     data = obj.json().encode()
 
-                await server.send_message(registration.channel_id, to_ns(stamp), data)
+                await server.send_message(registration.channel_id, stamp_ns, data)
 
             except asyncio.TimeoutError:
                 pass
@@ -430,7 +457,7 @@ class FoxgloveWebsocketLogger:
         Args:
             topic_name: topic name
             obj: object to dump (pydantic model)
-            stamp: timestamp in nanoseconds (float)
+            stamp: timestamp in seconds (float)
         '''
 
         if not (self._loop.is_running() and self._foxlgove_thread.is_alive()):
@@ -448,7 +475,7 @@ class FoxgloveWebsocketLogger:
 
         Args:
             msg: message to print
-            stamp: timestamp in nanoseconds (float)
+            stamp: timestamp in seconds (float)
             level: log level (UNKNOWN, DEBUG, INFO, WARNING, ERROR, FATAL)
         '''
         
@@ -497,24 +524,30 @@ class Logger:
         '''
 
         self._pylog = get_pylogger('cartpole', level)
-        self._foxglove_log = FoxgloveWebsocketLogger()
+        self._foxglove_log = None
+        # TODO: Prettify
+        if os.environ.get("FOXGLOVE_ENABLE", "false").lower() == "true":
+            self._foxglove_log = FoxgloveWebsocketLogger()
         self._mcap_log = None
 
         if log_path:
             self._mcap_log = MCAPLogger(log_path, level=level)
 
-    def publish(self, topic_name: str, obj: BaseModel, stamp: float) -> None:
+    def publish(self, topic_name: str, obj: BaseModel, stamp: float = None) -> None:
         '''
         Args:
             topic_name: topic name
             obj: pydantic object
-            stamp: timestamp in nanoseconds (float), if not provided, current time used
+            stamp: timestamp in seconds (float), if not provided, current time used
         '''
+        if stamp is None:
+            stamp = time.perf_counter()
 
         if self._mcap_log:
             self._mcap_log.publish(topic_name, obj, stamp)
-
-        self._foxglove_log.publish(topic_name, obj, stamp)
+        
+        if self._foxglove_log:
+            self._foxglove_log.publish(topic_name, obj, stamp)
 
     def log(self, msg: str, stamp: float, level: Level = Level.INFO) -> None:
         '''
@@ -527,7 +560,8 @@ class Logger:
         '''
 
         self._pylog.log(pylog_level(level), f'{stamp:.3f}: {msg}')
-        self._foxglove_log.log(msg, stamp, level)
+        if self._foxglove_log:
+            self._foxglove_log.log(msg, stamp, level)
 
         if self._mcap_log:
             self._mcap_log.log(msg, stamp, level)
@@ -551,8 +585,8 @@ class Logger:
         '''
         Close logger
         '''
-
-        self._foxglove_log.close()
+        if self._foxglove_log:
+            self._foxglove_log.close()
         if self._mcap_log:
             self._mcap_log.close()
 
