@@ -74,7 +74,7 @@ void updateState() {
 }
 
 void checkErrors() {
-    if (state.hardware_errors && state.error == Error_NO_ERROR) {
+    if (state.hardware_errors) {
         state.error = Error_HARDWARE;
     } else if (std::abs(state.cart_position) > config.max_cart_position) {
         state.error = Error_CART_POSITION_OVERFLOW;
@@ -83,7 +83,7 @@ void checkErrors() {
     } else if (std::abs(state.cart_acceleration) > config.max_cart_acceleration) {
         state.error = Error_CART_ACCELERATION_OVERFLOW;
     }
-    if (state.error && state.error != Error_NEED_RESET) stepper.disable();
+    if (state.error) stepper.disable();
 }
 
 // ENTRYPOINT
@@ -101,5 +101,5 @@ void setup() {
 
 void loop() {
     updateState();
-    if (!stepper.isHoming()) checkErrors();
+    if (!stepper.isHoming() && !state.error) checkErrors();
 }

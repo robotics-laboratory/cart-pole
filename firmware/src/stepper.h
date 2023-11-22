@@ -108,7 +108,7 @@ public:
 
     float getPosition() { return _stepsToMeters(fasStepper->getCurrentPosition()); }
 
-    float getVelocity() { return _stepsToMeters(fasStepper->getCurrentSpeedInMilliHz() / 1000.0f); }
+    float getVelocity() { return _stepsToMeters(fasStepper->getCurrentSpeedInMilliHz(true) / 1000.0f); }
 
     float getAcceleration() { return _stepsToMeters(fasStepper->getCurrentAcceleration()); }
 
@@ -147,11 +147,11 @@ public:
 
 private:
     static void ARDUINO_ISR_ATTR _endstopISR(void *params) {
-        Stepper *stepper = (Stepper *)params;
-        if (stepper->enabled) {
-            stepper->disable();
-            stepper->error = HardwareError_STEPPER_ENDSTOP_HIT;
-        }
+        // Stepper *stepper = (Stepper *)params;
+        // if (stepper->enabled) {
+        //     stepper->disable();
+        //     stepper->error = HardwareError_STEPPER_ENDSTOP_HIT;
+        // }
     }
 
     static void _homingTask(void *params) {

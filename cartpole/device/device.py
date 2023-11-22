@@ -96,9 +96,6 @@ class CartPoleDevice(CartPoleBase):
         self._last_state = None
         self._last_state_time = time.perf_counter()
 
-        self._kek_lock = threading.Lock()
-        self._kek_buffer = []
-
     def _detect_port(self):
         all_ports = list(comports())
         if len(all_ports) == 0:
@@ -128,11 +125,10 @@ class CartPoleDevice(CartPoleBase):
                 payload = mapping.req_message(**payload.dict())
             assert isinstance(payload, mapping.req_message)
         data = framing.encode(type, payload)
-        with self._request_lock:
-            self._port.write(data)
-            logging.debug(f"SEND (raw): {data}")
-            data = self._port.read_until(framing.FRAME_DELIMITER)
-            logging.debug(f"RECV (raw): {data}")
+        self._port.write(data)
+        logging.debug(f"SEND (raw): {data}")
+        data = self._port.read_until(framing.FRAME_DELIMITER)
+        logging.debug(f"RECV (raw): {data}")
         if not data:
             logging.error(f"{type!r} request timeout")
             raise TimeoutError
@@ -153,18 +149,15 @@ class CartPoleDevice(CartPoleBase):
         while state.error != Error.NO_ERROR:
             state = self.get_state()
             if time.perf_counter() - start > self.HOMING_TIMEOUT:
-                raise RuntimeError("Device homing timeout")
-        print("homing done")
+                raise RuntimeError(f"Device homing timeout. Last known state: {state}")
         # time.sleep(5.0)
         # if state.cart_position != 0:
         #     # TODO: Move to position (if specified)
         #     raise NotImplementedError
 
     def _push_state(self, state: DeviceState):
-        self._kek_buffer.append(state)
-        with self._kek_lock:
-            self._last_state = state
-            self._last_state_time = time.perf_counter()
+        self._last_state = state
+        self._last_state_time = time.perf_counter()
 
     def set_target(self, target: Target) -> State:
         state = self._request(RequestType.TARGET, target)
@@ -172,12 +165,12 @@ class CartPoleDevice(CartPoleBase):
         return state
 
     def get_state(self, force: bool = False) -> State:
-        if self._last_state is not None and not force:
-            with self._kek_lock:
-                if time.perf_counter() - self._last_state_time < 0.01:
-                    return self._last_state
+        # if self._last_state is not None and not force:
+        #     # with self._lock:
+        #     if time.perf_counter() - self._last_state_time < 0.02:
+        #         return self._last_state
         state = self._request(RequestType.TARGET, Target())
-        self._push_state(state)
+        # self._push_state(state)
         return state
 
     def set_config(self, config: Config):
@@ -205,47 +198,49 @@ if __name__ == "__main__":
     ### ENCODER TEST + FOXGLOVE
     from cartpole import log
 
-    log.setup(log_path="untracked/test.mcap")
+    log.setup(log_path="untracked/realtime_true.mcap")
     logger = log.get_logger()
     device = CartPoleDevice(hard_reset=True)
 
-    def state_update_loop():
-        while True:
-            state = device.get_state()
-            print(f"errors: {state.error}, flags: {bin(state.hardware_errors)}")
-            logger.publish("/cartpole/state", state)
-            time.sleep(1 / 200)
+    # def state_update_loop():
+    #     while True:
+    #         state = device.get_state()
+    #         # print(f"errors: {state.error}, flags: {bin(state.hardware_errors)}")
+    #         logger.publish("/cartpole/state", state)
+    #         time.sleep(1 / 100)
 
-    t = threading.Thread(target=state_update_loop, daemon=True)
-    t.start()
+    # t = threading.Thread(target=state_update_loop, daemon=True)
+    # t.start()
 
     state = device.get_state()
-    for _ in range(1):
-        device.reset()
-    config = device.get_config()
-    print(config)
+    device.reset()
+    time.sleep(5)
 
     def wait_position_reached(target: Target):
         state = device.get_state()
-        while abs(target.position - state.cart_position) > 0.01:
+        while abs(target.position - state.cart_position) > 0.001:
+            # time.sleep(0.01)
             state = device.get_state()
+            logger.publish("/cartpole/state", state)
 
-    x = 0.1
-    v = 2.0
-    a = 5.0
+    x = 0.15
+    v = 1.0
+    a = 2.0
 
-    for _ in range(5):
+    for a in [0.1, 0.2, 0.5, 1.0]:
         target = Target(position=-x, velocity=v, acceleration=a)
-        device.set_target(target)
+        state = device.set_target(target)
+        logger.publish("/cartpole/state", state)
         wait_position_reached(target)
 
         target = Target(position=+x, velocity=v, acceleration=a)
-        device.set_target(target)
+        state = device.set_target(target)
+        logger.publish("/cartpole/state", state)
         wait_position_reached(target)
 
-    target = Target(position=0, velocity=v, acceleration=a)
-    device.set_target(target)
-    wait_position_reached(target)
+    # target = Target(position=0, velocity=v, acceleration=0.1)
+    # device.set_target(target)
+    # wait_position_reached(target)
 
     # device._request(RequestType.RESET)
     # time.sleep(10)

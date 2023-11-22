@@ -29,7 +29,7 @@ private:
 
     static const uint32_t POLLING_DELAY = 1000;
     static const uint32_t VELOCITY_TIMEDELTA = 20 * 1000;
-    static constexpr float VELOCITY_SMOOTHING = 0.85;
+    static constexpr float VELOCITY_SMOOTHING = 0.1;
     static constexpr float MAX_VELOCITY = 5 * 2 * PI;
     static constexpr float ROTATION_THRESHOLD = 1.8 * PI;
 
