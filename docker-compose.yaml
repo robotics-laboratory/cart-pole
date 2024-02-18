@@ -20,8 +20,8 @@ services:
           - type=registry,ref=registry.robotics-lab.ru/cartpole:cache-arm64
           - type=registry,ref=registry.robotics-lab.ru/cartpole:cache-amd64
         cache-to:
-          # - type=registry,ref=registry.robotics-lab.ru/cartpole:cache-arm64,mode=max
-          # - type=registry,ref=registry.robotics-lab.ru/cartpole:cache-amd64,mode=max
+          - type=registry,ref=registry.robotics-lab.ru/cartpole:cache-arm64,mode=max
+          - type=registry,ref=registry.robotics-lab.ru/cartpole:cache-amd64,mode=max
     environment:
       - PYTHONPATH=/cartpole
     volumes:

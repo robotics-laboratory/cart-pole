@@ -45,7 +45,7 @@ varint = "^1.0.2"
 jupyter = "^1.0"
 matplotlib = "^3.8"
 mkdocs = "^1.5"
-mkdocstrings = "^0.24"
+mkdocstrings = { version = "^0.24", extras = ["python"] }
 mkdocs-material = "^9.4"
 mkdocs-material-extensions = "^1.2"
 ruff = "^0.2"
