@@ -13,6 +13,10 @@ from typing import Any, Dict
 
 
 class Level(enum.IntEnum):
+    """
+    Classic log levels: `UNKNOWN`, `DEBUG`, `INFO`, `WARNING`, `ERROR`, `FATAL`
+    """
+
     UNKNOWN = 0
     DEBUG   = 1
     INFO    = 2
@@ -20,8 +24,11 @@ class Level(enum.IntEnum):
     ERROR   = 4
     FATAL   = 5
 
-
 def pylog_level(level: Level) -> int:
+    """
+    Convert log level from foxglove to python
+    """
+
     if level == Level.UNKNOWN:
         return logging.NOTSET
     elif level == Level.DEBUG:
@@ -38,7 +45,7 @@ def pylog_level(level: Level) -> int:
         raise ValueError(f'Unknown log level {level}')
 
 
-FOXGLOVE_LOG_TOPIC = '/log'
+FOXGLOVE_LOG_TOPIC = "`/log`"
 
 FOXGLOVE_LOG_MSG_TYPE = 'foxglove.Log'
 
@@ -147,13 +154,16 @@ class Registration(BaseModel):
 
 
 def get_pylogger(name: str, level: Level) -> logging.Logger:
-    '''
+    """
     Create python or get existing logger. Log Level is translated from foxglove to python.
 
-    Args:
-        name: logger name
-        level: log level (UNKNOWN, DEBUG, INFO, WARNING, ERROR, FATAL)
-    '''
+    Parameters
+    ----------
+    name: str
+        logger name
+    level: Level
+        log level (`UNKNOWN`, `DEBUG`, `INFO`, `WARNING`, `ERROR`, `FATAL`)
+    """
 
     logger = logging.getLogger(name)
     logger.setLevel(pylog_level(level))
@@ -168,29 +178,39 @@ def get_pylogger(name: str, level: Level) -> logging.Logger:
 
 
 class MCAPLogger:
-    '''
+    """
     Logger to mcap file.
 
-    Usage:
-        with MCAPLogger(log_path='log.mcap') as log:
-            obj = ... # some pydantic object
-            log.publish('/topic', obj, stamp)
-            log.info('message')
-    '''
+    Example
+    -------
+    ```python
+    with MCAPLogger(log_path='log.mcap') as log:
+        obj = ... # some pydantic object
+        log.publish('/topic', obj, stamp)
+        log.info('message')
+    ```
+
+    """
 
     def __init__(self, log_path: str, level: Level=Level.INFO, compress=True):
-        '''
-        Args:
-            log_path: path to mcap log file
-            level: log level (UNKNOWN, DEBUG, INFO, WARNING, ERROR, FATAL)
-            compress: enable compression
-        '''
+        """
+        Parameters
+        ----------
+        log_path: str
+            path to mcap log file
+        level: Level
+            log level (`UNKNOWN`, `DEBUG`, `INFO`, `WARNING`, `ERROR`, `FATAL`)
+
+        compress: bool
+            enable compression
+        """
 
         self._pylog = get_pylogger('cartpole.mcap', level)
 
         self._writer = Writer(
             open(log_path, "wb"),
-            CompressionType.ZSTD if compress else CompressionType.NONE)
+            compression=CompressionType.ZSTD if compress else CompressionType.NONE,
+        )
 
         self._writer.start()
         self._topic_to_registration: Dict[str, Registration] = {}
@@ -229,34 +249,43 @@ class MCAPLogger:
     def _register_class(self, topic_name: str, cls: Any) -> Registration:
         name = cls.__name__
         assert issubclass(cls, BaseModel), 'Required pydantic model, but got {name}'
-        return self._register(topic_name, name, cls.schema_json())
+        return self._register(topic_name, name, json.dumps(cls.model_json_schema()))
 
     def publish(self, topic_name: str, obj: BaseModel, stamp: float) -> None:
-        '''
+        """
         Publish object to topic.
 
-        Args:
-            topic_name: topic name
-            obj: object to dump (pydantic model)
-            stamp: timestamp in nanoseconds (float)
-        '''
+        Parameters:
+        -----------
+        topic_name:
+            topic name
+        obj: Any
+            object to dump (pydantic model)
+        stamp: float
+            timestamp in nanoseconds (float)
+        """
 
         registation = self._register_class(topic_name, type(obj))
         self._writer.add_message(
-                channel_id=registation.channel_id,
-                log_time=to_ns(stamp),
-                data=obj.json().encode(),
-                publish_time=to_ns(stamp))
-        
-    def log(self, msg: str, stamp: float, level: Level) -> None:
-        '''
-        Print message to topic /log.
+            channel_id=registation.channel_id,
+            log_time=to_ns(stamp),
+            data=obj.model_dump_json().encode(),
+            publish_time=to_ns(stamp),
+        )
 
-        Args:
-            msg: message to print
-            stamp: timestamp in nanoseconds (float)
-            level: log level (UNKNOWN, DEBUG, INFO, WARNING, ERROR, FATAL)
-        '''
+    def log(self, msg: str, stamp: float, level: Level) -> None:
+        """
+        Print message to topic `/log`.
+
+        Parameters:
+        -----------
+        msg: str
+            message to print
+        stamp: float
+            timestamp in nanoseconds (float)
+        level: Level
+            log level (`UNKNOWN`, `DEBUG`, `INFO`, `WARNING`, `ERROR`, `FATAL`)
+        """
 
         sec, nsec = to_stamp(stamp)
         stamp_ns = to_ns(stamp)
@@ -277,21 +306,39 @@ class MCAPLogger:
                 publish_time=stamp_ns)
         
     def debug(self, msg: str, stamp: float) -> None:
+        """
+        Print message to topic `/log` with `DEBUG` level.
+        """
         self.log(msg, stamp, Level.DEBUG)
 
     def info(self, msg: str, stamp: float) -> None:
+        """
+        Print message to topic `/log` with `INFO` level.
+        """
         self.log(msg, stamp, Level.INFO)
 
     def warning(self, msg: str, stamp: float) -> None:
+        """
+        Print message to topic `/log` with `WARNING` level.
+        """
         self.log(msg, stamp, Level.WARNING)
 
     def error(self, msg: str, stamp: float) -> None:
+        """
+        Print message to topic `/log` with `ERROR` level.
+        """
         self.log(msg, stamp, Level.ERROR)
 
     def fatal(self, msg: str, stamp: float) -> None:
+        """
+        Print message to topic `/log` with `FATAL` level.
+        """
         self.log(msg, stamp, Level.FATAL)
 
     def close(self):
+        """
+        Free log resources.
+        """
         self._writer.finish()
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -328,7 +375,7 @@ async def _foxglove_async_entrypoint(queue: asyncio.Queue, stop: Event, level: L
         async def register_class(topic_name, cls) -> Registration:
             name = cls.__name__
             assert issubclass(cls, BaseModel), f'Required pydantic model, but got {name}'
-            return await register(topic_name, name, cls.schema_json())
+            return await register(topic_name, name, cls.model_json_schema())
 
         # preventive topic creation
         registration_log = await register(
@@ -358,7 +405,7 @@ async def _foxglove_async_entrypoint(queue: asyncio.Queue, stop: Event, level: L
                     data = json.dumps(msg).encode()
                 else:
                     registration = await register_class(topic_name, type(obj))
-                    data = obj.json().encode()
+                    data = obj.model_dump_json().encode()
 
                 await server.send_message(registration.channel_id, to_ns(stamp), data)
 
@@ -388,22 +435,27 @@ def foxglove_main(
 
 
 class FoxgloveWebsocketLogger:
-    '''
+    """
     Logger to foxglove websocket, messages are available in real time.
     Class will start new thread with asyncio event loop.
 
-    Usage:
-        with FoxgloveWebsocketLogger() as log:
-            obj = ... # some pydantic object
-            log.publish('/topic', obj, stamp)
-            log.info('message')
-    '''
+    Example
+    -------
+    ```
+    with FoxgloveWebsocketLogger() as log:
+        obj = ... # some pydantic object
+        log.publish('/topic', obj, stamp)
+        log.info('message')
+    ```
+    """
 
     def __init__(self, level: int = Level.INFO):
-        '''
-        Args:
-            level: log level (UNKNOWN, DEBUG, INFO, WARNING, ERROR, FATAL)
-        '''
+        """
+        Parameters
+        ----------
+        level: Level
+            log level (`UNKNOWN`, `DEBUG`, `INFO`, `WARNING`, `ERROR`, `FATAL`)
+        """
 
         self._loop = asyncio.new_event_loop()
         self._input_queue = asyncio.Queue()
@@ -424,14 +476,18 @@ class FoxgloveWebsocketLogger:
         return self
 
     def publish(self, topic_name: str, obj: BaseModel, stamp: float) -> None:
-        '''
+        """
         Publish object to topic.
 
-        Args:
-            topic_name: topic name
-            obj: object to dump (pydantic model)
-            stamp: timestamp in nanoseconds (float)
-        '''
+        Parameters
+        ----------
+        topic_name: str
+            topic name
+        obj: BaseModel
+            object to dump (pydantic model)
+        stamp: float
+            timestamp in nanoseconds (float)
+        """
 
         if not (self._loop.is_running() and self._foxlgove_thread.is_alive()):
             if not self._exception_queue.empty():
@@ -443,33 +499,56 @@ class FoxgloveWebsocketLogger:
         asyncio.run_coroutine_threadsafe(self._input_queue.put(item), self._loop)
 
     def log(self, msg: str, stamp: float, level: int) -> None:
-        '''
-        Print message to topic /log.
+        """
+        Print message to topic `/log`.
 
-        Args:
-            msg: message to print
-            stamp: timestamp in nanoseconds (float)
-            level: log level (UNKNOWN, DEBUG, INFO, WARNING, ERROR, FATAL)
-        '''
-        
-        self.publish('/log', msg, stamp)
+        Parameters
+        ----------
+        msg: str
+            message to print
+        stamp: float
+            timestamp in nanoseconds (float)
+        level: Level
+            log level (`UNKNOWN`, `DEBUG`, `INFO`, `WARNING`, `ERROR`, `FATAL`)
+        """
+
+        self.publish("`/log`", msg, stamp)
 
     def debug(self, msg: str, stamp: float) -> None:
+        """
+        Print message to topic `/log` with `DEBUG` level.
+        """
         self.log(msg, stamp, Level.DEBUG)
 
     def info(self, msg: str, stamp: float) -> None:
+        """
+        Print message to topic `/log` with `INFO` level.
+        """
         self.log(msg, stamp, Level.INFO)
 
     def warning(self, msg: str, stamp: float) -> None:
+        """
+        Print message to topic `/log` with `WARNING` level.
+        """
         self.log(msg, stamp, Level.WARNING)
 
     def error(self, msg: str, stamp: float) -> None:
+        """
+        Print message to topic `/log` with `ERROR` level.
+        """
         self.log(msg, stamp, Level.ERROR)
 
     def fatal(self, msg: str, stamp: float) -> None:
+        """
+        Print message to topic `/log` with `FATAL` level.
+        """
         self.log(msg, stamp, Level.FATAL)
 
     def close(self):
+        """
+        Free log resources.
+        """
+
         self._stop.set()
         self._foxlgove_thread.join()
 
@@ -478,23 +557,29 @@ class FoxgloveWebsocketLogger:
 
 
 class Logger:
-    '''
+    """
     Compound Logger class that logs to console, foxglove and mcap.
 
-    Usage:
-        with Logger(log_path='log.mcap', level=INFO) as log:
-            obj = ... # some pydantic object
+    Example
+    -------
+    ```
+    with Logger(log_path='log.mcap', level=INFO) as log:
+        obj = ... # some pydantic object
 
-            log.publish('/topic', obj)
-            log.info('message')
-    '''
+        log.publish('/topic', obj)
+        log.info('message')
+    ```
+    """
 
     def __init__(self, log_path: str = '', level: Level = Level.INFO):
-        '''
-        Args:
-        * log_path: path to mcap log file, if not provided, no mcap log will be created
-        * level: log level (UNKNOWN, DEBUG, INFO, WARNING, ERROR, FATAL)
-        '''
+        """
+        Parameters
+        ----------
+        log_path: str
+            path to mcap log file, if not provided, no mcap log will be created
+        level: Level
+            log level (`UNKNOWN`, `DEBUG`, `INFO`, `WARNING`, `ERROR`, `FATAL`)
+        """
 
         self._pylog = get_pylogger('cartpole', level)
         self._foxglove_log = FoxgloveWebsocketLogger()
@@ -504,12 +589,16 @@ class Logger:
             self._mcap_log = MCAPLogger(log_path, level=level)
 
     def publish(self, topic_name: str, obj: BaseModel, stamp: float) -> None:
-        '''
-        Args:
-            topic_name: topic name
-            obj: pydantic object
-            stamp: timestamp in nanoseconds (float), if not provided, current time used
-        '''
+        """
+        Parameters
+        ----------
+        topic_name: str
+            topic name
+        obj: BaseModel
+            pydantic object
+        stamp: float
+            timestamp in nanoseconds (float), if not provided, current time used
+        """
 
         if self._mcap_log:
             self._mcap_log.publish(topic_name, obj, stamp)
@@ -517,14 +606,18 @@ class Logger:
         self._foxglove_log.publish(topic_name, obj, stamp)
 
     def log(self, msg: str, stamp: float, level: Level = Level.INFO) -> None:
-        '''
-        Print message to console and topic /log.
+        """
+        Print message to console and topic `/log`.
 
-        Args:
-            msg: message to print
-            stamp: timestamp in nanoseconds (float), if not provided, current time used
-            level: log level (UNKNOWN, DEBUG, INFO, WARNING, ERROR, FATAL)
-        '''
+        Parameters
+        ----------
+        msg: str
+            message to print
+        stamp: float
+            timestamp in nanoseconds (float), if not provided, current time used
+        level: Level
+            log level (`UNKNOWN`, `DEBUG`, `INFO`, `WARNING`, `ERROR`, `FATAL`)
+        """
 
         self._pylog.log(pylog_level(level), f'{stamp:.3f}: {msg}')
         self._foxglove_log.log(msg, stamp, level)
@@ -533,24 +626,39 @@ class Logger:
             self._mcap_log.log(msg, stamp, level)
 
     def debug(self, msg: str, stamp: float) -> None:
+        """
+        Print message to console and topic `/log` with `DEBUG` level.
+        """
         self.info(msg, stamp, Level.DEBUG)
 
     def info(self, msg: str, stamp: float) -> None:
+        """
+        Print message to console and topic `/log` with `INFO` level.
+        """
         self.log(msg, stamp, Level.INFO)
 
     def warning(self, msg: str, stamp: float) -> None:
+        """
+        Print message to console and topic `/log` with `WARNING` level.
+        """
         self.log(msg, stamp, Level.WARNING)
 
     def error(self, msg: str, stamp: float) -> None:
+        """
+        Print message to console and topic `/log` with `ERROR` level.
+        """
         self.log(msg, stamp, Level.ERROR)
 
     def fatal(self, msg: str, stamp: float) -> None:
+        """
+        Print message to console and topic `/log` with `FATAL` level.
+        """
         self.log(msg, stamp, Level.FATAL)
 
     def close(self):
-        '''
-        Close logger
-        '''
+        """
+        Free log resources.
+        """
 
         self._foxglove_log.close()
         if self._mcap_log:
@@ -564,11 +672,16 @@ __logger = None
 
 
 def setup(log_path: str = '', level: Level = Level.INFO) -> None:
-    '''
-    Args:
-        log_path: path to mcap log file, if not provided, no mcap log will be created
-        level: log level (UNKNOWN, DEBUG, INFO, WARNING, ERROR, FATAL)
-    '''
+    """
+    Setup gloval logger.
+
+    Parameters
+    ----------
+    log_path: str
+        path to mcap log file, if not provided, no mcap log will be created
+    level: Level
+        log level (`UNKNOWN`, `DEBUG`, `INFO`, `WARNING`, `ERROR`, `FATAL`)
+    """
 
     global __logger
     close()
@@ -576,9 +689,9 @@ def setup(log_path: str = '', level: Level = Level.INFO) -> None:
 
 
 def close():
-    '''
-    Close logger
-    '''
+    """
+    Close global logger
+    """
 
     global __logger
 
@@ -591,9 +704,9 @@ atexit.register(close)
 
 
 def get_logger() -> Logger:
-    '''
-    Get logger instance
-    '''
+    """
+    Get global logger instance
+    """
 
     global __logger
     if not __logger:
@@ -603,44 +716,76 @@ def get_logger() -> Logger:
  
 
 def publish(topic_name: str, obj: BaseModel, stamp: float|None = None) -> None:
-    '''
-    Args:
-        topic_name: topic name
-        obj: pydantic model
-        stamp: timestamp in nanoseconds (float), if not provided, current time used
-    '''
+    """
+    Publish object to topic of global logger.
+    If logger is not set, it will be created with default settings.
+
+    Parameters
+    ----------
+    topic_name: str
+        topic name
+    obj: BaseModel
+        pydantic model
+    stamp: float
+        timestamp in nanoseconds (float), if not provided, current time used
+    """
 
     get_logger().publish(topic_name, obj, this_or_now(stamp))
 
 
 def log(msg: str, stamp: float|None = None, level: Level = Level.INFO) -> None:
-    '''
-    Print message to console and topic /log.
+    """
+    Print message to console and topic `/log`.
+    If logger is not set, it will be created with default settings.
 
-    Args:
-        msg: message to print
-        stamp: timestamp in nanoseconds (float), if not provided, current time used
-        level: log level (UNKNOWN, DEBUG, INFO, WARNING, ERROR, FATAL)
-    '''
+    Parameters
+    ----------
+    msg: str
+        message to print
+    stamp: float
+        timestamp in nanoseconds (float), if not provided, current time used
+    level: Level
+        log level (`UNKNOWN`, `DEBUG`, `INFO`, `WARNING`, `ERROR`, `FATAL`)
+    """
 
     get_logger().log(msg, this_or_now(stamp), level)
 
 
 def debug(msg: str, stamp: float|None = None) -> None:
+    """
+    Print message to console and topic `/log` with `DEBUG` level.
+    If logger is not set, it will be created with default settings.
+    """
     log(msg, stamp, Level.DEBUG)
 
 
 def info(msg: str, stamp: float|None = None) -> None:
+    """
+    Print message to console and topic `/log` with `INFO` level.
+    If logger is not set, it will be created with default settings.
+    """
     log(msg, stamp, Level.INFO)
 
 
 def warning(msg: str, stamp: float|None = None) -> None:
+    """
+    Print message to console and topic `/log` with `WARNING` level.
+    If logger is not set, it will be created with default settings.
+    """
     log(msg, stamp, Level.WARNING)
 
 
 def error(msg: str, stamp: float|None = None) -> None:
+    """
+    Print message to console and topic `/log` with `ERROR` level.
+    If logger is not set, it will be created with default settings.
+    """
     log(msg, stamp, Level.ERROR)
 
 
 def fatal(msg: str, stamp: float|None = None) -> None:
+    """
+    Print message to console and topic `/log` with `FATAL` level.
+    If logger is not set, it will be created with default settings.
+    """
     log(msg, stamp, Level.FATAL)

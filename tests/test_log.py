@@ -17,6 +17,7 @@ def test_log_some_object():
     # send another object, specify time explicitly
     log.publish('/some/object', SomeObject(name='second', value=2.0), time())
 
+
 def test_log_state():
     # explicitly setup logger, specify log path
     log.setup(log_path='test.mcap')
@@ -24,10 +25,11 @@ def test_log_state():
     # send state
     log.publish('/cartpole/state', State())
 
+
 def test_log_bad_object():
     # explicitly setup logger only for foxglove
     log.setup()
- 
+
     # send bad object (not pydantic model)
     log.publish('/str', 'something')
 
