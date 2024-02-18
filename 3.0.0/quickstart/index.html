@@ -42,6 +42,8 @@
       
     
     
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
       <link rel="stylesheet" href="https://tikzjax.com/v1/fonts.css">
     
     <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
@@ -281,6 +283,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#docs" class="md-nav__link">
+    Docs
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -300,6 +309,83 @@
       <a href="../dynamics/" class="md-nav__link">
         Dynamics
       </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/common/" class="md-nav__link">
+        Interface
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/log/" class="md-nav__link">
+        Logging
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/simulator/" class="md-nav__link">
+        Simulation
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
     </li>
   
 
@@ -358,6 +444,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#docs" class="md-nav__link">
+    Docs
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -383,34 +476,29 @@ Firstly, you need checkout repo and prepare enviroment.</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/robotics-laboratory/cart-pole.git
 </span></code></pre></div>
 <p>We have a built container with all dependencies, use it for development and testing
-(you need to have <a href="https://docs.docker.com/get-docker/">docker</a> and <a href="https://docs.docker.com/compose/install/">docker-compose</a> installed).
-Run in root of repo following commands.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># start container</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># enter to container</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>cartpole<span class="w"> </span>bash
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># run tests to check that everithing is OK</span>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>pytest<span class="w"> </span>tests
+(you need to have <a href="https://docs.docker.com/get-docker/">docker</a> and <a href="https://docs.docker.com/compose/install/">docker-compose</a> installed). Run in root of repo following commands.</p>
+<p>Pull latest actual image <code>docker compose pull</code>, that you may start devcontainer in VSCode or run it manually.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># enter to container</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>cartpole<span class="w"> </span>bash
 </span></code></pre></div>
-<p>Repo folder is mounted as <code>/cartpole</code> dir, so you can edit files in your favorite IDE and run scripts in container.
-Also there are some environment variables, which may be useful for you:</p>
+<p>Repo folder is mounted as <code>/cartpole</code> dir, so you can edit files in your favorite IDE.
+We highly recommend to use <code>VS Code</code>, since we provide everything for comfortable development.
+After you set up your environment, you can run tests to check that everything is OK.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pytest<span class="w"> </span>tests
+</span></code></pre></div>
+<p>Also there are some environment variables, which may be useful for you:</p>
 <ul>
 <li><code>$CONTAINER_NAME</code> - name of container (default is <code>cartpole</code>)</li>
 </ul>
 <p>If you want to use your own python environment, you can install all dependencies manually, using <a href="https://python-poetry.org/">poetry</a>.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># check poetry config</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>poetry<span class="w"> </span>config<span class="w"> </span>--list<span class="w"> </span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># install all depencies to .venv folder</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>poetry<span class="w"> </span>install
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># run tests to check that everithing is OK</span>
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>poetry<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests
-</span></code></pre></div>
-<p>Also you can build and run docs server locally.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>mkdocs<span class="w"> </span>serve<span class="w"> </span>-a<span class="w"> </span><span class="m">0</span>.0.0.0:8000
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># check poetry config</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>poetry<span class="w"> </span>config<span class="w"> </span>--list<span class="w"> </span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># install all depencies to .venv folder</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>poetry<span class="w"> </span>install
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># run tests to check that everithing is OK</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>poetry<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests
 </span></code></pre></div>
 <h2 id="foxglove">Foxglove</h2>
 <p>For visualization of real time data we use <a href="https://foxglove.dev/">foxglove studio</a>.
@@ -479,6 +567,10 @@ Also simulator may be used to train ML agents.</p>
 </span><span id="__span-5-27"><a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>    <span class="c1"># make simulation step</span>
 </span><span id="__span-5-28"><a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>    <span class="n">cartpole</span><span class="o">.</span><span class="n">advance</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
 </span><span id="__span-5-29"><a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
+</span></code></pre></div>
+<h2 id="docs">Docs</h2>
+<p>You can build and run docs server locally.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>mkdocs<span class="w"> </span>serve<span class="w"> </span>-a<span class="w"> </span><span class="m">0</span>.0.0.0:8000
 </span></code></pre></div>
 
 
