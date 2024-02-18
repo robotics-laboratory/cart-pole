@@ -22,6 +22,8 @@ services:
         cache-to:
           # - type=registry,ref=registry.robotics-lab.ru/cartpole:cache-arm64,mode=max
           # - type=registry,ref=registry.robotics-lab.ru/cartpole:cache-amd64,mode=max
+    environment:
+      - PYTHONPATH=/cartpole
     volumes:
       - "${PWD}:/cartpole"
       - "/dev:/dev"

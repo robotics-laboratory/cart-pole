@@ -9,21 +9,23 @@ git clone https://github.com/robotics-laboratory/cart-pole.git
 ```
 
 We have a built container with all dependencies, use it for development and testing
-(you need to have [docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/) installed).
-Run in root of repo following commands.
+(you need to have [docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/) installed). Run in root of repo following commands.
+
+Pull latest actual image ```docker compose pull```, that you may start devcontainer in VSCode or run it manually.
 
 ```bash
-# start container
-docker compose up -d
-
 # enter to container
 docker exec -it cartpole bash
+```
 
-# run tests to check that everithing is OK
+Repo folder is mounted as `/cartpole` dir, so you can edit files in your favorite IDE.
+We highly recommend to use `VS Code`, since we provide everything for comfortable development.
+After you set up your environment, you can run tests to check that everything is OK.
+
+```bash
 pytest tests
 ```
 
-Repo folder is mounted as `/cartpole` dir, so you can edit files in your favorite IDE and run scripts in container.
 Also there are some environment variables, which may be useful for you:
 
 - `$CONTAINER_NAME` - name of container (default is `cartpole`)
@@ -39,12 +41,6 @@ poetry install
 
 # run tests to check that everithing is OK
 poetry run pytest tests
-```
-
-Also you can build and run docs server locally.
-
-```bash
-mkdocs serve -a 0.0.0.0:8000
 ```
 
 ## Foxglove
@@ -66,4 +62,11 @@ Also simulator may be used to train ML agents.
 
 ```python title="examples/simulatio.py"
 --8<-- "examples/simulation.py"
+```
+
+## Docs
+You can build and run docs server locally.
+
+```bash
+mkdocs serve -a 0.0.0.0:8000
 ```

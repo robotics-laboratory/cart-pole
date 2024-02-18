@@ -209,7 +209,8 @@ class MCAPLogger:
 
         self._writer = Writer(
             open(log_path, "wb"),
-            CompressionType.ZSTD if compress else CompressionType.NONE)
+            compression=CompressionType.ZSTD if compress else CompressionType.NONE,
+        )
 
         self._writer.start()
         self._topic_to_registration: Dict[str, Registration] = {}
@@ -248,7 +249,7 @@ class MCAPLogger:
     def _register_class(self, topic_name: str, cls: Any) -> Registration:
         name = cls.__name__
         assert issubclass(cls, BaseModel), 'Required pydantic model, but got {name}'
-        return self._register(topic_name, name, cls.schema_json())
+        return self._register(topic_name, name, json.dumps(cls.model_json_schema()))
 
     def publish(self, topic_name: str, obj: BaseModel, stamp: float) -> None:
         """
@@ -266,11 +267,12 @@ class MCAPLogger:
 
         registation = self._register_class(topic_name, type(obj))
         self._writer.add_message(
-                channel_id=registation.channel_id,
-                log_time=to_ns(stamp),
-                data=obj.json().encode(),
-                publish_time=to_ns(stamp))
-        
+            channel_id=registation.channel_id,
+            log_time=to_ns(stamp),
+            data=obj.model_dump_json().encode(),
+            publish_time=to_ns(stamp),
+        )
+
     def log(self, msg: str, stamp: float, level: Level) -> None:
         """
         Print message to topic `/log`.
@@ -373,7 +375,7 @@ async def _foxglove_async_entrypoint(queue: asyncio.Queue, stop: Event, level: L
         async def register_class(topic_name, cls) -> Registration:
             name = cls.__name__
             assert issubclass(cls, BaseModel), f'Required pydantic model, but got {name}'
-            return await register(topic_name, name, cls.schema_json())
+            return await register(topic_name, name, cls.model_json_schema())
 
         # preventive topic creation
         registration_log = await register(
@@ -403,7 +405,7 @@ async def _foxglove_async_entrypoint(queue: asyncio.Queue, stop: Event, level: L
                     data = json.dumps(msg).encode()
                 else:
                     registration = await register_class(topic_name, type(obj))
-                    data = obj.json().encode()
+                    data = obj.model_dump_json().encode()
 
                 await server.send_message(registration.channel_id, to_ns(stamp), data)
 
