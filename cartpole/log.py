@@ -375,7 +375,7 @@ async def _foxglove_async_entrypoint(queue: asyncio.Queue, stop: Event, level: L
         async def register_class(topic_name, cls) -> Registration:
             name = cls.__name__
             assert issubclass(cls, BaseModel), f'Required pydantic model, but got {name}'
-            return await register(topic_name, name, cls.model_json_schema())
+            return await register(topic_name, name, json.dumps(cls.model_json_schema()))
 
         # preventive topic creation
         registration_log = await register(
