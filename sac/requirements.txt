@@ -1,0 +1,11 @@
+python=3.6
+torch
+cudatoolkit=9.2
+absl-py
+pyparsing
+hydra-core=0.11
+tb-nightly
+imageio
+imageio-ffmpeg
+gym
+
