@@ -2,32 +2,32 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://robotics-laboratory.github.io/cart-pole/3.0.0/</loc>
-         <lastmod>2024-02-25</lastmod>
+         <lastmod>2024-03-03</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://robotics-laboratory.github.io/cart-pole/3.0.0/dynamics/</loc>
-         <lastmod>2024-02-25</lastmod>
+         <lastmod>2024-03-03</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://robotics-laboratory.github.io/cart-pole/3.0.0/quickstart/</loc>
-         <lastmod>2024-02-25</lastmod>
+         <lastmod>2024-03-03</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://robotics-laboratory.github.io/cart-pole/3.0.0/reference/common/</loc>
-         <lastmod>2024-02-25</lastmod>
+         <lastmod>2024-03-03</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://robotics-laboratory.github.io/cart-pole/3.0.0/reference/log/</loc>
-         <lastmod>2024-02-25</lastmod>
+         <lastmod>2024-03-03</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://robotics-laboratory.github.io/cart-pole/3.0.0/reference/simulator/</loc>
-         <lastmod>2024-02-25</lastmod>
+         <lastmod>2024-03-03</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>
