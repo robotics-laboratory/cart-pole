@@ -3,15 +3,15 @@ from cartpole import State, Error
 import random
 import torch
 
-from math import pi
+from math import pi, cos, tanh
 
 def state_to_tensor(state: State):
     return torch.tensor([
-        state.cart_position,
-        state.cart_velocity,
-        state.cart_acceleration,
-        state.pole_angle,
-        state.pole_angular_velocity,
+        state.cart_position / 0.5,
+        state.cart_velocity / 2.0,
+        state.cart_acceleration / 5.0,
+        -cos(state.pole_angle),
+        tanh(state.pole_angular_velocity),
     ])
 
 def make_tensor(from_state, to_state, action, reward):
@@ -36,13 +36,13 @@ class ReplayMemory:
         self.ptr = (self.ptr + 1) % self.maxlen
         self.length = min(self.length + 1, self.maxlen)
     
-    def sample(self, sample_size: int):
+    def sample(self, sample_size: int, device):
         sample_size = min(self.length, sample_size)
         sample = self.states[random.sample(range(self.length), sample_size)]
         return (
-            sample[:, :self.state_size],
-            sample[:, self.state_size:self.state_size*2],
-            sample[:, self.state_size*2].reshape(-1, 1),
-            sample[:, self.state_size*2+1].reshape(-1, 1),
-            sample[:, self.state_size*2+2].reshape(-1, 1)
+            sample[:, :self.state_size].to(device),
+            sample[:, self.state_size:self.state_size*2].to(device),
+            sample[:, self.state_size*2].reshape(-1, 1).to(device),
+            sample[:, self.state_size*2+1].reshape(-1, 1).to(device),
+            sample[:, self.state_size*2+2].reshape(-1, 1).to(device)
         )
