@@ -66,7 +66,7 @@ class Simulator(CartPoleBase):
                 cart_position=0.5, cart_velocity=2.0, cart_acceleration=5.0
             ),
             control_limit=Limits(),
-            parameters=Parameters(g=9.81, b=0, k=0.3),
+            parameters=Parameters(gravity=9.81, friction_coef=0, mass_coef=0.3),
         )
 
         self._state = State(error=Error.NEED_RESET)
