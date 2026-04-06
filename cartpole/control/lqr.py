@@ -39,6 +39,37 @@ class BalanceLQRControl:
         print(f"ERROR: {error[0]:.2f} {error[1]:.2f} {error[2]:.2f} {error[3]:.2f}")
         u = -self.K @ error
         return u[0]
+    
+class ReverseBalanceLQRControl:
+    def __init__(self, config):
+        state = State(
+            cart_position = 0,
+            cart_velocity = 0,
+            pole_angle = 0,
+            pole_angular_velocity = 0
+        )
+        
+        self.q0 = state.as_array()
+        self.u0 = numpy.array([0])
+        
+        system = CartPoleSystem()
+        context = system.CreateContext(config, self.q0)
+        system.get_input_port().FixValue(context, self.u0)
+
+        # Q = numpy.diag([1, 13, 1, 4])
+        # R = numpy.diag([0.18])
+        Q = numpy.diag([30, 1, 5, 1])
+        R = numpy.diag([0.8])
+
+        linearized = Linearize(system, context)
+        self.K, _ = LinearQuadraticRegulator(linearized.A(), linearized.B(), Q, R)
+        
+    def __call__(self, state):
+        q = state.as_array()
+        error = q - self.q0
+        print(f"ERROR: {error[0]:.2f} {error[1]:.2f} {error[2]:.2f} {error[3]:.2f}")
+        u = -self.K @ error
+        return u[0]
 
 
 class TrajectoryLQRControl:
