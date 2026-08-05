@@ -1,0 +1,13 @@
+# Runtime dependencies for Raspberry Pi / Docker (Python 3.10, CPU).
+# Torch is installed separately in the Dockerfile for the correct architecture.
+
+numpy==1.26.4
+protobuf==4.25.3
+pyserial==3.5
+varint==1.0.2
+dacite==1.8.1
+PyYAML==6.0.1
+gymnasium==0.29.1
+pydantic==2.6.4
+mcap==1.1.1
+scipy==1.11.4

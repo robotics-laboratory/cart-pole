@@ -1,0 +1,17 @@
+.git
+.deps
+.pio
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+.ipynb_checkpoints
+.DS_Store
+.vscode
+.env
+*.mcap
+outputs/*/checkpoints
+outputs/ddpg_phys_eval
+docs/tex
+examples/*.ipynb

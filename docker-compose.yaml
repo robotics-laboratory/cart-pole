@@ -1,0 +1,25 @@
+services:
+  cartpole:
+    container_name: ${CONTAINER_NAME:-cartpole-ddpg}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${IMAGE_NAME:-cartpole-ddpg:pi}
+    working_dir: /cartpole
+    environment:
+      SERIAL_PORT: ${SERIAL_PORT:-/dev/ttyUSB0}
+      SERIAL_SPEED: ${SERIAL_SPEED:-500000}
+      PYTHONPATH: /cartpole
+      CHECKPOINT: ${CHECKPOINT:-outputs/ddpg_simba_small_push_seed42/ddpg_model.pt}
+      THETA_OFFSET: ${THETA_OFFSET:-2.201221}
+    volumes:
+      - ./:/cartpole
+      - /dev:/dev
+    devices: []
+    privileged: true
+    group_add:
+      - dialout
+    stdin_open: true
+    tty: true
+    network_mode: host
+    command: ["help"]

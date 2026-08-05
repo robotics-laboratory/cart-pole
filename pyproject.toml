@@ -6,13 +6,18 @@ authors = []
 readme = "readme.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
-torch = "^1.13.0"
-numpy = "^1.23.5"
+python = ">=3.10,<3.12"
+torch = "^2.0.1"
+numpy = "^1.26.0"
 protobuf = "^4.21.9"
 pyserial = "^3.5"
 varint = "^1.0.2"
 dacite = "^1.6.0"
+PyYAML = "^6.0"
+gymnasium = "^0.29.0"
+pydantic = "^2.6.0"
+mcap = "^1.1.0"
+scipy = "^1.11.0"
 drake = {version = "^1.10.0", optional = true}
 
 [tool.poetry.group.dev.dependencies]
