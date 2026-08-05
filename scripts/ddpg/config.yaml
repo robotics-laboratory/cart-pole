@@ -1,0 +1,137 @@
+run_name: balance_recovery_v2
+seed: 42
+
+device:
+  use_cuda: false
+
+env:
+  dt: 0.02
+  max_episode_time: 10.0
+  random_initial_angle: true
+  initial_angle: 0.0
+  initial_angle_center: 3.141592653589793
+  initial_angle_range: 0.10
+  random_initial_cart: true
+  initial_cart_position_range: 0.03
+  initial_cart_velocity_range: 0.05
+  initial_pole_angular_velocity_range: 0.0
+  reward_mode: swingup_soft
+  terminate_on_control_limit: true
+  noisy_physics_enabled: true
+  physics_noise_low: 0.8
+  physics_noise_high: 1.2
+  action_delay_min_steps: 0
+  action_delay_max_steps: 0
+  theta_dot_penalty: 0.05
+  center_penalty: 0.02
+  action_delta_penalty: 0.002
+  initial_state_mix:
+    enabled: true
+    start_probabilities: [0.25, 0.75, 0.0] # down, upright, uniform
+    end_probabilities: [0.40, 0.40, 0.20]
+    down_angle_range: 0.25
+    upright_angle_range: 0.25
+    recovery_cart_position_range: 0.12
+    recovery_cart_velocity_range: 0.60
+  disturbance:
+    enabled: true
+    upright_error_threshold: 0.25
+    upright_time: 0.5
+    delay_min: 0.5
+    delay_max: 2.0
+    small_probability: 0.70
+    small_theta_dot_delta_min: 0.2
+    small_theta_dot_delta_max: 2.0
+    theta_dot_delta_min: 2.0
+    theta_dot_delta_max: 6.0
+
+curriculum:
+  enabled: true
+  mode: linear
+  start_angle_range: 0.10
+  max_angle_range: 3.141592653589793
+  linear_increment_per_episode: 0.002
+  success_threshold: 0.75
+  success_increment: 0.15
+  initial_state:
+    enabled: true
+    start_episode: 1
+    end_episode: 900
+    cart_position_range_start: 0.005
+    cart_position_range_end: 0.04
+    cart_velocity_range_start: 0.03
+    cart_velocity_range_end: 0.40
+    theta_dot_range_start: 0.10
+    theta_dot_range_end: 4.00
+  physics_noise:
+    enabled: true
+    start_episode: 1
+    end_episode: 900
+    low_start: 0.98
+    low_end: 0.90
+    high_start: 1.02
+    high_end: 1.10
+  action_latency:
+    enabled: true
+    start_episode: 300
+    end_episode: 1200
+    min_delay_steps_start: 0
+    min_delay_steps_end: 1
+    max_delay_steps_start: 0
+    max_delay_steps_end: 3
+
+model:
+  model_type: simba
+  hidden_dims: [256, 256]
+  gamma: 0.995
+  target_exponential_averaging: 0.995
+  exploration_std: 0.35
+  min_exploration_std: 0.05
+  exploration_decay: 0.995
+  simba:
+    actor_hidden_dim: 128
+    critic_hidden_dim: 256
+    actor_num_blocks: 1
+    critic_num_blocks: 2
+    history_len: 4
+    include_action_history: true
+    rsnorm_eps: 0.00001
+
+history:
+  enabled: true
+  length: 8
+  transformer:
+    d_model: 32
+    n_heads: 2
+    n_layers: 1
+    dropout: 0.0
+
+train:
+  n_episodes: 2200
+  batch_size: 512 # 256
+  max_buffer_size: 200000
+  random_warmup_steps: 15000
+  preheat_steps: 0
+  updates_per_step: 1
+  actor_update_frequency: 2
+  actor_lr: 0.0003
+  critic_lr: 0.0003
+  weight_decay: 0.003
+  max_grad_norm: 10.0
+  log_every: 10
+  eval_every: 100
+  save_every: 100
+  out_dir: outputs/ddpg
+
+eval:
+  n_episodes: 40
+  push_episodes: 20
+  upright_error_threshold: 0.25
+  stable_x_threshold: 0.20
+  required_upright_time: 2.0
+  max_post_acquisition_rotations: 0.75
+  out_dir: outputs/ddpg_eval
+
+logging:
+  wandb: false
+  wandb_project: Cartpole-DDPG
