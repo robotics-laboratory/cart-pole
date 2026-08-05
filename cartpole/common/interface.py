@@ -36,6 +36,10 @@ class Config:
     pole_mass: float = 0.118  # kg
     gravity: float = 9.8  # m/s^2
 
+    @classmethod
+    def default(cls) -> "Config":
+        return cls()
+
 
 @dc.dataclass
 class State:
