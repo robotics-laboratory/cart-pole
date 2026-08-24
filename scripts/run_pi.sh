@@ -11,6 +11,7 @@ export SERIAL_SPEED="${SERIAL_SPEED:-500000}"
 CHECKPOINT="${CHECKPOINT:-outputs/ddpg_simba_small_push_seed42/ddpg_model.pt}"
 THETA_OFFSET="${THETA_OFFSET:-3.141592653589793}"
 OUT_DIR="${OUT_DIR:-outputs/ddpg_phys_eval}"
+HARDWARE_EPISODE_TIME="${HARDWARE_EPISODE_TIME:-50}"
 
 ensure_protobuf() {
   if [[ ! -f cartpole/device/protocol_pb2.py || ! -f cartpole/device/nanopb_pb2.py ]]; then
@@ -42,6 +43,7 @@ Environment:
   CHECKPOINT    Path to .pt checkpoint
   THETA_OFFSET  Angle offset (default pi)
   OUT_DIR       Hardware eval output directory
+  HARDWARE_EPISODE_TIME  Hardware episode timeout in seconds (default 50)
 EOF
 }
 
@@ -117,6 +119,7 @@ cmd_hardware() {
     --serial-speed "$SERIAL_SPEED" \
     --theta-offset "$THETA_OFFSET" \
     --out-dir "$OUT_DIR" \
+    --max-episode-time "$HARDWARE_EPISODE_TIME" \
     "$@"
 }
 

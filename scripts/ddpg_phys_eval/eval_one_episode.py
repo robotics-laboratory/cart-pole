@@ -44,6 +44,7 @@ DEFAULT_CONFIG = (
     REPO_ROOT / "outputs" / "ddpg_simba_small_push_seed42" / "config_used.yaml"
 )
 DEFAULT_OUT_DIR = REPO_ROOT / "outputs" / "ddpg_phys_eval"
+DEFAULT_HARDWARE_EPISODE_TIME = 1800
 
 
 class DDPGPhysEvalStep(BaseModel):
@@ -232,7 +233,11 @@ def run_episode(args: argparse.Namespace) -> Path:
     x_limit = float(args.x_limit or ref_env.config.control_limit.cart_position)
     velocity_limit = float(args.velocity_limit or ref_env.config.control_limit.cart_velocity)
     dt = float(args.dt or ref_env.dt)
-    max_episode_time = float(args.max_episode_time or ref_env.max_episode_time)
+    max_episode_time = float(
+        args.max_episode_time
+        if args.max_episode_time is not None
+        else DEFAULT_HARDWARE_EPISODE_TIME
+    )
 
     reward_for_state(
         reference_env=ref_env,
@@ -449,9 +454,13 @@ def run_episode(args: argparse.Namespace) -> Path:
 
             next_tick += dt
     finally:
+        active_error = sys.exc_info()[0] is not None
+        stop_error: Exception | None = None
         try:
-            device.set_target(0.0)
+            device.stop()
             time.sleep(float(args.stop_settle))
+        except Exception as exc:  # noqa: BLE001
+            stop_error = exc
         finally:
             device.close()
             ref_env.close()
@@ -468,6 +477,15 @@ def run_episode(args: argparse.Namespace) -> Path:
             }
         )
         write_eval_metadata(metadata_path, metadata)
+        if stop_error is not None:
+            print(
+                f"ERROR: failed to stop motor: {stop_error}",
+                file=sys.stderr,
+            )
+            if not active_error:
+                raise RuntimeError(
+                    "Hardware episode ended, but the motor could not be stopped."
+                ) from stop_error
 
     length = len(rows)
     upright_fraction = (
@@ -501,7 +519,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--theta-offset", type=float, default=math.pi)
     parser.add_argument("--startup-delay", type=float, default=3.0)
     parser.add_argument("--post-reset-delay", type=float, default=0.2)
-    parser.add_argument("--stop-settle", type=float, default=0.2)
+    parser.add_argument("--stop-settle", type=float, default=1.0)
     parser.add_argument("--print-every", type=int, default=10)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--clamp-position", action="store_true")
